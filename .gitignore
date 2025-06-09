@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.env
+users.db
+rsa_private_key.pem
+rsa_public_key.pem
+static/tmp/

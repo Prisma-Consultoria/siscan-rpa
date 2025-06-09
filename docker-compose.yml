@@ -1,0 +1,9 @@
+services:
+  app:
+    build: .
+    env_file:
+      - .env
+    volumes:
+      - ./static/tmp:/app/static/tmp
+    ports:
+      - "5000:5000"
