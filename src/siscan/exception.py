@@ -87,6 +87,7 @@ class PacienteDuplicadoException(SiscanException):
             mensagem = "Foram encontrados múltiplos pacientes na busca. A seleção não pode ser realizada automaticamente."
         super().__init__(ctx, mensagem)
 
+
 class XpathNotFoundError(SiscanException):
     """
     Exceção disparada quando um elemento (Locator) não é encontrado ou
@@ -102,3 +103,55 @@ class XpathNotFoundError(SiscanException):
             mensagem = ("Elemento não encontrado "
                         "ou não resolvível na página do SIScan.")
         super().__init__(ctx, mensagem)
+
+
+class FieldValueNotFoundError(SiscanException):
+    """
+    Exceção lançada quando o valor preenchido/selecionado em um campo de
+    formulário não corresponde a nenhuma opção válida definida no mapeamento
+    FIELDS_MAP.
+    """
+    def __init__(self, context, field_name: str, value, msg: str = None):
+        mensagem = (msg or
+            f"Valor '{value}' não encontrado no mapeamento de opções válidas "
+            f"para o campo '{field_name}'.")
+        super().__init__(context, msg=mensagem)
+        self.field_name = field_name
+        self.value = value
+
+
+class SiscanUnexpectedFieldFilledError(SiscanException):
+    """
+    Exceção lançada quando um campo é preenchido de forma inesperada,
+    isto é, quando a lógica do formulário não exige ou não permite o
+    preenchimento deste campo em função das respostas anteriores.
+
+    Parâmetros
+    ----------
+    context : SiscanBrowserContext
+        Contexto de execução.
+    field_name : str
+        Nome lógico do campo preenchido indevidamente.
+    message : str, opcional
+        Mensagem detalhada do erro.
+    """
+    def __init__(self, context,
+                 field_name: str = None,
+                 data: dict = None,
+                 options_values: list = None,
+                 message: str = None
+                 ):
+        if data and field_name and options_values:
+            msg = (
+                f"O valor '{data.get(field_name)}' "
+                f"fornecido para o campo '{field_name}' não consta na lista "
+                f"de opções válidas. "
+                f"Opções válidas: {', '.join(options_values)}."
+            )
+        elif field_name:
+            msg = f"O campo '{field_name}' deve ser informado."
+        if message:
+            msg = message
+
+        super().__init__(context, msg)
+        self.field_name = field_name

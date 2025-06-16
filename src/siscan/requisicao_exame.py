@@ -1,0 +1,198 @@
+from abc import abstractmethod
+
+import logging
+
+from src.siscan.exception import SiscanUnexpectedFieldFilledError
+from src.siscan.siscan_webpage import SiscanWebPage
+from src.siscan.webtools.xpath_constructor import XPathConstructor
+
+logger = logging.getLogger(__name__)
+
+
+class RequisicaoExame(SiscanWebPage):
+    # Mapeamento entre as chaves do dicionário e o label do formulário
+    MAP_DATA_LABEL = {
+        "apelido": ("Apelido", "text"),
+        "escolaridade": ("Escolaridade:", "select"),
+        "ponto_de_referencia": ("Ponto de Referência", "text"),
+        "tipo_exame_colo": ("Colo", "radio"),
+        "tipo_exame_mama": ("Mama", "radio"),
+        "unidade_requisitante": ("Unidade Requisitante", "select"),
+        "prestador": ("Prestador", "select"),
+    }
+
+    # Mapeamento entre as chaves do dicionário e o label do formulário
+    FIELDS_MAP = {
+        "escolaridade": {
+            "0": "0",  # Selecione...
+            "1": "1",  # Analfabeto(a)
+            "2": "2",  # Ensino Fundamental Incompleto
+            "3": "3",  # Ensino Fundamental Completo
+            "4": "4",  # Ensino Médio Completo
+            "5": "5",  # Ensino Superior Completo
+        },
+        # "tipo_exame_colo": {
+        #     "Cito de Colo...": "02",
+        #     "Histo de Colo": "04",
+        # },
+        # "tipo_exame_mama": {
+        #     "Mamografia": "01",
+        #     "Cito de Mama": "03",
+        #     "Histo de Mama": "05",
+        # }
+    }
+    FIELDS_MAP.update(SiscanWebPage.FIELDS_MAP)
+
+    def validation(self, data: dict):
+        super().validation(data)
+        # nome_campo = "escolaridade"
+        # if not data.get(nome_campo) in self.FIELDS_MAP[nome_campo].keys():
+        #     raise SiscanUnexpectedFieldFilledError(
+        #         self.context,
+        #         field_name=nome_campo,
+        #         data=data,
+        #         options_values=self.FIELDS_MAP[nome_campo].keys()
+        #     )
+        if not data.get("cartao_sus"):
+            raise SiscanUnexpectedFieldFilledError(
+                self.context,
+                field_name=self.get_label("cartao_sus"),
+            )
+        # if not data.get("prestador"):
+        #     raise SiscanUnexpectedFieldFilledError(
+        #         self.context,
+        #         field_name=self.get_label("prestador"),
+        #     )
+        # if not data.get("unidade_requisitante"):
+        #     raise SiscanUnexpectedFieldFilledError(
+        #         self.context,
+        #         field_name=self.get_label("unidade_requisitante"),
+        #     )
+
+    @abstractmethod
+    def selecionar_tipo_exame(self, data: dict):
+        """
+        Método abstrato para selecionar o tipo de exame.
+        Deve ser implementado nas subclasses.
+        """
+        raise NotImplementedError("O método select_type_exam deve ser "
+                                  "implementado na subclasse.")
+
+    def get_map_label(self) -> dict[str, tuple[str, str]]:
+        """
+        Retorna o mapeamento de campos do formulário com seus respectivos
+        labels e tipos.
+
+        Retorna
+        -------
+        dict[str, tuple[str, str]]
+            Dicionário onde a chave é o nome do campo e o valor é uma tupla
+            contendo o label e o tipo do campo.
+        """
+        return {
+            "cartao_sus": ("Cartão SUS", "input"),
+            **RequisicaoExame.MAP_DATA_LABEL,
+        }
+
+    def acesar_menu_gerenciar_exame(self):
+        self.acessar_menu("EXAME", "GERENCIAR EXAME")
+
+    def _novo_exame(self, event_button: bool = False) -> XPathConstructor:
+        self.acesar_menu_gerenciar_exame()
+
+        if event_button:
+
+            xpath = XPathConstructor(self.context)
+            xpath.find_form_anchor_button("Novo Exame").click()
+
+        xpath.wait_page_ready()
+        return xpath
+
+    def buscar_cartao_sus(self, data: dict):
+        self._buscar_cartao_sus(data, menu_action=self._novo_exame)
+
+    def seleciona_unidade_requisitante(self, data: dict = None):
+        nome_campo = "unidade_requisitante"
+        self.load_select_options(nome_campo)
+
+        # Atualiza o mapeamento de campos com os valores do select para obter
+        # o código CNES do campo Unidade Requisitante.
+        # Para cada chave no mapeamento, mantém apenas a parte antes do hífen
+        # e.g., "0274267 - CENTRAL DE TELEATENDIMENTO SAUDE JA CURITIBA"
+        # se torna "0274267"
+
+        # Cria uma lista com os itens originais para evitar alteração durante
+        # o loop
+        for k, v in list(self.FIELDS_MAP[nome_campo].items()):
+            key = f"{k.split('-')[0].strip()}"
+            self.FIELDS_MAP[nome_campo][key] = v
+
+            # Remove o item original que contém o hífen
+            if v != "0":
+                del self.FIELDS_MAP[nome_campo][k]
+
+        text, value = self.select_value(nome_campo, data)
+        if value == "0":
+            raise SiscanUnexpectedFieldFilledError(
+                self.context,
+                field_name=nome_campo,
+                data=data,
+                options_values=self.FIELDS_MAP[nome_campo].keys()
+            )
+
+    def selecionar_prestador(self, data: dict = None):
+        nome_campo = "prestador"
+        self.load_select_options(nome_campo)
+        text, value = self.select_value(nome_campo, data)
+        if value == "0":
+            raise SiscanUnexpectedFieldFilledError(
+                self.context,
+                field_name=nome_campo,
+                data=data,
+                options_values=self.FIELDS_MAP[nome_campo].keys()
+            )
+
+    def preencher(self, data: dict):
+        """
+        Preenche o formulário de novo exame de acordo com os campos informados.
+
+        Parâmetros
+        ----------
+        campos : dict
+            Dicionário onde a chave é o nome amigável do campo
+            (ex: "Cartão SUS") e o valor é o dado a ser inserido.
+        """
+        self.validation(data)
+
+        xpath = self._novo_exame(event_button=True)
+
+        # 1o passo: Preenche o campo Cartão SUS e chama o
+        # evento onblur do campo
+        self.preencher_cartao_sus(self.get_value("cartao_sus", data))
+
+        # 2o passo: Define o tipo de exame para então poder habilitar
+        # os campos de Prestador e Unidade Requisitante
+        self.selecionar_tipo_exame(data)
+
+        # 3o passo: Obtem os valores do campo select Unidade Requisitante,
+        # atualiza o mapeamento de campos e preenche o campo
+        self.seleciona_unidade_requisitante(data)
+
+        # 4o passo: Obtem os valores do campo select Prestador,
+        # atualiza o mapeamento de campos e preenche o campo
+        self.selecionar_prestador(data)
+
+        # 5o passo: Preenche os campos adicionais do formulário
+        # Antes, monta o mapeamento de campos e os dados finais
+        fields_map, data_final = self.mount_fields_map_and_data(
+            data,
+            RequisicaoExame.MAP_DATA_LABEL,
+            suffix="",
+        )
+
+        # xpath.find_form_input("Escolaridade:", "select").fill("2")
+        # xpath.find_form_input("Escolaridade:", "select").fill("Ensino Médio Completo")
+        # Remove os campos que já foram preenchidos
+        fields_map.pop('unidade_requisitante')
+        fields_map.pop('prestador')
+        xpath.fill_form_fields(data_final, fields_map)

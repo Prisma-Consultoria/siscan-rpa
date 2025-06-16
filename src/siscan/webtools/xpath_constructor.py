@@ -1,10 +1,12 @@
+from typing import Optional, Union
+
 import ast
 import time
 import logging
 from playwright.sync_api import Page, TimeoutError
 
-from src.siscan.pages.context import SiscanBrowserContext
-from src.siscan.pages.exception import SiscanMenuNotFoundError, \
+from src.siscan.context import SiscanBrowserContext
+from src.siscan.exception import SiscanMenuNotFoundError, \
     XpathNotFoundError, SiscanException
 
 logger = logging.getLogger(__name__)
@@ -14,22 +16,11 @@ INPUT_TYPES = {
     'date': 'input',
     'value': 'input',
     'number': 'input',
-    'file': 'input',
     'checkbox': 'input',
-    'multiple-checkbox': 'multiplecheckbox',
-    'checkbox-popup': 'multiplecheckbox',
     'textarea': 'textarea',
     'list': 'select',
     'select': 'select',
-    'tree': 'arvore',
     'radio': 'radio',
-    'search': 'busca',
-    'autocomplete-list': 'lista autocompletar',
-    'multiple-list': 'lista multipla',
-    'multiple-autocomplete': 'autocomplete multiplo',
-    'filtered-select-multiple': 'filteredselectmultiple',
-    'placeholder': 'placeholder',
-    'aria-label': 'aria-label'
 }
 
 
@@ -39,7 +30,7 @@ class XPathConstructor:
     # Multiplicador para o tempo de espera
     WAIT_FILLED_MULTIPLIER = 5
     # Intervalo entre tentativas de repetição (em segundos)
-    RETRY_INTERVAL = 0.5  # segundos
+    RETRY_INTERVAL = 0.2  # segundos
 
 
     """
@@ -52,8 +43,16 @@ class XPathConstructor:
         self._context = context
         self._xpath = xpath
 
+        self._input_type: Optional[str] = None
+
     def __str__(self):
-        return f"XPathConstructor(xpath='{self._xpath}')"
+        return (f"XPathConstructor(xpath='{self._xpath}', "
+                f"input_type='{self._input_type}')")
+
+    def _get_input_type(self, default_input_type: str):
+        input_type = default_input_type or self._input_type
+        return INPUT_TYPES.get(input_type, 'input')
+
     @property
     def page(self) -> Page:
         return self._page
@@ -72,6 +71,7 @@ class XPathConstructor:
 
     def reset(self):
         self._xpath = ''
+        self._input_type = None
 
     def get(self) -> Page.locator:
         """
@@ -165,14 +165,14 @@ class XPathConstructor:
         logger.debug(f"Aguardando elemento com XPath: {self._xpath} "
                      f"por {timeout} segundos")
         try:
-            # Espera 10 segundos
             locator.wait_for(state="visible",
                              timeout=timeout * self.TIMEOUT_MS_FACTOR)
             return locator
         except TimeoutError:
             # Se o wait_for estourar timeout, o elemento não se tornou visível
             logger.error(f"Timeout: Elemento com XPath '{self._xpath}' "
-                         f"não se tornou visível em {timeout} segundos.")
+                         f"não se tornou visível em "
+                         f"{timeout * self.TIMEOUT_MS_FACTOR} segundos.")
             raise XpathNotFoundError(
                 self._context,
                 xpath=self._xpath,
@@ -291,7 +291,8 @@ class XPathConstructor:
                     return element.value.length > 0;
                 }""",
                 arg=locator.element_handle(),
-                timeout=timeout * self.TIMEOUT_MS_FACTOR * self.WAIT_FILLED_MULTIPLIER
+                timeout=timeout * self.TIMEOUT_MS_FACTOR *
+                        self.WAIT_FILLED_MULTIPLIER
             )
             logger.info(
                 f"Campo com XPath '{self._xpath}' foi preenchido com sucesso.")
@@ -384,162 +385,176 @@ class XPathConstructor:
                 msg=f"Erro inesperado ao aguardar a prontidão da página: {e}"
             )
 
-    def get_value(self, type_input: str = "texto", timeout=500):
+    def get_value(
+            self, type_input: str = None, timeout=500
+    ) -> tuple[str, str] | list[tuple[str, str]]:
         """
-        Obtém o valor do campo localizado pelo XPath corrente, de acordo com o
-        tipo do campo informado.
+        Obtém o valor de um campo localizado via XPath, retornando sempre uma
+        tupla `(texto, valor)` conforme o tipo do campo.
 
         O método adapta a extração do valor conforme o tipo do campo:
-          - Para campos de texto e textarea, retorna o valor digitado.
-          - Para campos select, retorna o texto da opção atualmente
-            selecionada.
-          - Para checkbox e radio, retorna se está marcado (True/False).
-          - Para múltiplos checkboxes, retorna uma lista com os valores
-            marcados.
-          - Para elementos do tipo div ou span, retorna o texto contido no
-            elemento.
-          - Para outros tipos, utiliza o input_value padrão do Playwright.
+          - Para campos de texto (`text`, `textarea`), retorna uma tupla
+            contendo o valor digitado duas vezes: `(valor, valor)`.
+          - Para campos select, retorna `(texto_opcao_selecionada,
+            value_opcao_selecionada)`.
+          - Para checkbox:
+              - Se houver apenas um checkbox, retorna `(texto_associado,
+                value)` se estiver marcado, ou `(None, None)` se não estiver.
+              - Se houver múltiplos checkboxes, retorna uma lista de tuplas
+                para os checkboxes marcados: `[(texto, value), ...]`.
+          - Para radio, retorna `(texto_associado, value)` para o radio
+            selecionado, ou `(None, None)` se nenhum estiver marcado.
+          - Para elementos do tipo div ou span, retorna o texto como
+            `(texto, texto)`.
+          - Para outros tipos, retorna `(valor, valor)`.
 
         Parâmetros
         ----------
         type_input : str, opcional
-            Tipo do campo a ser lido ('texto', 'select', 'checkbox', 'radio',
-            'multiple-checkbox', 'div', 'span', etc.). O padrão é 'texto'.
+            Tipo do campo a ser lido ('text', 'select', 'checkbox', 'radio',
+            'multiple-checkbox', 'div', 'span', etc.). O padrão é 'text'.
         timeout : int, opcional
             Tempo máximo (em milissegundos) para aguardar o elemento.
             Padrão: 500.
 
         Retorno
         -------
-        valor : str, bool ou list
-            O valor extraído do campo, podendo ser string, booleano ou lista de
-            strings conforme o tipo do campo.
+        tuple[str, str] | list[tuple[str, str]]
+            Tupla (texto, valor) correspondente ao campo, ou lista de tuplas
+            no caso de múltiplos checkboxes.
+            Retorna (None, None) quando o campo não está preenchido ou nenhum
+            item está marcado/selecionado.
 
         Exemplo
         -------
-        ```python
-        valor = xpath.get_value("select")
-        checked = xpath.get_value("checkbox")
-        lista = xpath.get_value("multiple-checkbox")
+        ```
+        texto, valor = xpath.get_value("select")
+        print(texto, valor)  # ex: 'Feminino', 'F'
+        lista = xpath.get_value("checkbox")  # Se múltiplos checkboxes marcados
+        print(lista)  # [('Opção 1', '1'), ('Opção 2', '2')]
+        texto, valor = xpath.get_value("radio")
+        texto, valor = xpath.get_value("text")
         ```
         """
         locator = self.wait_and_get(timeout)
-        input_type = INPUT_TYPES.get(type_input, 'input')
+        input_type = self._get_input_type(type_input)
 
         if input_type in ("text", "textarea"):
-            return locator.input_value()
+            value = locator.input_value()
+            return (value, value)
         elif input_type == "select":
             # Retorna o texto visível da opção selecionada
             selected_option = locator.locator('option:checked')
-            return selected_option.inner_text().strip()
+            value = selected_option.get_attribute("value")
+            text = selected_option.inner_text().strip()
+            return (text, value)
         elif input_type == "checkbox":
-            return locator.is_checked()
-        elif input_type == "radio":
-            return locator.is_checked()
-        elif input_type == "multiple-checkbox":
-            # Checkbox múltiplo: retorna lista de valores selecionados
-            checkboxes = locator.all()
-            return [cb.input_value() for cb in checkboxes if cb.is_checked()]
-        elif input_type in ("div", "span"):
-            return locator.inner_text().strip()
-        else:
-            return locator.input_value()  # Padrão
-
-    def find_form_input(self,
-                        label_name: str,
-                        type_input: str = "text") -> 'XPathConstructor':
-        """
-        Localiza um campo de formulário (input, textarea, select, data ou
-        checkbox) associado a um label específico.
-
-        O método constrói o XPath conforme o tipo de campo:
-          - Para campos de data ('date'), procura o input dentro do span
-            subsequente.
-          - Para campos do tipo checkbox, localiza a tabela após o label
-            contendo os inputs do tipo checkbox.
-          - Para outros tipos (ex: text, select, textarea), localiza o elemento
-            irmão direto do label.
-
-        Parâmetros
-        ----------
-        label_name : str
-            Texto do label do campo a ser localizado.
-        type_input : str, opcional
-            Tipo do campo a ser localizado (ex: 'text', 'date', 'checkbox',
-            'select'). O padrão é 'text'.
-
-        Retorno
-        -------
-        self : XPathConstructor
-            Permite o encadeamento de métodos.
-
-        Exemplo
-        -------
-        ```python
-        xpath.find_form_input("CPF:", type_input="text").fill("123...")
-        xpath.find_form_input("Sexo:", type_input="checkbox").fill("M")
-        ```
-        """
-        input_type = INPUT_TYPES[type_input]
-        label_xpath = f"//label[normalize-space(text())='{label_name}']"
-
-        if type_input == "date":
-            # Para campos de data, encontra o span após o label e dentro dele
-            # busca o input de texto do calendário
-            self._xpath += (
-                f"{label_xpath}/following-sibling::span[1]//{input_type}"
-                f"[contains(@class, 'date') or contains(@class, 'calendar')]"
-            )
-        elif type_input == "checkbox":
-            # Para checkbox, busca todos os inputs do tipo checkbox após o
-            # label, dentro de qualquer estrutura (ex: tabela)
-            self._xpath += (
-                f"{label_xpath}/following-sibling::table[1]"
-            )
-        elif type_input == "radio":
-            # Para radio: busca no fieldset com legend igual ao label_name
-            self._xpath += (
-                f"//fieldset[legend[normalize-space(text())='{label_name}']]"
-            )
-        elif type_input == "select":
-            # Busca primeiro por 'for'
-            label_elem = self.page.locator(label_xpath)
-            if label_elem.count() == 0:
-                logger.debug(
-                    f"Label '{label_name}' não encontrado com "
-                    f"XPath {label_xpath}")
-                raise XpathNotFoundError(self._context, xpath=label_xpath)
-            select_id = label_elem.first.get_attribute("for")
-            if select_id:
-                # Caminho padrão: label->for->select#id
-                self._xpath = f"//select[@id='{select_id}']"
+            # Checa quantos checkboxes existem
+            checkboxes = locator.locator("input[type='checkbox']")
+            count = checkboxes.count()
+            # Um único checkbox
+            if count == 1:
+                cb = checkboxes.nth(0)
+                if cb.is_checked():
+                    value = cb.get_attribute("value")
+                    # Busca o label associado
+                    label_elem = cb.evaluate_handle(
+                        "node => node.closest('label')")
+                    if label_elem:
+                        text = label_elem.inner_text().strip()
+                    else:
+                        text = value
+                    return (text, value)
+                else:
+                    return (None, None)
+            # Múltiplos checkboxes
+            elif count > 1:
+                result = []
+                for i in range(count):
+                    cb = checkboxes.nth(i)
+                    if cb.is_checked():
+                        value = cb.get_attribute("value")
+                        label_elem = cb.evaluate_handle(
+                            "node => node.closest('label')")
+                        if label_elem:
+                            text = label_elem.inner_text().strip()
+                        else:
+                            text = value
+                        result.append((text, value))
+                return result
             else:
-                # Caminho alternativo: select irmão
-                self._xpath = f"{label_xpath}/following-sibling::select[1]"
-                # Opcional: checar se existe, caso contrário, tente por
-                # ancestral comum
-                if self.page.locator(self._xpath).count() == 0:
-                    # Busca por select descendente do mesmo div ancestral
-                    self._xpath = (
-                        f"{label_xpath}/ancestor::div[1]//select[1]"
-                    )
+                return (None, None)
+        elif input_type == "radio":
+            # Retorna o value do radio marcado, ou None se nenhum marcado
+            radios = locator.locator("input[type='radio']")
+            count = radios.count()
+            for i in range(count):
+                radio = radios.nth(i)
+                if radio.is_checked():
+                    value = radio.get_attribute("value")
+                    label_elem = radio.evaluate_handle(
+                        "node => node.closest('label')")
+                    if label_elem:
+                        text = label_elem.inner_text().strip()
+                    else:
+                        text = value
+                    return (text, value)
+            return (None, None)
+        elif input_type in ("div", "span"):
+            text = locator.inner_text().strip()
+            return (text, text)
         else:
-            # Para outros tipos, mantém o comportamento padrão (irmão direto)
-            self._xpath += (
-                f"{label_xpath}/following-sibling::{input_type}[1]"
-            )
-        logger.debug(f"XPath: {self._xpath}")
-        return self
+            value = locator.input_value()  # Padrão
+            return (value, value)
 
     def _select_option_with_retry(
             self, obj_locator, value: str, timeout=10, interval: float = None):
         """
-        Seleciona uma opção de <select> via value, aguardando as opções
-        aparecerem se necessário.
+        Realiza a seleção de uma opção em um campo <select>, com tentativas
+        repetidas até que a opção desejada esteja disponível ou até que o tempo
+        limite seja atingido.
+
+        O método itera sobre as opções do elemento <select> identificado por
+        `obj_locator`, buscando uma opção cujo atributo 'value' seja igual ao
+        valor informado em `value`. Caso não encontre imediatamente, o método
+        repete a verificação a cada intervalo definido por `interval`, até o
+        tempo máximo especificado por `timeout`. Caso o valor informado seja
+        `None`, o método apenas emite um aviso no logger e retorna sem realizar
+        qualquer seleção.
+
+        Parâmetros
+        ----------
+        obj_locator : Locator
+            Objeto Locator do Playwright apontando para o elemento <select>.
+        value : str
+            Valor do atributo 'value' da opção que se deseja selecionar.
+        timeout : int, opcional
+            Tempo máximo de espera, em segundos, até localizar e selecionar a
+            opção desejada. O padrão é 10 segundos.
+        interval : float, opcional
+            Intervalo, em segundos, entre tentativas de verificação. Se não
+            informado, utiliza o valor padrão de `self.RETRY_INTERVAL`.
+
+        Exceções
+        --------
+        TimeoutError
+            Disparada caso a opção desejada não seja localizada dentro do tempo
+            limite especificado.
+
+        Notas
+        -----
+        Este método é útil para cenários onde as opções do select podem ser
+        carregadas de forma assíncrona (exemplo: via AJAX), garantindo robustez
+        diante de atrasos ou variações do front-end.
+
+        Exemplo
+        -------
+        ```
+        self._select_option_with_retry(select_locator, "5", timeout=15)
+        ```
         """
         interval = interval if interval is not None else self.RETRY_INTERVAL
-        value = ast.literal_eval('None')  # retorna None
-        if value is None:
+        if value == 'None' or value is None:
             logger.warning(
                 "Valor vazio para campo do tipo 'select'. "
                 "Nenhum valor será selecionado.")
@@ -560,6 +575,7 @@ class XPathConstructor:
                 return
             time.sleep(interval)
             elapsed += interval
+
         raise TimeoutError(
             f"Timeout ao selecionar opção '{value}' no <select>: "
             "opção não encontrada após aguardar carregamento."
@@ -600,48 +616,182 @@ class XPathConstructor:
                      f"'{label_name}': {self._xpath}")
         return self
 
-    def fill(self, value: str, type_input="texto",
-             timeout=10, reset=True) -> 'XPathConstructor':
+    def find_form_input(self,
+                        label_name: str,
+                        type_input: str = None) -> 'XPathConstructor':
         """
-        Preenche campos de formulário identificados pelo XPath interno.
+        Localiza um campo de formulário (input, select, textarea, date,
+        checkbox ou radio) associado a um label específico, construindo
+        dinamicamente o XPath apropriado para o tipo de campo informado.
 
-        Este método preenche automaticamente campos de diferentes tipos,
-        selecionando a abordagem correta conforme o tipo informado.
+        O método implementa diferentes estratégias de localização, de acordo
+        com o tipo do campo:
+          - Para 'date', busca o input do calendário dentro do span subsequente
+            ao label.
+          - Para 'checkbox', localiza a tabela imediatamente após o label.
+          - Para 'radio', procura pelo fieldset cujo legend corresponda ao
+            texto do label.
+          - Para 'select', utiliza o atributo 'for' do label para mapear o
+            select pelo id. Caso não exista, tenta localizar o select como
+            irmão direto ou descendente do mesmo ancestral.
+          - Para outros tipos (ex: 'text', 'textarea'), assume o campo como
+            irmão direto do label.
 
         Parâmetros
         ----------
-        valor : str
-            Valor a ser preenchido no campo. Para campos checkbox, pode ser
-            uma lista de valores a serem marcados/desmarcados.
+        label_name : str
+            Texto do label do campo a ser localizado (deve estar exatamente
+            como exibido na interface, incluindo pontuação, se houver).
         type_input : str, opcional
-            Tipo do campo: "texto" (padrão), "select", "lista" ou "checkbox".
+            Tipo do campo a ser localizado: 'text', 'select', 'textarea',
+            'date', 'checkbox' ou 'radio'. Padrão: 'text'.
+
+        Retorno
+        -------
+        self : XPathConstructor
+            Retorna a própria instância para permitir o encadeamento de
+            métodos.
+
+        Exceções
+        --------
+        XpathNotFoundError
+            Disparada se o label informado não for encontrado na página.
+        Exception
+            Disparada se, no caso de campos do tipo 'select', não for possível
+            localizar o elemento <select> associado ao label, após todas as
+            tentativas.
+
+        Exemplos
+        --------
+        ```
+        xpath.find_form_input("Unidade de Saúde", "select")
+        xpath.find_form_input("Data de Nascimento", "date")
+        xpath.find_form_input("Sexo", "checkbox")
+        ```
+
+        Notas
+        -----
+        Este método é tolerante a diferentes estruturas de HTML frequentemente
+        encontradas em sistemas legados e sistemas web governamentais, lidando
+        com cenários onde o relacionamento label-campo não segue padrões W3C.
+        """
+        input_type = self._get_input_type(type_input)
+        label_xpath = f"//label[normalize-space(text())='{label_name}']"
+
+        if type_input == "date":
+            # Para campos de data, encontra o span após o label e dentro dele
+            # busca o input de texto do calendário
+            self._xpath += (
+                f"{label_xpath}/following-sibling::span[1]//{input_type}"
+                f"[contains(@class, 'date') or contains(@class, 'calendar')]"
+            )
+        elif type_input == "checkbox":
+            # Para checkbox, busca todos os inputs do tipo checkbox após o
+            # label, dentro de qualquer estrutura (ex: tabela)
+            self._xpath += (
+                f"{label_xpath}/following-sibling::table[1]"
+                f"|//fieldset[legend[normalize-space(text())='{label_name}']]"
+            )
+        elif type_input == "radio":
+            # Para radio: busca no fieldset com legend igual ao label_name
+            self._xpath += (
+                f"//fieldset[legend[normalize-space(text())='{label_name}']]"
+            )
+        elif type_input == "select":
+            # Busca primeiro por 'for'
+            label_elem = self.page.locator(label_xpath)
+            if label_elem.count() == 0:
+                logger.debug(
+                    f"Label '{label_name}' não encontrado com "
+                    f"XPath {label_xpath}")
+                raise XpathNotFoundError(self._context, xpath=label_xpath)
+            select_id = label_elem.first.get_attribute("for")
+            if select_id:
+                # Caminho padrão: label->for->select#id
+                self._xpath = f"//select[@id='{select_id}']"
+            else:
+                # Caminho alternativo: select irmão
+                self._xpath = f"{label_xpath}/following-sibling::select[1]"
+                # Opcional: checar se existe, caso contrário, tente por
+                # ancestral comum
+                if self.page.locator(self._xpath).count() == 0:
+                    # Busca por select descendente do mesmo div ancestral
+                    self._xpath = (
+                        f"{label_xpath}/ancestor::div[1]//select[1]"
+                    )
+        else:
+            # Para outros tipos, mantém o comportamento padrão (irmão direto)
+            self._xpath += (
+                f"{label_xpath}/following-sibling::{input_type}[1]"
+            )
+        self._input_type = input_type
+        logger.debug(f"XPath: {self}")
+        return self
+
+    def fill(self, value: str, type_input="text",
+             timeout=10, reset=True) -> 'XPathConstructor':
+        """
+        Preenche campos de formulário de diferentes tipos (input, select,
+        checkbox, radio, lista), de acordo com o tipo especificado, utilizando
+        abordagens específicas para cada estrutura de campo.
+
+        O método identifica o tipo do campo e executa o preenchimento conforme
+        o padrão do elemento:
+          - Para 'select' ou 'lista', seleciona a opção cujo value seja igual
+            ao valor fornecido, com mecanismo de retry.
+          - Para 'checkbox', marca ou desmarca os checkboxes necessários para
+            refletir os valores informados.
+          - Para 'radio', seleciona o botão de rádio do grupo correspondente ao
+            valor.
+          - Para outros tipos (ex: texto, textarea), preenche o campo via
+            método fill do Playwright.
+
+        Parâmetros
+        ----------
+        value : str
+            Valor a ser preenchido no campo (ou lista de valores para
+            checkboxes).
+        type_input : str, opcional
+            Tipo do campo ('texto', 'select', 'checkbox', 'radio', 'lista').
+            O padrão é 'texto'.
         timeout : int, opcional
-            Tempo máximo, em segundos, para aguardar o campo estar visível.
-            Padrão: 10.
+            Tempo máximo para aguardar o campo estar disponível, em segundos.
+            O padrão é 10 segundos.
         reset : bool, opcional
-            Se True, reseta o XPath após preencher o campo. Padrão: True.
+            Se True, reseta o XPath interno após o preenchimento.
+            Default: True.
 
         Retorno
         -------
         self : XPathConstructor
             Retorna a própria instância para permitir encadeamento de métodos.
 
-        Exemplo
-        -------
-        ```python
-        xpath.fill("JAILTON PAIVA", type_input="texto")
-        xpath.fill("BRASILEIRO", type_input="select")
-        xpath.fill(["M", "F"], type_input="checkbox")
+        Exceções
+        --------
+        TimeoutError
+            Disparada se o campo não puder ser localizado ou preenchido no
+            tempo limite.
+        Warning
+            Um aviso é registrado no logger se o valor não for encontrado para
+            radio ou select, ou se o valor for vazio para select/lista.
+
+        Exemplos
+        --------
+        ```
+        xpath.find_form_input("Sexo", "checkbox").fill("M")
+        xpath.find_form_input("Escolaridade", "select").fill("4")
+        xpath.find_form_input("Tipo de Exame", "radio").fill("03")
         ```
 
-        Observações
-        -----------
-        - Para campos "select" ou "lista", o valor é selecionado pela opção
-          exibida (label).
-        - Para "checkbox", marca/desmarca de acordo com os valores informados.
-        - Para outros tipos, preenche o campo usando o método fill do
-          Playwright.
+        Notas
+        -----
+        O método é tolerante a campos dinâmicos ou carregamentos parciais,
+        realizando tentativas com retry para selects/listas. Campos do tipo
+        'checkbox' aceitam múltiplos valores (como lista).
         """
+        # if value is None:
+        #     raise ValueError("value não pode ser nulo.")
+
         locator = self.wait_and_get(timeout)
         logger.debug(
             f"Preenchendo o campo do tipo {type_input} com valor: {value}"
@@ -651,7 +801,6 @@ class XPathConstructor:
                 logger.warning(
                     f"Valor vazio para campo do tipo {type_input}. "
                     "Nenhum valor será preenchido.")
-                breakpoint()
                 return self
             self._select_option_with_retry(locator, value, timeout)
         elif type_input == "checkbox":
@@ -742,7 +891,7 @@ class XPathConstructor:
             f"|//a[contains(@class,'form-button') "
             f"and normalize-space(string(.))='{button_text}'])[1]"
         )
-        logger.debug(f"XPath do botão localizado: {self._xpath}")
+        logger.debug(f"XPath do botão localizado: {self}")
         return self
 
     def find_form_anchor_button(
@@ -992,7 +1141,7 @@ class XPathConstructor:
             As chaves correspondem aos nomes dos campos e os valores devem ser
             tuplas contendo (label:str, type_input:str), em que:
               - label: texto do label associado ao campo no formulário.
-              - type_input: tipo do campo (ex: "texto", "select", "checkbox").
+              - type_input: tipo do campo (ex: "text", "select", "checkbox").
 
         Exceções
         --------
@@ -1004,7 +1153,7 @@ class XPathConstructor:
         -------
         ```python
         campos_map = {
-        ...     "nome": ("Nome:", "texto"),
+        ...     "nome": ("Nome:", "text"),
         ...     "sexo": ("Sexo:", "checkbox"),
         ...     "nacionalidade": ("Nacionalidade:", "select")
         ... }
@@ -1065,10 +1214,12 @@ class XPathConstructor:
 
         Exemplo
         -------
-        >>> xpath.find_form_input("Unidade de Saúde", "select")
-        >>> options = xpath.get_select_options()
-        >>> print(options["4"])
-        '0015466 - CENTRO DE ESPECIALIDADES MEDICAS ENCANTAR'
+        ```
+        xpath.find_form_input("Unidade de Saúde", "select")
+        options = xpath.get_select_options()
+        print(options["4"])
+        # '0015466 - CENTRO DE ESPECIALIDADES MEDICAS ENCANTAR'
+        ```
 
         Exceções
         --------

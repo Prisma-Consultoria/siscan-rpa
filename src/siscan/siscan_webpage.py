@@ -1,21 +1,18 @@
-from abc import abstractmethod, ABC
+import time
 
 import logging
-import time
 from typing import Optional, Callable, Any
 
-from playwright.sync_api import Browser, Page, TimeoutError
-
-from src.siscan.pages.context import SiscanBrowserContext
-from src.siscan.pages.utils.xpath_constructor import XPathConstructor
-from src.siscan.pages.exception import SiscanLoginError, \
+from src.siscan.exception import SiscanLoginError, \
     SiscanMenuNotFoundError, PacienteDuplicadoException, SiscanException, \
-    CartaoSusNotFoundError
+    CartaoSusNotFoundError, SiscanUnexpectedFieldFilledError
+from src.siscan.webtools.webpage import WebPage
+from src.siscan.webtools.xpath_constructor import XPathConstructor
 
 logger = logging.getLogger(__name__)
 
 
-class SiscanWebPage (ABC):
+class SiscanWebPage(WebPage):
     MAP_DATA_FIND_CARTAO_SUS = {
         "cartao_sus": ("Cartão SUS", "text"),
         "cpf": ("CPF", "text"),
@@ -42,156 +39,37 @@ class SiscanWebPage (ABC):
     # Mapeamento de campos para valores específicos
     FIELDS_MAP = {
         "sexo": {
-            "Masculino": "M",
-            "Feminino": "F",
-        },
-        "escolaridade": {
-            "Selecione...": "0",
-            "Analfabeto(a)": "1",
-            "Ensino Fundamental Incompleto": "2",
-            "Ensino Fundamental Completo": "3",
-            "Ensino Médio Completo": "4",
-            "Ensino Superior Completo": "5",
-        },
-        "tipo_exame_colo": {
-            "Cito de Colo...": "02",
-            "Histo de Colo": "04",
-        },
-        "tipo_exame_mama": {
-            "Mamografia": "01",
-            "Cito de Mama": "03",
-            "Histo de Mama": "05",
+            "M": "M",  # Masculino
+            "F": "F",  # Feminino
         }
     }
 
-    def __init__(self, url_base: str):
-        self._url_base = url_base
-        self._context: Optional[SiscanBrowserContext] = None
+    def validation(self, data: dict):
+        for nome_campo in self.FIELDS_MAP.keys():
+            if isinstance(data.get(nome_campo), list):
+                # Se o campo for uma lista, verifica se algum valor é válido
+                if not any(item in self.FIELDS_MAP[nome_campo].keys()
+                           for item in data[nome_campo]):
+                    raise SiscanUnexpectedFieldFilledError(
+                        self.context,
+                        field_name=nome_campo,
+                        data=data,
+                        options_values=self.FIELDS_MAP[nome_campo].keys()
+                    )
+            elif not data.get(nome_campo) in self.FIELDS_MAP[nome_campo].keys():
+                raise SiscanUnexpectedFieldFilledError(
+                    self.context,
+                    field_name=nome_campo,
+                    data=data,
+                    options_values=self.FIELDS_MAP[nome_campo].keys()
+            )
+        for key, value in data.items():
+            if not value:
+                raise SiscanUnexpectedFieldFilledError(
+                    self.context,
+                    message="Campo '{key}' não pode estar vazio.")
 
-    @property
-    def context(self) -> SiscanBrowserContext:
-        """
-        Retorna o contexto Playwright associado a esta instância.
-        """
-        if self._context is None:
-            self._initialize_context()
-        return self._context
-
-    def _initialize_context(self):
-        self._context = SiscanBrowserContext(
-            url_base=self._url_base,
-            headless=False,  # Para depuração, use False
-            timeout=15000
-        )
-
-    @abstractmethod
-    def get_map_label(self) -> dict[str, tuple[str, str]]:
-        """
-        Método abstrato que deve ser implementado por subclasses para retornar
-        o mapeamento de labels.
-        Deve retornar um dicionário onde as chaves são os nomes dos campos e
-        os valores são tuplas contendo o label e o tipo do campo.
-        """
-        raise NotImplementedError("Subclasses devem implementar este método.")
-
-    def _get_label(
-            self, campo: str,
-            map_label: Optional[dict[str, tuple[str, str]]] = None) -> str:
-
-        if map_label is None:
-            value = self.get_map_label().get(campo)
-        else:
-            value = map_label.get(campo)
-
-        if value is None:
-            raise ValueError(f"Campo '{campo}' não está mapeado.")
-        return value[0]
-
-    def _get_label_type(
-            self, campo: str,
-            map_label: Optional[dict[str, tuple[str, str]]] = None) -> str:
-        if map_label is None:
-            value = self.get_map_label().get(campo)
-        else:
-            value = map_label.get(campo)
-
-        if value is None:
-            raise ValueError(f"Campo '{campo}' não está mapeado.")
-        return value[1]
-
-    def _get_value(self, campo: str, data: dict) -> Optional[str]:
-        """
-        Obtém o valor de um campo específico do dicionário de dados.
-
-        Parâmetros
-        ----------
-        campo : str
-            Nome do campo a ser buscado.
-        data : dict
-            Dicionário contendo os dados.
-
-        Retorna
-        -------
-        Optional[str]
-            O valor do campo se existir, caso contrário None.
-        """
-        value = data.get(campo, None)
-
-        if campo in self.FIELDS_MAP.keys() and value is not None:
-            # Mapeia o valor do campo para o valor específico definido no
-            # mapeamento
-            value = self.FIELDS_MAP[campo].get(value, None)
-        return value
-
-    def update_field_map_from_select(
-            self,
-            field_name: str,
-            xpath: XPathConstructor,
-            label_as_key: bool = True,
-            timeout: int = 10
-    ) -> None:
-        """
-        Atualiza o dicionário FIELDS_MAP[field_name] com opções do select da página.
-
-        Este método utiliza um XPathConstructor já posicionado no campo <select>,
-        recupera todas as opções (value, texto) e as insere em FIELDS_MAP para
-        permitir mapeamento automático no preenchimento do formulário.
-
-        Parâmetros
-        ----------
-        field_name : str
-            Nome do campo no dicionário FIELDS_MAP a ser atualizado.
-        xpath : XPathConstructor
-            Instância já posicionada no <select> desejado.
-        label_as_key : bool, opcional
-            Se True (padrão), usa o texto do option como chave do dicionário
-            e o value como valor. Se False, inverte (útil para selects onde
-            o backend exige a chave como value).
-        timeout : int, opcional
-            Tempo máximo para aguardar o <select> na página.
-
-        Retorno
-        -------
-        None
-
-        Exemplo
-        -------
-        ```python
-        xpath.find_form_input("Unidade de Saúde", "select")
-        self.update_field_map_from_select("unidade_saude", xpath)
-        print(self.FIELDS_MAP["unidade_saude"])
-        {'0015466 - CENTRO DE ...': '4', ...}
-        ```
-        """
-        options = xpath.get_select_options(timeout=timeout)
-        if label_as_key:
-            mapping = {label: value for value, label in options.items()}
-        else:
-            mapping = {value: label for value, label in options.items()}
-        self.FIELDS_MAP[field_name] = mapping
-        xpath.reset()
-
-    def authenticate(self, email: str, senha: str):
+    def autenticar(self, email: str, senha: str):
         """
         Realiza login no SIScan utilizando um contexto.
 
@@ -225,8 +103,8 @@ class SiscanWebPage (ABC):
         except Exception:
             raise SiscanLoginError(self.context)
 
-    def access_menu(self, menu_name: str, menu_action_text: str,
-                    timeout: int = 10, interval: float = None):
+    def acessar_menu(self, menu_name: str, menu_action_text: str,
+                     timeout: int = 10, interval: float = None):
         """
         Acessa um menu específico no SIScan, com tentativas automáticas até
         sucesso ou atingir o tempo limite.
@@ -261,25 +139,15 @@ class SiscanWebPage (ABC):
                     "realizado com sucesso."
                 )
                 return  # Sucesso
-            except SiscanMenuNotFoundError as e:
+            except Exception as e:
                 last_exception = e
                 logger.warning(
                     f"Tentativa de acesso ao menu '{menu_name} > "
-                    f"{menu_action_text}' falhou ({elapsed:.1f}s). Retentando..."
+                    f"{menu_action_text}' falhou ({elapsed:.1f}s). "
+                    f"Retentando..."
                 )
                 time.sleep(interval)
                 elapsed += interval
-            except Exception as e:
-                logger.error(
-                    f"Erro inesperado ao acessar menu '{menu_name} > "
-                    f"{menu_action_text}': {e}"
-                )
-                raise SiscanMenuNotFoundError(
-                    self.context,
-                    menu_name=menu_name,
-                    action=menu_action_text,
-                    msg=str(e)
-                ) from e
 
         # Todas as tentativas falharam
         logger.error(
@@ -327,46 +195,55 @@ class SiscanWebPage (ABC):
                 logger.warning(f"Campo '{nome_campo}' não está mapeado ou não "
                                f"é editável. Ignorado.")
                 continue
-            label = f"{self._get_label(nome_campo, map_label)}{suffix}"
-            type_input = self._get_label_type(nome_campo, map_label)
-            valor = self._get_value(nome_campo, data)
+            label = f"{self.get_label(nome_campo, map_label)}{suffix}"
+            type_input = self.get_label_type(nome_campo, map_label)
+            valor = self.get_value(nome_campo, data)
             fields_map[nome_campo] = (label, type_input)
             data_final[nome_campo] = valor
         return fields_map, data_final
 
-    def select_unique_patient(self, timeout=10):
+    def seleciona_um_paciente(self, timeout=10):
         """
-        Verifica se existe apenas um paciente na tabela de resultados e, se sim, clica em 'Selecionar Paciente'.
-        Se houver mais de um, lança PacienteDuplicadoException.
+        Verifica se existe apenas um paciente na tabela de resultados e, se
+        sim, clica em 'Selecionar Paciente'. Se houver mais de um, lança
+        PacienteDuplicadoException.
         """
         # Espera a tabela de resultados estar visível
-        self.context.page.wait_for_selector("table#frm\\:listaPaciente", state="visible", timeout=timeout * 1000)
+        self.context.page.wait_for_selector("table#frm\\:listaPaciente",
+                                            state="visible",
+                                            timeout=timeout * 1000)
 
         # Localiza o corpo da tabela
-        rows = self.context.page.locator("table#frm\\:listaPaciente > tbody > tr")
+        rows = self.context.page.locator(
+            "table#frm\\:listaPaciente > tbody > tr")
         row_count = rows.count()
         if row_count > 1:
             raise PacienteDuplicadoException(self.context)
         elif row_count == 0:
-            raise Exception("Nenhum paciente encontrado na tabela de resultados.")
+            raise Exception("Nenhum paciente encontrado na tabela de "
+                            "resultados.")
 
-        # Se chegou aqui, só há um resultado: clicar no botão 'Selecionar Paciente' (última coluna)
-        botao_selecionar = rows.nth(0).locator("a[title='Selecionar Paciente']")
+        # Se chegou aqui, só há um resultado: clicar no botão
+        # 'Selecionar Paciente' (última coluna)
+        botao_selecionar = rows.nth(0).locator(
+            "a[title='Selecionar Paciente']")
         botao_selecionar.click()
 
-    def _find_cartao_sus(self, data: dict, menu_action: Callable[[], Any]):
+    def _buscar_cartao_sus(self, data: dict, menu_action: Callable[[], Any]):
         """
         Realiza a busca de um paciente pelo Cartão SUS no SIScan.
-        Método para buscar um paciente pelo Cartão SUS, preenchendo os campos de busca e selecionando o paciente.
+        Método para buscar um paciente pelo Cartão SUS, preenchendo os campos
+        de busca e selecionando o paciente.
         Parâmetros
         ----------
         :param data: Dicionário com os dados do paciente a serem buscados.
-        :param menu_action: Função que retorna o XPathConstructor configurado para a ação de menu de busca.
+        :param menu_action: Função que retorna o XPathConstructor configurado
+               para a ação de menu de busca.
         :return: None
         """
         xpath = menu_action()
         xpath.find_search_link_after_input(
-            self._get_label("cartao_sus")).click()
+            self.get_label("cartao_sus")).click()
         xpath.wait_page_ready()
 
         # Preenche os campos de busca do Cartão SUS
@@ -378,19 +255,19 @@ class SiscanWebPage (ABC):
         xpath.find_form_button("Pesquisar").click(
             wait_for_selector="table#frm\\:listaPaciente")
 
-        self.select_unique_patient()
+        self.seleciona_um_paciente()
 
-    def fill_cartao_sus(
+    def preencher_cartao_sus(
             self,
             numero: str,
             timeout: int = 10,
-            interval: float =None
+            interval: float = None
     ):
         """
         Preenche o campo Cartão SUS no formulário e trata possíveis erros.
-        Repete as tentativas de preenchimento e validação até sucesso ou
-        até atingir o tempo limite. Se ocorrer erro (mensagem exibida na
-        tela) ou o campo 'Nome' for preenchido, interrompe o loop.
+        Repete as tentativas de preenchimento e validação até sucesso ou até
+        atingir o tempo limite. Se ocorrer erro (mensagem exibida na tela) ou
+        o campo 'Nome' for preenchido, interrompe o loop.
 
         Parâmetros
         ----------
@@ -419,7 +296,7 @@ class SiscanWebPage (ABC):
         while elapsed < timeout:
             xpath.reset()
             cartao_sus_ele = xpath.find_form_input(
-                self._get_label("cartao_sus")).wait_until_enabled()
+                self.get_label("cartao_sus")).wait_until_enabled()
             cartao_sus_ele.fill(numero, reset=False)
             cartao_sus_ele.on_blur()
             cartao_sus_ele.reset()
@@ -435,8 +312,8 @@ class SiscanWebPage (ABC):
                 xpath.reset()
                 nome_ele = xpath.find_form_input('Nome')
                 nome_ele.wait_until_filled(
-                    timeout=interval * xpath.WAIT_FILLED_MULTIPLIER)
-                nome = nome_ele.get_value()
+                    timeout=interval)
+                nome, _ = nome_ele.get_value()
                 if nome:
                     return  # Sucesso!
             except Exception as err:
