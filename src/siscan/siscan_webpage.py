@@ -55,10 +55,11 @@ class SiscanWebPage(WebPage):
                 nome_campo
             )
             if nome_campo not in data.keys():
-                raise SiscanRequiredFieldNotProvidedError(
-                    context=None,
-                    field_name=nome_campo
-                )
+                if requirement_level.is_required():
+                    raise SiscanRequiredFieldNotProvidedError(
+                        context=None,
+                        field_name=nome_campo
+                    )
             elif isinstance(data.get(nome_campo), list):
                 # Se o campo for uma lista, verifica se algum valor é válido
                 if not any(item in self.FIELDS_MAP[nome_campo].keys()

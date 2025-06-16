@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Optional
 
 from src.siscan.exception import FieldValueNotFoundError
-from src.siscan.webtools.xpath_constructor import XPathConstructor
+from src.siscan.webtools.xpath_constructor import XPathConstructor, InputType
 from src.siscan.context import SiscanBrowserContext
 
 logger = logging.getLogger(__name__)
@@ -71,7 +71,7 @@ class WebPage(ABC):
             self,
             field_name: str,
             map_label: Optional[dict[str, tuple]] = None
-    ) -> tuple[str, str, bool]:
+    ) -> tuple[str, InputType, RequirementLevel]:
         """
         Retorna o label, o tipo e o indicador de obrigatoriedade de um campo,
         baseado no mapeamento fornecido.
@@ -121,16 +121,12 @@ class WebPage(ABC):
         if value is None:
             raise ValueError(f"Campo '{field_name}' não está mapeado.")
 
-        label = value[0]
-        tipo = value[1]
-        try:
-            required = (value[2] == RequirementLevel.REQUIRED)
-        except IndexError:
+        if len(value) != 3:
             raise ValueError(
                 f"O campo '{field_name}' não possui indicação de "
                 f"obrigatoriedade no mapeamento."
             )
-        return label, tipo, required
+        return value
 
     def get_field_label(
             self, field_name: str,
