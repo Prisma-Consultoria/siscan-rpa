@@ -5,32 +5,37 @@ from typing import Optional, Callable, Any
 
 from src.siscan.exception import SiscanLoginError, \
     SiscanMenuNotFoundError, PacienteDuplicadoException, SiscanException, \
-    CartaoSusNotFoundError, SiscanUnexpectedFieldFilledError
-from src.siscan.webtools.webpage import WebPage
-from src.siscan.webtools.xpath_constructor import XPathConstructor
+    CartaoSusNotFoundError, SiscanInvalidFieldValueError, \
+    SiscanRequiredFieldNotProvidedError
+from src.siscan.webtools.webpage import WebPage, RequirementLevel
+from src.siscan.webtools.xpath_constructor import XPathConstructor, InputType
 
 logger = logging.getLogger(__name__)
 
 
 class SiscanWebPage(WebPage):
     MAP_DATA_FIND_CARTAO_SUS = {
-        "cartao_sus": ("Cartão SUS", "text"),
-        "cpf": ("CPF", "text"),
-        "nome": ("Nome", "text"),
-        "nome_da_mae": ("Nome da Mãe", "text"),
-        "data_de_nascimento": ("Data de Nascimento", "date"),
-        "nacionalidade": ("Nacionalidade", "select"),
-        "sexo": ("Sexo", "checkbox"),
+        "cartao_sus": ("Cartão SUS", InputType.TEXT,
+                       RequirementLevel.REQUIRED),
+        "cpf": ("CPF", InputType.TEXT, RequirementLevel.OPTIONAL),
+        "nome": ("Nome", InputType.TEXT, RequirementLevel.REQUIRED),
+        "nome_da_mae": ("Nome da Mãe", InputType.TEXT,
+                        RequirementLevel.REQUIRED),
+        "data_de_nascimento": ("Data de Nascimento", InputType.DATE,
+                               RequirementLevel.REQUIRED),
+        "nacionalidade": ("Nacionalidade", InputType.SELECT,
+                          RequirementLevel.REQUIRED),
+        "sexo": ("Sexo", InputType.CHECKBOX, RequirementLevel.REQUIRED),
     }
     MAP_DATA_CARTAO_SUS = {
-        "raca_cor": ("Raça/Cor", "text"),
-        "uf": ("UF", "text"),
-        "municipio": ("Município", "text"),
-        "tipo_logradouro": ("Tipo Logradouro", "text"),
-        "nome_logradouro": ("Nome Logradouro", "text"),
-        "numero": ("Numero", "text"),
-        "bairro": ("Bairro", "text"),
-        "cep": ("Cep", "text"),
+        "raca_cor": ("Raça/Cor", InputType.TEXT, RequirementLevel.REQUIRED),
+        "uf": ("UF", InputType.TEXT, RequirementLevel.REQUIRED),
+        "municipio": ("Município", InputType.TEXT, RequirementLevel.REQUIRED),
+        "tipo_logradouro": ("Tipo Logradouro", InputType.TEXT, RequirementLevel.REQUIRED),
+        "nome_logradouro": ("Nome Logradouro", InputType.TEXT, RequirementLevel.REQUIRED),
+        "numero": ("Numero", InputType.TEXT, RequirementLevel.REQUIRED),
+        "bairro": ("Bairro", InputType.TEXT, RequirementLevel.REQUIRED),
+        "cep": ("Cep", InputType.TEXT, RequirementLevel.REQUIRED),
     }
     MAP_DATA_CARTAO_SUS.update(MAP_DATA_FIND_CARTAO_SUS)
     # Remover CPF pois não é necessário no formulário
@@ -46,54 +51,54 @@ class SiscanWebPage(WebPage):
 
     def validation(self, data: dict):
         for nome_campo in self.FIELDS_MAP.keys():
-            if isinstance(data.get(nome_campo), list):
+            _, _, requirement_level = self.get_field_metadata(
+                nome_campo
+            )
+            if nome_campo not in data.keys():
+                raise SiscanRequiredFieldNotProvidedError(
+                    context=None,
+                    field_name=nome_campo
+                )
+            elif isinstance(data.get(nome_campo), list):
                 # Se o campo for uma lista, verifica se algum valor é válido
                 if not any(item in self.FIELDS_MAP[nome_campo].keys()
                            for item in data[nome_campo]):
-                    raise SiscanUnexpectedFieldFilledError(
-                        self.context,
+                    raise SiscanInvalidFieldValueError(
+                        context=None,
                         field_name=nome_campo,
                         data=data,
                         options_values=self.FIELDS_MAP[nome_campo].keys()
                     )
             elif not data.get(nome_campo) in self.FIELDS_MAP[nome_campo].keys():
-                raise SiscanUnexpectedFieldFilledError(
-                    self.context,
+                raise SiscanInvalidFieldValueError(
+                    context=None,
                     field_name=nome_campo,
                     data=data,
                     options_values=self.FIELDS_MAP[nome_campo].keys()
             )
         for key, value in data.items():
             if not value:
-                raise SiscanUnexpectedFieldFilledError(
-                    self.context,
+                raise SiscanInvalidFieldValueError(
+                    context=None,
                     message="Campo '{key}' não pode estar vazio.")
 
-    def autenticar(self, email: str, senha: str):
+    def authenticate(self):
         """
         Realiza login no SIScan utilizando um contexto.
-
-        Parâmetros
-        ----------
-        email : str
-            E-mail do usuário SIScan.
-        senha : str
-            Senha do usuário SIScan.
-        ctx : SiscanBrowserContext
-            Contexto de execução Playwright.
 
         Exceções
         --------
         Exception se autenticação falhar.
         """
+
         self.context.goto('/login.jsf', wait_until='load')
 
         # Aguarda possível popup abrir e fecha se necessário
         self.context.collect_information_popup()
 
         xpath = XPathConstructor(self.context)
-        xpath.find_form_input('E-mail:').fill(email)
-        xpath.find_form_input('Senha:').fill(senha)
+        xpath.find_form_input('E-mail:').fill(self._user)
+        xpath.find_form_input('Senha:').fill(self._password)
         xpath.find_form_button("Acessar").click()
 
         # Aguarda confirmação de login bem-sucedido
@@ -161,47 +166,6 @@ class SiscanWebPage(WebPage):
             msg="Menu não localizado após múltiplas tentativas."
         )
 
-    def mount_fields_map_and_data(
-            self, data: dict,
-            map_label: dict[str, tuple[str, str]],
-            suffix: Optional[str] = ":"
-    ) -> tuple[dict[str, tuple[str, str]], dict[str, str]]:
-        """
-        Gera o dicionário campos_map e o dicionário data_final para uso em
-        preenchimento genérico de formulários.
-
-        Parâmetros
-        ----------
-        data : dict
-            Dicionário de dados originais (nomes de campos como chave).
-        map_label : dict[str, tuple[str, str]]
-            Dicionário com nomes de campos como chave e tuplas contendo
-            (label, tipo de campo) como valor.
-        suffix : str, opcional (default=":")
-
-        Retorna
-        -------
-        tuple (campos_map, data_final)
-            - campos_map: dict[str, tuple[str, str]]
-            - data_final: dict[str, str]
-        """
-        if suffix is None:
-            suffix = ""
-
-        fields_map = {}
-        data_final = {}
-        for nome_campo in data.keys():
-            if nome_campo not in map_label.keys():
-                logger.warning(f"Campo '{nome_campo}' não está mapeado ou não "
-                               f"é editável. Ignorado.")
-                continue
-            label = f"{self.get_label(nome_campo, map_label)}{suffix}"
-            type_input = self.get_label_type(nome_campo, map_label)
-            valor = self.get_value(nome_campo, data)
-            fields_map[nome_campo] = (label, type_input)
-            data_final[nome_campo] = valor
-        return fields_map, data_final
-
     def seleciona_um_paciente(self, timeout=10):
         """
         Verifica se existe apenas um paciente na tabela de resultados e, se
@@ -243,7 +207,7 @@ class SiscanWebPage(WebPage):
         """
         xpath = menu_action()
         xpath.find_search_link_after_input(
-            self.get_label("cartao_sus")).click()
+            self.get_field_label("cartao_sus")).click()
         xpath.wait_page_ready()
 
         # Preenche os campos de busca do Cartão SUS
@@ -296,7 +260,7 @@ class SiscanWebPage(WebPage):
         while elapsed < timeout:
             xpath.reset()
             cartao_sus_ele = xpath.find_form_input(
-                self.get_label("cartao_sus")).wait_until_enabled()
+                self.get_field_label("cartao_sus")).wait_until_enabled()
             cartao_sus_ele.fill(numero, reset=False)
             cartao_sus_ele.on_blur()
             cartao_sus_ele.reset()
@@ -330,3 +294,10 @@ class SiscanWebPage(WebPage):
             time.sleep(interval)
             elapsed += interval
 
+    def fill_field_in_card(self, card_name: str, field_name: str, value: str):
+        xpath_obj = XPathConstructor(
+            self.context,
+            xpath=f"//fieldset[legend[normalize-space(text())='{card_name}']]"
+                  f"//label[normalize-space(text())={field_name}]"
+                  f"/following-sibling::input[1]")
+        xpath_obj.fill(value)

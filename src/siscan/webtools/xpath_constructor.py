@@ -1,6 +1,5 @@
-from typing import Optional, Union
-
-import ast
+from enum import Enum
+from typing import Optional
 import time
 import logging
 from playwright.sync_api import Page, TimeoutError
@@ -11,17 +10,41 @@ from src.siscan.exception import SiscanMenuNotFoundError, \
 
 logger = logging.getLogger(__name__)
 
-INPUT_TYPES = {
-    'text': 'input',
-    'date': 'input',
-    'value': 'input',
-    'number': 'input',
-    'checkbox': 'input',
-    'textarea': 'textarea',
-    'list': 'select',
-    'select': 'select',
-    'radio': 'radio',
-}
+
+class InputType(Enum):
+    """
+    # Exemplo de uso
+    tipo = LogicalInputType.CHECKBOX
+    print(tipo.html_element)  # 'input'
+    """
+    TEXT = "text"
+    DATE = "date"
+    VALUE = "value"
+    NUMBER = "number"
+    CHECKBOX = "checkbox"
+    TEXTAREA = "textarea"
+    LIST = "list"
+    SELECT = "select"
+    RADIO = "radio"
+
+    @property
+    def html_element(self) -> str:
+        if self in {
+            InputType.TEXT,
+            InputType.DATE,
+            InputType.VALUE,
+            InputType.NUMBER,
+            InputType.CHECKBOX,
+        }:
+            return "input"
+        elif self == InputType.TEXTAREA:
+            return "textarea"
+        elif self in {InputType.LIST, InputType.SELECT}:
+            return "select"
+        elif self == InputType.RADIO:
+            return "radio"
+        else:
+            raise ValueError(f"Tipo de input não suportado: {self.value}")
 
 
 class XPathConstructor:
@@ -49,9 +72,24 @@ class XPathConstructor:
         return (f"XPathConstructor(xpath='{self._xpath}', "
                 f"input_type='{self._input_type}')")
 
-    def _get_input_type(self, default_input_type: str):
-        input_type = default_input_type or self._input_type
-        return INPUT_TYPES.get(input_type, 'input')
+    def _get_input_type(
+            self, default_input_type: str | InputType = None) -> InputType:
+        """
+        Obtém o tipo de input como Enum InputType a partir de string ou já
+        do próprio Enum.
+        """
+        if isinstance(default_input_type, InputType):
+            return default_input_type
+        if default_input_type is None:
+            input_type = self._input_type or InputType.TEXT
+        else:
+            input_type = default_input_type
+        if isinstance(input_type, InputType):
+            return input_type
+        try:
+            return InputType[input_type.upper()]
+        except KeyError:
+            raise ValueError(f"Tipo de input desconhecido: {input_type.html_element}")
 
     @property
     def page(self) -> Page:
@@ -386,7 +424,7 @@ class XPathConstructor:
             )
 
     def get_value(
-            self, type_input: str = None, timeout=500
+            self, input_type: str | InputType = None, timeout=500
     ) -> tuple[str, str] | list[tuple[str, str]]:
         """
         Obtém o valor de um campo localizado via XPath, retornando sempre uma
@@ -428,27 +466,27 @@ class XPathConstructor:
         Exemplo
         -------
         ```
-        texto, valor = xpath.get_value("select")
+        texto, valor = xpath.get_value(InputType.SELECT)
         print(texto, valor)  # ex: 'Feminino', 'F'
-        lista = xpath.get_value("checkbox")  # Se múltiplos checkboxes marcados
+        lista = xpath.get_value(InputType.CHECKBOX)  # Se múltiplos checkboxes marcados
         print(lista)  # [('Opção 1', '1'), ('Opção 2', '2')]
-        texto, valor = xpath.get_value("radio")
-        texto, valor = xpath.get_value("text")
+        texto, valor = xpath.get_value(InputType.RADIO)
+        texto, valor = xpath.get_value(InputType.TEXT)
         ```
         """
         locator = self.wait_and_get(timeout)
-        input_type = self._get_input_type(type_input)
+        input_type = self._get_input_type(input_type)
 
-        if input_type in ("text", "textarea"):
+        if input_type in (InputType.TEXT, InputType.TEXTAREA):
             value = locator.input_value()
             return (value, value)
-        elif input_type == "select":
+        elif input_type == InputType.SELECT:
             # Retorna o texto visível da opção selecionada
             selected_option = locator.locator('option:checked')
             value = selected_option.get_attribute("value")
             text = selected_option.inner_text().strip()
             return (text, value)
-        elif input_type == "checkbox":
+        elif input_type == InputType.CHECKBOX:
             # Checa quantos checkboxes existem
             checkboxes = locator.locator("input[type='checkbox']")
             count = checkboxes.count()
@@ -484,7 +522,7 @@ class XPathConstructor:
                 return result
             else:
                 return (None, None)
-        elif input_type == "radio":
+        elif input_type == InputType.RADIO:
             # Retorna o value do radio marcado, ou None se nenhum marcado
             radios = locator.locator("input[type='radio']")
             count = radios.count()
@@ -609,16 +647,16 @@ class XPathConstructor:
         """
         # Reaproveita a lógica de find_form_input para montar o XPath até o
         # campo input
-        self.find_form_input(label_name, type_input="text")
+        self.find_form_input(label_name, input_type=InputType.TEXT)
         # Adiciona o seletor para o <a> logo após o campo
         self._xpath += "/following-sibling::a[1]"
         logger.debug(f"XPath para lupa após input "
                      f"'{label_name}': {self._xpath}")
         return self
 
-    def find_form_input(self,
-                        label_name: str,
-                        type_input: str = None) -> 'XPathConstructor':
+    def find_form_input(
+            self, label_name: str, input_type: str | InputType = None
+    ) -> 'XPathConstructor':
         """
         Localiza um campo de formulário (input, select, textarea, date,
         checkbox ou radio) associado a um label específico, construindo
@@ -664,9 +702,9 @@ class XPathConstructor:
         Exemplos
         --------
         ```
-        xpath.find_form_input("Unidade de Saúde", "select")
-        xpath.find_form_input("Data de Nascimento", "date")
-        xpath.find_form_input("Sexo", "checkbox")
+        xpath.find_form_input("Unidade de Saúde", InputType.SELECT)
+        xpath.find_form_input("Data de Nascimento", InputType.DATE)
+        xpath.find_form_input("Sexo", InputType.CHECKBOX)
         ```
 
         Notas
@@ -675,29 +713,29 @@ class XPathConstructor:
         encontradas em sistemas legados e sistemas web governamentais, lidando
         com cenários onde o relacionamento label-campo não segue padrões W3C.
         """
-        input_type = self._get_input_type(type_input)
+        input_type = self._get_input_type(input_type)
         label_xpath = f"//label[normalize-space(text())='{label_name}']"
 
-        if type_input == "date":
+        if input_type == InputType.DATE:
             # Para campos de data, encontra o span após o label e dentro dele
             # busca o input de texto do calendário
             self._xpath += (
-                f"{label_xpath}/following-sibling::span[1]//{input_type}"
+                f"{label_xpath}/following-sibling::span[1]//{input_type.html_element}"
                 f"[contains(@class, 'date') or contains(@class, 'calendar')]"
             )
-        elif type_input == "checkbox":
+        elif input_type == InputType.CHECKBOX:
             # Para checkbox, busca todos os inputs do tipo checkbox após o
             # label, dentro de qualquer estrutura (ex: tabela)
             self._xpath += (
                 f"{label_xpath}/following-sibling::table[1]"
                 f"|//fieldset[legend[normalize-space(text())='{label_name}']]"
             )
-        elif type_input == "radio":
+        elif input_type == InputType.RADIO:
             # Para radio: busca no fieldset com legend igual ao label_name
             self._xpath += (
                 f"//fieldset[legend[normalize-space(text())='{label_name}']]"
             )
-        elif type_input == "select":
+        elif input_type == InputType.SELECT:
             # Busca primeiro por 'for'
             label_elem = self.page.locator(label_xpath)
             if label_elem.count() == 0:
@@ -722,13 +760,13 @@ class XPathConstructor:
         else:
             # Para outros tipos, mantém o comportamento padrão (irmão direto)
             self._xpath += (
-                f"{label_xpath}/following-sibling::{input_type}[1]"
+                f"{label_xpath}/following-sibling::{input_type.html_element}[1]"
             )
         self._input_type = input_type
         logger.debug(f"XPath: {self}")
         return self
 
-    def fill(self, value: str, type_input="text",
+    def fill(self, value: str, input_type: str | InputType = None,
              timeout=10, reset=True) -> 'XPathConstructor':
         """
         Preenche campos de formulário de diferentes tipos (input, select,
@@ -778,9 +816,9 @@ class XPathConstructor:
         Exemplos
         --------
         ```
-        xpath.find_form_input("Sexo", "checkbox").fill("M")
-        xpath.find_form_input("Escolaridade", "select").fill("4")
-        xpath.find_form_input("Tipo de Exame", "radio").fill("03")
+        xpath.find_form_input("Sexo", InputType.CHECKBOX).fill("M")
+        xpath.find_form_input("Escolaridade", InputType.SELECT).fill("4")
+        xpath.find_form_input("Tipo de Exame", InputType.RADIO).fill("03")
         ```
 
         Notas
@@ -792,18 +830,20 @@ class XPathConstructor:
         # if value is None:
         #     raise ValueError("value não pode ser nulo.")
 
+        input_type = self._get_input_type(input_type)
+
         locator = self.wait_and_get(timeout)
         logger.debug(
-            f"Preenchendo o campo do tipo {type_input} com valor: {value}"
+            f"Preenchendo o campo do tipo {input_type.html_element} com valor: {value}"
         )
-        if type_input in ("select", "lista"):
+        if input_type in (InputType.SELECT, InputType.SELECT):
             if value is None:
                 logger.warning(
-                    f"Valor vazio para campo do tipo {type_input}. "
+                    f"Valor vazio para campo do tipo {input_type.html_element}. "
                     "Nenhum valor será preenchido.")
                 return self
             self._select_option_with_retry(locator, value, timeout)
-        elif type_input == "checkbox":
+        elif input_type == InputType.CHECKBOX:
             # Para checkbox: encontrar todos os inputs dentro da tabela
             # localizada
             valores = value if isinstance(value, list) else [value]
@@ -818,7 +858,7 @@ class XPathConstructor:
                     input_el.check(force=True)
                 elif input_value not in valores and is_checked:
                     input_el.uncheck(force=True)
-        elif type_input == "radio":
+        elif input_type == InputType.RADIO:
             # Para radio: selecionar o radio com value==valor dentro do grupo
             # identificado
             # locator deve ser o grupo (fieldset ou container de radios)
@@ -1141,7 +1181,7 @@ class XPathConstructor:
             As chaves correspondem aos nomes dos campos e os valores devem ser
             tuplas contendo (label:str, type_input:str), em que:
               - label: texto do label associado ao campo no formulário.
-              - type_input: tipo do campo (ex: "text", "select", "checkbox").
+              - type_input: tipo do campo (ex: InputType.TEXT, InputType.SELECT, InputType.CHECKBOX).
 
         Exceções
         --------
@@ -1153,9 +1193,9 @@ class XPathConstructor:
         -------
         ```python
         campos_map = {
-        ...     "nome": ("Nome:", "text"),
-        ...     "sexo": ("Sexo:", "checkbox"),
-        ...     "nacionalidade": ("Nacionalidade:", "select")
+        ...     "nome": ("Nome:", InputType.TEXT),
+        ...     "sexo": ("Sexo:", InputType.CHECKBOX),
+        ...     "nacionalidade": ("Nacionalidade:", InputType.SELECT)
         ... }
         data = {
         ...     "nome": "Maria",
@@ -1215,7 +1255,7 @@ class XPathConstructor:
         Exemplo
         -------
         ```
-        xpath.find_form_input("Unidade de Saúde", "select")
+        xpath.find_form_input("Unidade de Saúde", InputType.SELECT)
         options = xpath.get_select_options()
         print(options["4"])
         # '0015466 - CENTRO DE ESPECIALIDADES MEDICAS ENCANTAR'

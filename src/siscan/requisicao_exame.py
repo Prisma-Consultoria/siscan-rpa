@@ -2,9 +2,10 @@ from abc import abstractmethod
 
 import logging
 
-from src.siscan.exception import SiscanUnexpectedFieldFilledError
+from src.siscan.exception import SiscanInvalidFieldValueError
 from src.siscan.siscan_webpage import SiscanWebPage
-from src.siscan.webtools.xpath_constructor import XPathConstructor
+from src.siscan.webtools.webpage import RequirementLevel
+from src.siscan.webtools.xpath_constructor import XPathConstructor, InputType
 
 logger = logging.getLogger(__name__)
 
@@ -12,13 +13,18 @@ logger = logging.getLogger(__name__)
 class RequisicaoExame(SiscanWebPage):
     # Mapeamento entre as chaves do dicionário e o label do formulário
     MAP_DATA_LABEL = {
-        "apelido": ("Apelido", "text"),
-        "escolaridade": ("Escolaridade:", "select"),
-        "ponto_de_referencia": ("Ponto de Referência", "text"),
-        "tipo_exame_colo": ("Colo", "radio"),
-        "tipo_exame_mama": ("Mama", "radio"),
-        "unidade_requisitante": ("Unidade Requisitante", "select"),
-        "prestador": ("Prestador", "select"),
+        "apelido": ("Apelido", InputType.TEXT, RequirementLevel.OPTIONAL),
+        "escolaridade": ("Escolaridade:", InputType.SELECT,
+                         RequirementLevel.OPTIONAL),
+        "ponto_de_referencia": ("Ponto de Referência", InputType.TEXT),
+        "tipo_exame_colo": ("Colo", InputType.RADIO,
+                            RequirementLevel.OPTIONAL),
+        "tipo_exame_mama": ("Mama", InputType.RADIO,
+                            RequirementLevel.OPTIONAL),
+        "unidade_requisitante": ("Unidade Requisitante", InputType.SELECT,
+                                 RequirementLevel.REQUIRED),
+        "prestador": ("Prestador", InputType.SELECT,
+                      RequirementLevel.REQUIRED),
     }
 
     # Mapeamento entre as chaves do dicionário e o label do formulário
@@ -54,20 +60,10 @@ class RequisicaoExame(SiscanWebPage):
         #         options_values=self.FIELDS_MAP[nome_campo].keys()
         #     )
         if not data.get("cartao_sus"):
-            raise SiscanUnexpectedFieldFilledError(
-                self.context,
-                field_name=self.get_label("cartao_sus"),
+            raise SiscanInvalidFieldValueError(
+                context=None,
+                field_name=self.get_field_label("cartao_sus"),
             )
-        # if not data.get("prestador"):
-        #     raise SiscanUnexpectedFieldFilledError(
-        #         self.context,
-        #         field_name=self.get_label("prestador"),
-        #     )
-        # if not data.get("unidade_requisitante"):
-        #     raise SiscanUnexpectedFieldFilledError(
-        #         self.context,
-        #         field_name=self.get_label("unidade_requisitante"),
-        #     )
 
     @abstractmethod
     def selecionar_tipo_exame(self, data: dict):
@@ -90,7 +86,7 @@ class RequisicaoExame(SiscanWebPage):
             contendo o label e o tipo do campo.
         """
         return {
-            "cartao_sus": ("Cartão SUS", "input"),
+            "cartao_sus": ("Cartão SUS", InputType.TEXT),
             **RequisicaoExame.MAP_DATA_LABEL,
         }
 
@@ -133,7 +129,7 @@ class RequisicaoExame(SiscanWebPage):
 
         text, value = self.select_value(nome_campo, data)
         if value == "0":
-            raise SiscanUnexpectedFieldFilledError(
+            raise SiscanInvalidFieldValueError(
                 self.context,
                 field_name=nome_campo,
                 data=data,
@@ -145,7 +141,7 @@ class RequisicaoExame(SiscanWebPage):
         self.load_select_options(nome_campo)
         text, value = self.select_value(nome_campo, data)
         if value == "0":
-            raise SiscanUnexpectedFieldFilledError(
+            raise SiscanInvalidFieldValueError(
                 self.context,
                 field_name=nome_campo,
                 data=data,
@@ -168,7 +164,7 @@ class RequisicaoExame(SiscanWebPage):
 
         # 1o passo: Preenche o campo Cartão SUS e chama o
         # evento onblur do campo
-        self.preencher_cartao_sus(self.get_value("cartao_sus", data))
+        self.preencher_cartao_sus(self.get_field_value("cartao_sus", data))
 
         # 2o passo: Define o tipo de exame para então poder habilitar
         # os campos de Prestador e Unidade Requisitante
@@ -190,8 +186,8 @@ class RequisicaoExame(SiscanWebPage):
             suffix="",
         )
 
-        # xpath.find_form_input("Escolaridade:", "select").fill("2")
-        # xpath.find_form_input("Escolaridade:", "select").fill("Ensino Médio Completo")
+        # xpath.find_form_input("Escolaridade:", InputType.SELECT).fill("2")
+        # xpath.find_form_input("Escolaridade:", InputType.SELECT).fill("Ensino Médio Completo")
         # Remove os campos que já foram preenchidos
         fields_map.pop('unidade_requisitante')
         fields_map.pop('prestador')

@@ -1,21 +1,35 @@
 import logging
 from abc import abstractmethod, ABC
+from enum import Enum
+from typing import Optional
 
 from src.siscan.exception import FieldValueNotFoundError
 from src.siscan.webtools.xpath_constructor import XPathConstructor
-from typing import Optional
-
 from src.siscan.context import SiscanBrowserContext
 
 logger = logging.getLogger(__name__)
+
+
+class RequirementLevel(Enum):
+    REQUIRED = "required"
+    OPTIONAL = "optional"
+
+    # Ou, para uso de instância:
+    def is_required(self) -> bool:
+        """
+        Verifica se a instância representa o nível 'required'.
+        """
+        return self is RequirementLevel.REQUIRED
 
 
 class WebPage(ABC):
     # Mapeamento de campos para valores específicos
     FIELDS_MAP: dict[str, dict[str, str]] = {}
 
-    def __init__(self, url_base: str):
+    def __init__(self, url_base: str, user: str, password: str):
         self._url_base = url_base
+        self._user = user
+        self._password = password
         self._context: Optional[SiscanBrowserContext] = None
 
     @property
@@ -33,6 +47,11 @@ class WebPage(ABC):
             headless=False,  # Para depuração, use False
             timeout=15000
         )
+        self.authenticate()
+
+    @abstractmethod
+    def authenticate(self):
+        raise NotImplementedError("Subclasses devem implementar este método.")
 
     @abstractmethod
     def get_map_label(self) -> dict[str, tuple[str, str]]:
@@ -48,8 +67,73 @@ class WebPage(ABC):
     def validation(self, data: dict):
         raise NotImplementedError("Subclasses devem implementar este método.")
 
-    def get_label(
-            self, campo: str,
+    def get_field_metadata(
+            self,
+            field_name: str,
+            map_label: Optional[dict[str, tuple]] = None
+    ) -> tuple[str, str, bool]:
+        """
+        Retorna o label, o tipo e o indicador de obrigatoriedade de um campo,
+        baseado no mapeamento fornecido.
+
+        Este método consolida a busca das principais informações do campo de
+        formulário: o texto do label exibido ao usuário, o tipo do campo e se
+        o preenchimento é obrigatório.
+
+        Parâmetros
+        ----------
+        field_name : str
+            Nome lógico do campo para o qual se deseja obter as informações.
+        map_label : Optional[dict[str, tuple]], opcional
+            Dicionário de mapeamento de campos. Caso não seja informado,
+            utiliza o mapeamento padrão retornado por `get_map_label()`.
+
+        Retorno
+        -------
+        tuple (label, tipo, required)
+            - label: str - Texto do label conforme definido no mapeamento.
+            - tipo: str - Tipo do campo (exemplo: 'text', 'select',
+                'checkbox').
+            - required: bool - True se o campo é obrigatório, False caso
+                contrário.
+
+        Exceções
+        --------
+        ValueError
+            Disparada se o campo não estiver presente no mapeamento fornecido
+            ou se não houver informação suficiente sobre obrigatoriedade.
+
+        Exemplo
+        -------
+        ```
+        label, tipo, required = self.get_field_metadata(
+        "ano_que_fez_a_ultima_mamografia")
+        print(label, tipo, required)
+        # "QUANDO FEZ A ÚLTIMA MAMOGRAFIA?", InputType.TEXT, True
+        ```
+        """
+        # Busca o valor no dicionário de mapeamento
+        if map_label is None:
+            value = self.get_map_label().get(field_name)
+        else:
+            value = map_label.get(field_name)
+
+        if value is None:
+            raise ValueError(f"Campo '{field_name}' não está mapeado.")
+
+        label = value[0]
+        tipo = value[1]
+        try:
+            required = (value[2] == RequirementLevel.REQUIRED)
+        except IndexError:
+            raise ValueError(
+                f"O campo '{field_name}' não possui indicação de "
+                f"obrigatoriedade no mapeamento."
+            )
+        return label, tipo, required
+
+    def get_field_label(
+            self, field_name: str,
             map_label: Optional[dict[str, tuple[str, str]]] = None) -> str:
         """
         Retorna o texto do label associado ao nome lógico do campo, com base no
@@ -88,16 +172,16 @@ class WebPage(ABC):
         ```
         """
         if map_label is None:
-            value = self.get_map_label().get(campo)
+            value = self.get_map_label().get(field_name)
         else:
-            value = map_label.get(campo)
+            value = map_label.get(field_name)
 
         if value is None:
-            raise ValueError(f"Campo '{campo}' não está mapeado.")
+            raise ValueError(f"Campo '{field_name}' não está mapeado.")
         return value[0]
 
-    def get_label_type(
-            self, campo: str,
+    def get_field_type(
+            self, field_name: str,
             map_label: Optional[dict[str, tuple[str, str]]] = None) -> str:
         """
         Retorna o tipo de campo associado ao nome lógico do campo, com base no
@@ -137,15 +221,28 @@ class WebPage(ABC):
         ```
         """
         if map_label is None:
-            value = self.get_map_label().get(campo)
+            value = self.get_map_label().get(field_name)
         else:
-            value = map_label.get(campo)
+            value = map_label.get(field_name)
 
         if value is None:
-            raise ValueError(f"Campo '{campo}' não está mapeado.")
+            raise ValueError(f"Campo '{field_name}' não está mapeado.")
         return value[1]
 
-    def get_value(self, campo: str, data: dict) -> Optional[str | list]:
+    def get_field_required(
+            self, field_name: str,
+            map_label: Optional[dict[str, tuple[str, str]]] = None) -> str:
+        if map_label is None:
+            value = self.get_map_label().get(field_name)
+        else:
+            value = map_label.get(field_name)
+
+        if value is None:
+            raise ValueError(f"Campo '{field_name}' não está mapeado.")
+        return value[2]
+
+    def get_field_value(
+            self, field_name: str, data: dict) -> Optional[str | list]:
         """
         Obtém o valor correspondente ao campo informado, realizando a conversão
         conforme o mapeamento definido em `FIELDS_MAP`, caso aplicável.
@@ -170,12 +267,12 @@ class WebPage(ABC):
             Valor convertido de acordo com o mapeamento definido, se aplicável.
             Caso contrário, retorna o valor original do campo ou None.
         """
-        value = data.get(campo, None)
+        value = data.get(field_name, None)
 
-        if campo in self.FIELDS_MAP.keys() and value is not None:
+        if field_name in self.FIELDS_MAP.keys() and value is not None:
             # Mapeia o valor do campo para o valor específico definido no
             # mapeamento
-            value = self.FIELDS_MAP[campo].get(value, None)
+            value = self.FIELDS_MAP[field_name].get(value, None)
         return value
 
     def update_field_map_from_select(
@@ -214,7 +311,7 @@ class WebPage(ABC):
         Exemplo
         -------
         ```python
-        xpath.find_form_input("Unidade de Saúde", "select")
+        xpath.find_form_input("Unidade de Saúde", InputType.SELECT)
         self.update_field_map_from_select("unidade_saude", xpath)
         print(self.FIELDS_MAP["unidade_saude"])
         {'0015466 - CENTRO DE ...': '4', ...}
@@ -227,6 +324,49 @@ class WebPage(ABC):
             mapping = {value: label for value, label in options.items()}
         self.FIELDS_MAP[field_name] = mapping
         xpath.reset()
+
+    def mount_fields_map_and_data(
+            self, data: dict,
+            map_label: dict[str, tuple[str, str]],
+            suffix: Optional[str] = ":"
+    ) -> tuple[dict[str, tuple[str, str]], dict[str, str]]:
+        """
+        Gera o dicionário campos_map e o dicionário data_final para uso em
+        preenchimento genérico de formulários.
+
+        Parâmetros
+        ----------
+        data : dict
+            Dicionário de dados originais (nomes de campos como chave).
+        map_label : dict[str, tuple[str, str]]
+            Dicionário com nomes de campos como chave e tuplas contendo
+            (label, tipo de campo) como valor.
+        suffix : str, opcional (default=":")
+
+        Retorna
+        -------
+        tuple (campos_map, data_final)
+            - campos_map: dict[str, tuple[str, str]]
+            - data_final: dict[str, str]
+        """
+        if suffix is None:
+            suffix = ""
+
+        fields_map = {}
+        data_final = {}
+        for field_name in data.keys():
+            if field_name not in map_label.keys():
+                logger.warning(f"Campo '{field_name}' não está mapeado ou não "
+                               f"é editável. Ignorado.")
+                continue
+            field_label, field_type, requirement_level = (
+                self.get_field_metadata(field_name, map_label))
+            value = self.get_field_value(field_name, data)
+            fields_map[field_name] = (f"{field_label}{suffix}",
+                                      field_type,
+                                      requirement_level)
+            data_final[field_name] = value
+        return fields_map, data_final
 
     def load_select_options(self, field_name: str):
         """
@@ -251,8 +391,8 @@ class WebPage(ABC):
         realmente disponíveis na página no momento da execução.
         """
         xpath = XPathConstructor(self.context)
-        xpath.find_form_input(self.get_label(field_name),
-                              self.get_label_type(field_name))
+        field_label, field_type, _ = self.get_field_metadata(field_name)
+        xpath.find_form_input(field_label, field_label)
         self.update_field_map_from_select(field_name, xpath)
 
     def select_value(
@@ -334,12 +474,10 @@ class WebPage(ABC):
         ```
         """
         xpath = XPathConstructor(self.context)
-        type_exam_elem = xpath.find_form_input(
-            self.get_label(field_name),
-            self.get_label_type(field_name)
-        )
-        xpath_obj = type_exam_elem.fill(self.get_value(field_name, data),
-                                        self.get_label_type(field_name),
+        field_label, field_type, _ = self.get_field_metadata(field_name)
+        type_exam_elem = xpath.find_form_input(field_label, field_type)
+        xpath_obj = type_exam_elem.fill(self.get_field_value(field_name, data),
+                                        field_type,
                                         reset=False)
         value = xpath_obj.get_value()
         # Para campos que retornam tupla (texto, valor)
