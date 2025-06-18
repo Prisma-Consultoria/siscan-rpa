@@ -223,7 +223,8 @@ class RequisicaoExame(SiscanWebPage):
 
         # 1o passo: Preenche o campo Cartão SUS e chama o
         # evento onblur do campo
-        self.preencher_cartao_sus(self.get_field_value("cartao_sus", data))
+        self.preencher_cartao_sus(
+            numero=self.get_field_value("cartao_sus", data))
 
         # 2o passo: Define o tipo de exame para então poder habilitar
         # os campos de Prestador e Unidade Requisitante
@@ -250,3 +251,4 @@ class RequisicaoExame(SiscanWebPage):
         fields_map.pop('prestador')
 
         xpath.fill_form_fields(data_final, fields_map)
+        self.take_screenshot("screenshot_03_requisicao_exame.png")

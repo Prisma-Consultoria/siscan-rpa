@@ -1,5 +1,5 @@
 from pathlib import Path
-
+from datetime import datetime
 import logging
 from abc import abstractmethod, ABC
 from enum import Enum
@@ -490,7 +490,8 @@ class WebPage(ABC):
 
         type_exam_elem = xpath.find_form_input(field_label, field_type)
         xpath_obj = type_exam_elem.fill(self.get_field_value(field_name, data),
-                                        field_type, reset=False)
+                                        field_type,
+                                        reset=False)
         value = xpath_obj.get_value(field_type)
         # Para campos que retornam tupla (texto, valor)
         if isinstance(value, tuple):
@@ -501,3 +502,41 @@ class WebPage(ABC):
                 raise FieldValueNotFoundError(self.context, field_name, _value)
         return value
 
+    def take_screenshot(self, filename: Optional[str] = None, full_page: bool = True, subdir: Optional[str] = None) -> Path:
+        """
+        Realiza um screenshot (print da tela) da página atual e salva em arquivo.
+
+        Parâmetros
+        ----------
+        filename : Optional[str], default=None
+            Nome do arquivo de imagem a ser salvo (ex: 'tela.png').
+            Se não informado, gera nome automático com timestamp.
+        full_page : bool, default=True
+            Se True, captura a página completa. Caso False, apenas o viewport visível.
+        subdir : Optional[str], default=None
+            Diretório para salvar o print. Se None, salva no diretório corrente.
+
+        Retorno
+        -------
+        Path
+            Caminho absoluto do arquivo de imagem salvo.
+
+        Exemplo
+        -------
+        ```python
+        caminho = self.take_screenshot()
+        print(f"Print salvo em: {caminho}")
+        ```
+        """
+        page = self.context.page  # page Playwright ativo no contexto
+        if filename is None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"screenshot_{timestamp}.png"
+        if subdir:
+            Path(subdir).mkdir(parents=True, exist_ok=True)
+            filepath = Path(subdir) / filename
+        else:
+            filepath = Path(filename)
+        page.screenshot(path=str(filepath), full_page=full_page)
+        logger.info(f"Screenshot salvo em: {filepath.resolve()}")
+        return filepath.resolve()

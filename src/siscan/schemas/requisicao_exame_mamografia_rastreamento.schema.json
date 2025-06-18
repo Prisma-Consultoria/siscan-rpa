@@ -404,7 +404,7 @@
     },
     "tipo_de_mamografia": {
       "type": "string",
-      "enum": ["01", "02", null],
+      "enum": ["Diagnóstica", "Rastreamento"],
       "title": "TIPO DE MAMOGRAFIA",
       "description": "Tipo de mamografia: 01=Diagnóstica, 02=Rastreamento",
       "x-widget": "radio"
@@ -415,6 +415,13 @@
       "title": "MAMOGRAFIA DE RASTREAMENTO",
       "description": "Indicação da mamografia de rastreamento: 01=População alvo, 02=Risco elevado, 03=Paciente já tratado",
       "x-widget": "radio"
+    },
+    "data_da_solicitacao": {
+      "type": "string",
+      "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
+      "title": "Data da Solicitação",
+      "description": "Data da solicitação do exame no formato DD/MM/AAAA",
+      "x-widget": "date"
     }
   },
   "required": [
@@ -524,7 +531,7 @@
       }
     },
     {
-      "if": { "properties": { "tipo_de_mamografia": { "const": "02" } } },
+      "if": { "properties": { "tipo_de_mamografia": { "const": "Rastreamento" } } },
       "then": { "required": ["mamografia_de_rastreamento"] },
       "else": {
         "not": { "required": ["mamografia_de_rastreamento"] }

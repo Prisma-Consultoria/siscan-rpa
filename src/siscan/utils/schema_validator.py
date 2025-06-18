@@ -82,7 +82,7 @@ class SchemaValidator:
     """
 
     @classmethod
-    def load_schema(cls, schema_path: Union[str, Path]) -> Dict[str, Any]:
+    def load_json(cls, schema_path: Union[str, Path]) -> Dict[str, Any]:
         """
         Carrega e retorna o JSON Schema do arquivo especificado.
 
@@ -153,7 +153,7 @@ class SchemaValidator:
     @classmethod
     def validate_data(cls, data: Dict[str, Any],
                       schema_path: Union[str, Path]) -> bool:
-        schema = cls.load_schema(schema_path)
+        schema = cls.load_json(schema_path)
 
         try:
             validate(instance=data, schema=schema)

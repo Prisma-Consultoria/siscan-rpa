@@ -93,6 +93,7 @@ class SiscanWebPage(WebPage):
         xpath = XPathConstructor(self.context)
         xpath.find_form_input('E-mail:').fill(self._user)
         xpath.find_form_input('Senha:').fill(self._password)
+        self.take_screenshot("screenshot_01_autenticar.png")
         xpath.find_form_button("Acessar").click()
 
         # Aguarda confirmação de login bem-sucedido
@@ -101,6 +102,7 @@ class SiscanWebPage(WebPage):
                 'h1:text("SEJA BEM VINDO AO SISCAN")', timeout=10_000)
         except Exception:
             raise SiscanLoginError(self.context)
+        self.take_screenshot("screenshot_02_tela_principal.png")
 
     def acessar_menu(self, menu_name: str, menu_action_text: str,
                      timeout: int = 10, interval: float = None):
@@ -125,7 +127,7 @@ class SiscanWebPage(WebPage):
             Se o menu ou ação não for encontrado após todas as tentativas.
         """
         interval = interval if interval is not None \
-            else XPathConstructor.RETRY_INTERVAL
+            else XPathConstructor.ELAPSED_INTERVAL
 
         elapsed = 0
         last_exception = None
@@ -218,7 +220,7 @@ class SiscanWebPage(WebPage):
     def preencher_cartao_sus(
             self,
             numero: str,
-            timeout: int = 10,
+            timeout: int = XPathConstructor.DEFAULT_TIMEOUT,
             interval: float = None
     ):
         """
@@ -248,8 +250,7 @@ class SiscanWebPage(WebPage):
         xpath.wait_page_ready()
         elapsed = 0
 
-        interval = interval if interval is not None \
-            else XPathConstructor.RETRY_INTERVAL
+        interval = interval or (XPathConstructor.ELAPSED_INTERVAL)
 
         while elapsed < timeout:
             xpath.reset()
@@ -269,8 +270,7 @@ class SiscanWebPage(WebPage):
             try:
                 xpath.reset()
                 nome_ele = xpath.find_form_input('Nome')
-                nome_ele.wait_until_filled(
-                    timeout=interval)
+                nome_ele.wait_until_filled(timeout=timeout)
                 nome, _ = nome_ele.get_value()
                 if nome:
                     return  # Sucesso!
@@ -289,82 +289,20 @@ class SiscanWebPage(WebPage):
             elapsed += interval
 
     def fill_field_in_card(self, card_name: str, field_name: str, value: str):
+        logger.debug(f"Preenchendo campo '{field_name}' de '{card_name}' "
+                     f"com o valor '{value}'")
+        # //fieldset[legend[normalize-space(text())='{card_name}']]//input[@type='text']
+        # //fieldset[legend[normalize-space(text())='{card_name}']]//label[normalize-space(text())='{field_name}']/@for
         xpath_obj = XPathConstructor(
             self.context,
             xpath=f"//fieldset[legend[normalize-space(text())='{card_name}']]"
-                  f"//label[normalize-space(text())='{field_name}']"
-                  f"/following-sibling::input[1]")
+                  f"//input[@type='text']"
+            # xpath=f"//fieldset[legend[normalize-space(text())='{card_name}']]"
+            #       f"//label[normalize-space(text())='{field_name}']"
+            #       f"/following-sibling::input[1]"
+        )
 
         xpath_obj.fill(value)
-
-    def preencher_campo_condicional(
-            self,
-            data: dict,
-            campo_chave: str,
-            valor_verdadeiro: str,
-            campos_dependentes: list,
-            label_dependente: str = None,
-            erro_dependente_msg: str = None,
-            timeout_label: float = 10
-    ):
-        """
-        Método genérico para preenchimento e validação de campos dependentes
-        condicionados ao valor de um campo chave.
-
-        Parâmetros
-        ----------
-        data : dict
-            Dicionário de dados do formulário.
-        campo_chave : str
-            Nome do campo condicional (ex: 'fez_mamografia_alguma_vez').
-        valor_verdadeiro : str
-            Valor do campo_chave que indica preenchimento dos campos dependentes.
-        campos_dependentes : list
-            Lista de campos dependentes.
-        label_dependente : str, opcional
-            Label do campo dependente (se único).
-        erro_dependente_msg : str, opcional
-            Mensagem de erro customizada para preenchimento indevido.
-        timeout_label : float, opcional
-            Tempo máximo para aguardar o campo dependente (em segundos).
-        """
-        text, value = self.select_value(campo_chave, data)
-        for campo_dependente in campos_dependentes:
-            valor_dependente = data.get(campo_dependente)
-            # Só deve preencher campo dependente se resposta for verdadeira
-            if text == valor_verdadeiro:
-                if valor_dependente:
-                    label_campo = label_dependente or self.get_field_label(
-                        campo_dependente)
-                    # Aguarda o label/campo dependente surgir na página (AJAX)
-                    xpath = XPathConstructor(self.context)
-                    if not xpath.wait_for_label_visible(label_campo,
-                                                       timeout=timeout_label):
-                        raise TimeoutError(
-                            f"Label '{label_campo}' para campo dependente '{campo_dependente}' "
-                            f"não apareceu após selecionar '{campo_chave}'."
-                        )
-                    time.sleep(0.2)
-                    self.fill_field_in_card(
-                        card_name=label_campo,
-                        field_name=label_campo,
-                        value=valor_dependente
-                    )
-            else:
-                # Se não deveria preencher e o valor foi fornecido, lança exceção
-                if valor_dependente:
-                    msg = erro_dependente_msg or (
-                        f"O campo '{campo_dependente}' não deve ser preenchido"
-                        f" se '{campo_chave}' for diferente de "
-                        f"'{valor_verdadeiro}'."
-                    )
-                    raise SiscanInvalidFieldValueError(
-                        context=None, field_name=campo_dependente,
-                        data=data, message=msg
-                    )
-            # Limpa do dicionário após processar
-            data.pop(campo_dependente, None)
-        data.pop(campo_chave, None)
 
     def preencher_campo_dependente_multiplo(
             self,
@@ -372,35 +310,13 @@ class SiscanWebPage(WebPage):
             campo_chave: str,
             condicoes_dependentes: dict,
             label_dependentes: dict = None,
-            erro_dependente_msg: str = None,
-            timeout: int = 10
+            erro_dependente_msg: str = None
     ):
-        """
-        Preenche campos dependentes condicionais com base no valor do campo chave,
-        aguardando o carregamento dinâmico via AJAX se necessário.
+        logger.debug(f"Selecionar campo {campo_chave}")
+        text, value = self.select_value(campo_chave, data)
 
-        Parâmetros:
-        -----------
-        data : dict
-            Dicionário com os dados do formulário.
-        campo_chave : str
-            Nome do campo chave a ser avaliado.
-        condicoes_dependentes : dict
-            Mapeamento do valor do campo chave para lista de campos dependentes obrigatórios.
-        label_dependentes : dict
-            Mapeamento campo -> label de exibição (opcional).
-        erro_dependente_msg : str
-            Mensagem de erro customizada (opcional).
-        timeout : int
-            Tempo máximo para aguardar o campo dependente (em segundos).
-        """
-
-        valor = data.get(campo_chave)
-        dependentes = condicoes_dependentes.get(valor, [])
+        dependentes = condicoes_dependentes.get(value, [])
         labels = label_dependentes or {}
-
-        # Clique no campo-chave, se necessário (personalize conforme sua API)
-        self.select_radio_value(campo_chave, valor)
 
         for dep in dependentes:
             valor_dep = data.get(dep)
@@ -411,38 +327,15 @@ class SiscanWebPage(WebPage):
                     data=data,
                     message=erro_dependente_msg or
                             f"O campo {dep} é obrigatório para o valor "
-                            f"'{valor}' de {campo_chave}."
+                            f"'{text}({value})' do card {campo_chave}."
                 )
-
-            # Retry aguardando o campo dependente ficar disponível após AJAX
-            selector_label = self.xpath.get_label_selector(
-                dep, labels.get(dep, "Ano:"))
-            elapsed = 0
-            interval = 0.5
-            found = False
-            while elapsed < timeout:
-                try:
-                    if self.page.query_selector(selector_label):
-                        found = True
-                        break
-                except Exception as e:
-                    logger.debug(
-                        f"Tentativa de localizar campo dependente falhou: {e}")
-                time.sleep(interval)
-                elapsed += interval
-
-            if not found:
-                raise TimeoutError(
-                    f"Campo dependente '{dep}' não apareceu após selecionar "
-                    f"'{campo_chave}'='{valor}'.")
 
             # Preencher o campo dependente
             self.fill_field_in_card(
                 card_name=self.get_field_label(dep),
-                field_name=labels.get(dep, "Ano:"),
+                field_name=labels.get(dep),
                 value=valor_dep
             )
             data.pop(dep, None)
-
         data.pop(campo_chave, None)
 

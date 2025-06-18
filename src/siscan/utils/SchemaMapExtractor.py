@@ -20,7 +20,7 @@ class SchemaMapExtractor:
         map_data_label = {}
         fields_map = {}
 
-        schema = SchemaValidator.load_schema(schema_path)
+        schema = SchemaValidator.load_json(schema_path)
 
         properties = schema.get("properties", {})
         required_fields = schema.get("required", [])
