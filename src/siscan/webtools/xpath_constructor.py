@@ -249,7 +249,6 @@ class XPathConstructor:
             # Se o .get() já lançou essa exceção, apenas relança
             raise
         except Exception as e:
-            breakpoint()
             logger.error(f"Erro inesperado ao aguardar e obter locator com "
                          f"XPath '{self._xpath}': {e}")
             raise XpathNotFoundError(
