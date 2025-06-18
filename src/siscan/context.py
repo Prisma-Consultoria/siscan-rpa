@@ -5,6 +5,7 @@ from playwright.sync_api import sync_playwright, Browser, Page
 
 logger = logging.getLogger(__name__)
 
+
 class SiscanBrowserContext:
     """
     Centraliza as configurações de contexto e inicialização do Playwright para o SIScan.
