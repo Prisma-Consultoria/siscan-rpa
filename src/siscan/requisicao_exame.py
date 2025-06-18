@@ -1,9 +1,14 @@
+from pathlib import Path
+
+from typing import Union
+
 from abc import abstractmethod
 
 import logging
 
 from src.siscan.exception import SiscanInvalidFieldValueError
 from src.siscan.siscan_webpage import SiscanWebPage
+from src.siscan.utils.SchemaMapExtractor import SchemaMapExtractor
 from src.siscan.webtools.webpage import RequirementLevel
 from src.siscan.webtools.xpath_constructor import XPathConstructor, InputType
 
@@ -11,59 +16,27 @@ logger = logging.getLogger(__name__)
 
 
 class RequisicaoExame(SiscanWebPage):
-    # Mapeamento entre as chaves do dicionário e o label do formulário
-    MAP_DATA_LABEL = {
-        "apelido": ("Apelido", InputType.TEXT, RequirementLevel.OPTIONAL),
-        "escolaridade": ("Escolaridade:", InputType.SELECT,
-                         RequirementLevel.OPTIONAL),
-        "ponto_de_referencia": ("Ponto de Referência", InputType.TEXT),
-        "tipo_exame_colo": ("Colo", InputType.RADIO,
-                            RequirementLevel.OPTIONAL),
-        "tipo_exame_mama": ("Mama", InputType.RADIO,
-                            RequirementLevel.OPTIONAL),
-        "unidade_requisitante": ("Unidade Requisitante", InputType.SELECT,
-                                 RequirementLevel.REQUIRED),
-        "prestador": ("Prestador", InputType.SELECT,
-                      RequirementLevel.REQUIRED),
-    }
+    # Campos específicos deste formulário
+    MAP_SCHEMA_FIELDS = [
+        "apelido",
+        "escolaridade",
+        "ponto_de_referencia",
+        # "tipo_exame_colo",
+        "tipo_exame_mama",
+        "unidade_requisitante",
+        "prestador"
+    ]
 
-    # Mapeamento entre as chaves do dicionário e o label do formulário
-    FIELDS_MAP = {
-        "escolaridade": {
-            "0": "0",  # Selecione...
-            "1": "1",  # Analfabeto(a)
-            "2": "2",  # Ensino Fundamental Incompleto
-            "3": "3",  # Ensino Fundamental Completo
-            "4": "4",  # Ensino Médio Completo
-            "5": "5",  # Ensino Superior Completo
-        },
-        # "tipo_exame_colo": {
-        #     "Cito de Colo...": "02",
-        #     "Histo de Colo": "04",
-        # },
-        # "tipo_exame_mama": {
-        #     "Mamografia": "01",
-        #     "Cito de Mama": "03",
-        #     "Histo de Mama": "05",
-        # }
-    }
-    FIELDS_MAP.update(SiscanWebPage.FIELDS_MAP)
+    def __init__(self, url_base: str, user: str, password: str,
+                 schema_path: Union[str, Path]):
+        super().__init__(url_base, user, password, schema_path)
+        map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
+            schema_path, fields=RequisicaoExame.MAP_SCHEMA_FIELDS)
+        RequisicaoExame.MAP_DATA_LABEL = map_data_label
+        self.FIELDS_MAP.update(fields_map)
 
     def validation(self, data: dict):
         super().validation(data)
-        # nome_campo = "escolaridade"
-        # if not data.get(nome_campo) in self.FIELDS_MAP[nome_campo].keys():
-        #     raise SiscanUnexpectedFieldFilledError(
-        #         self.context,
-        #         field_name=nome_campo,
-        #         data=data,
-        #         options_values=self.FIELDS_MAP[nome_campo].keys()
-        #     )
-        if not data.get("cartao_sus"):
-            raise SiscanInvalidFieldValueError(
-                context=None,
-                field_name=self.get_field_label("cartao_sus"),
-            )
 
     @abstractmethod
     def selecionar_tipo_exame(self, data: dict):
@@ -108,6 +81,52 @@ class RequisicaoExame(SiscanWebPage):
         self._buscar_cartao_sus(data, menu_action=self._novo_exame)
 
     def seleciona_unidade_requisitante(self, data: dict = None):
+        """
+        Seleciona e valida a unidade requisitante a partir dos dados
+        fornecidos.
+
+        Este método realiza o carregamento e o mapeamento das opções
+        disponíveis para o campo 'unidade_requisitante' (campo responsável
+        pelo código CNES da unidade requisitante).
+        Inicialmente, carrega as opções do campo select, atualizando o
+        mapeamento (`FIELDS_MAP`) para considerar apenas o código CNES (parte
+        antes do hífen). Em seguida, remove os itens originais do mapeamento
+        que continham a descrição completa. Após o ajuste do mapeamento,
+        seleciona o valor informado em `data` e valida se o valor selecionado
+        é válido. Caso o valor seja inválido (valor igual a "0"), é lançada
+        uma exceção do tipo `SiscanInvalidFieldValueError`, informando os
+        valores de opção disponíveis para o campo.
+
+        Parâmetros
+        ----------
+        data : dict, opcional
+            Dicionário contendo os dados do formulário, incluindo o campo
+            'unidade_requisitante'.
+
+        Exceções
+        --------
+        SiscanInvalidFieldValueError
+            Lançada caso o valor selecionado para 'unidade_requisitante' seja
+            inválido, ou não esteja entre as opções disponíveis (por exemplo,
+            valor igual a "0").
+
+        Exemplo
+        -------
+        ```
+        self.seleciona_unidade_requisitante(
+        {'unidade_requisitante': '0274267'})
+        # Seleciona e valida a unidade requisitante com código CNES informado.
+        ```
+
+        Notas
+        -----
+        - O método atualiza o dicionário FIELDS_MAP['unidade_requisitante'],
+          mantendo apenas o código CNES como chave, removendo os itens
+          originais que continham  hífen e a descrição completa.
+        - Este método depende das implementações de `load_select_options` e
+          `select_value` para carregamento das opções do campo e seleção do
+          valor, respectivamente.
+        """
         nome_campo = "unidade_requisitante"
         self.load_select_options(nome_campo)
 
@@ -137,6 +156,46 @@ class RequisicaoExame(SiscanWebPage):
             )
 
     def selecionar_prestador(self, data: dict = None):
+        """
+        Seleciona e valida o campo 'prestador' a partir dos dados fornecidos.
+
+        Este método realiza o carregamento das opções disponíveis para o campo
+         'prestador', utiliza o valor presente em `data` para seleção e
+        validação, e garante que o valor selecionado é válido conforme as
+        opções disponíveis. Caso o valor selecionado seja inválido (igual a
+        "0"), lança a exceção `SiscanInvalidFieldValueError`, informando os
+        valores válidos para o campo.
+
+        Parâmetros
+        ----------
+        data : dict, opcional
+            Dicionário contendo os dados do formulário, incluindo o campo
+            'prestador'.
+
+        Exceções
+        --------
+        SiscanInvalidFieldValueError
+            Lançada caso o valor selecionado para 'prestador' seja inválido,
+            ou não esteja entre as opções disponíveis (por exemplo, valor
+            igual a "0").
+
+        Exemplo
+        -------
+        ```
+        >>> self.selecionar_prestador({'prestador':
+        'HOSPITAL ERASTO GAERTNER'})
+        # Seleciona e valida o prestador informado.
+        ```
+
+        Notas
+        -----
+        - O método depende das implementações de `load_select_options` para
+          carregar as opções do campo 'prestador' e de `select_value` para
+          selecionar e validar o valor.
+        - A validação considera como inválido o valor "0", que normalmente
+          representa a opção  padrão "Selecione..." em campos select de
+          formulários web.
+        """
         nome_campo = "prestador"
         self.load_select_options(nome_campo)
         text, value = self.select_value(nome_campo, data)
@@ -186,9 +245,8 @@ class RequisicaoExame(SiscanWebPage):
             suffix="",
         )
 
-        # xpath.find_form_input("Escolaridade:", InputType.SELECT).fill("2")
-        # xpath.find_form_input("Escolaridade:", InputType.SELECT).fill("Ensino Médio Completo")
         # Remove os campos que já foram preenchidos
         fields_map.pop('unidade_requisitante')
         fields_map.pop('prestador')
+
         xpath.fill_form_fields(data_final, fields_map)

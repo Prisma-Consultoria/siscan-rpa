@@ -1,7 +1,9 @@
+from pathlib import Path
+
 import logging
 from abc import abstractmethod, ABC
 from enum import Enum
-from typing import Optional
+from typing import Optional, Union
 
 from src.siscan.exception import FieldValueNotFoundError
 from src.siscan.webtools.xpath_constructor import XPathConstructor, InputType
@@ -26,10 +28,12 @@ class WebPage(ABC):
     # Mapeamento de campos para valores específicos
     FIELDS_MAP: dict[str, dict[str, str]] = {}
 
-    def __init__(self, url_base: str, user: str, password: str):
+    def __init__(self, url_base: str, user: str, password: str,
+                 schema_path: Union[str, Path]):
         self._url_base = url_base
         self._user = user
         self._password = password
+        self._schema_path = schema_path
         self._context: Optional[SiscanBrowserContext] = None
 
     @property
@@ -49,6 +53,7 @@ class WebPage(ABC):
         )
         self.authenticate()
 
+
     @abstractmethod
     def authenticate(self):
         raise NotImplementedError("Subclasses devem implementar este método.")
@@ -66,6 +71,10 @@ class WebPage(ABC):
     @abstractmethod
     def validation(self, data: dict):
         raise NotImplementedError("Subclasses devem implementar este método.")
+
+    @property
+    def schema_path(self):
+        return self._schema_path
 
     def get_field_metadata(
             self,
@@ -268,7 +277,14 @@ class WebPage(ABC):
         if field_name in self.FIELDS_MAP.keys() and value is not None:
             # Mapeia o valor do campo para o valor específico definido no
             # mapeamento
-            value = self.FIELDS_MAP[field_name].get(value, None)
+            if isinstance(value, list):
+                logger.warning(
+                    f"O valor do campo '{field_name}' é uma lista ({value}). "
+                    f"O mapeamento FIELDS_MAP espera um valor escalar. "
+                    f"Ignorando o mapeamento e retornado o valor real "
+                    f"fornecido em 'data'.")
+            else:
+                value = self.FIELDS_MAP[field_name].get(value, None)
         return value
 
     def update_field_map_from_select(
@@ -388,7 +404,7 @@ class WebPage(ABC):
         """
         xpath = XPathConstructor(self.context)
         field_label, field_type, _ = self.get_field_metadata(field_name)
-        xpath.find_form_input(field_label, field_label)
+        xpath.find_form_input(field_label, field_type)
         self.update_field_map_from_select(field_name, xpath)
 
     def select_value(
@@ -471,11 +487,11 @@ class WebPage(ABC):
         """
         xpath = XPathConstructor(self.context)
         field_label, field_type, _ = self.get_field_metadata(field_name)
+
         type_exam_elem = xpath.find_form_input(field_label, field_type)
         xpath_obj = type_exam_elem.fill(self.get_field_value(field_name, data),
-                                        field_type,
-                                        reset=False)
-        value = xpath_obj.get_value()
+                                        field_type, reset=False)
+        value = xpath_obj.get_value(field_type)
         # Para campos que retornam tupla (texto, valor)
         if isinstance(value, tuple):
             _, _value = value

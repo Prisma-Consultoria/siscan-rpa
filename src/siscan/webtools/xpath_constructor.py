@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Optional
 import time
 import logging
-from playwright.sync_api import Page, TimeoutError
+from playwright.sync_api import Page, TimeoutError, ElementHandle
 
 from src.siscan.context import SiscanBrowserContext
 from src.siscan.exception import SiscanMenuNotFoundError, \
@@ -80,10 +80,12 @@ class XPathConstructor:
         """
         if isinstance(default_input_type, InputType):
             return default_input_type
+
         if default_input_type is None:
             input_type = self._input_type or InputType.TEXT
         else:
             input_type = default_input_type
+
         if isinstance(input_type, InputType):
             return input_type
         try:
@@ -490,35 +492,28 @@ class XPathConstructor:
             # Checa quantos checkboxes existem
             checkboxes = locator.locator("input[type='checkbox']")
             count = checkboxes.count()
-            # Um único checkbox
-            if count == 1:
-                cb = checkboxes.nth(0)
+            # Um único checkbox count = 1
+            # Múltiplos checkboxes count > 1
+            result = []
+            for i in range(count):
+                text = None
+                cb = checkboxes.nth(i)
                 if cb.is_checked():
                     value = cb.get_attribute("value")
-                    # Busca o label associado
-                    label_elem = cb.evaluate_handle(
-                        "node => node.closest('label')")
-                    if label_elem:
-                        text = label_elem.inner_text().strip()
-                    else:
-                        text = value
-                    return (text, value)
-                else:
-                    return (None, None)
-            # Múltiplos checkboxes
-            elif count > 1:
-                result = []
-                for i in range(count):
-                    cb = checkboxes.nth(i)
-                    if cb.is_checked():
-                        value = cb.get_attribute("value")
-                        label_elem = cb.evaluate_handle(
-                            "node => node.closest('label')")
-                        if label_elem:
+                    checkbox_id = cb.get_attribute("id")
+                    if checkbox_id:
+                        # Busca o label associado ao id
+                        label_elem = locator.page.locator(
+                            f"label[for='{checkbox_id}']")
+                        if label_elem.count() > 0:
+                            text = label_elem.nth(0).inner_text().strip()
+                    if not text:
+                        label_elem = cb.evaluate_handle("node => node.closest('label')")
+                        if label_elem and isinstance(label_elem, ElementHandle):
                             text = label_elem.inner_text().strip()
                         else:
                             text = value
-                        result.append((text, value))
+                    result.append((text, value))
                 return result
             else:
                 return (None, None)
@@ -527,15 +522,24 @@ class XPathConstructor:
             radios = locator.locator("input[type='radio']")
             count = radios.count()
             for i in range(count):
+                text = None
                 radio = radios.nth(i)
                 if radio.is_checked():
                     value = radio.get_attribute("value")
-                    label_elem = radio.evaluate_handle(
-                        "node => node.closest('label')")
-                    if label_elem:
-                        text = label_elem.inner_text().strip()
-                    else:
-                        text = value
+                    radio_id = radio.get_attribute("id")
+                    if radio_id:
+                        # Busca o label associado ao id
+                        label_elem = locator.page.locator(
+                            f"label[for='{radio_id}']")
+                        if label_elem.count() > 0:
+                            text = label_elem.nth(0).inner_text().strip()
+                    if not text:
+                        label_elem = radio.evaluate_handle(
+                            "node => node.closest('label')")
+                        if label_elem and isinstance(label_elem, ElementHandle):
+                            text = label_elem.inner_text().strip()
+                        else:
+                            text = value
                     return (text, value)
             return (None, None)
         elif input_type in ("div", "span"):
@@ -734,6 +738,7 @@ class XPathConstructor:
             # Para radio: busca no fieldset com legend igual ao label_name
             self._xpath += (
                 f"//fieldset[legend[normalize-space(text())='{label_name}']]"
+                f"|//fieldset[legend[contains(normalize-space(.), '{label_name}')]]"
             )
         elif input_type == InputType.SELECT:
             # Busca primeiro por 'for'
@@ -855,8 +860,12 @@ class XPathConstructor:
                 input_value = input_el.get_attribute("value")
                 is_checked = input_el.is_checked()
                 if input_value in valores and not is_checked:
+                    logger.debug(f"Marcando checkbox value={input_value} "
+                                 f"(checked={is_checked})")
                     input_el.check(force=True)
                 elif input_value not in valores and is_checked:
+                    logger.debug(f"Desmarcando checkbox value={input_value} "
+                                 f"(checked={is_checked})")
                     input_el.uncheck(force=True)
         elif input_type == InputType.RADIO:
             # Para radio: selecionar o radio com value==valor dentro do grupo
@@ -874,6 +883,7 @@ class XPathConstructor:
                     logger.debug(
                         f"Marcando radio value={value} (checked={is_checked})")
                     if not is_checked:
+                        time.sleep(0.2)
                         radio.check(force=True)
                     achou = True
                     break
@@ -881,6 +891,7 @@ class XPathConstructor:
                 logger.warning(
                     f"Valor '{value}' não encontrado no grupo de radio.")
         else:
+            logger.debug
             locator.fill(value, force=True)
         if reset:
             self.reset()
@@ -1164,7 +1175,7 @@ class XPathConstructor:
     def fill_form_fields(
         self,
         data: dict,
-        campos_map: dict[str, tuple[str, str]]
+        campos_map: dict[str, tuple[str, str, str]]
     ):
         """
         Preenche automaticamente os campos de um formulário de acordo com
@@ -1176,31 +1187,35 @@ class XPathConstructor:
             Dicionário contendo os dados a serem preenchidos no formulário,
             onde as chaves são os nomes dos campos e os valores são os dados.
 
-        campos_map : dict[str, tuple[str, str]]
+        campos_map : dict[str, tuple[str, str, str]]
             Dicionário de mapeamento dos campos permitidos para preenchimento.
             As chaves correspondem aos nomes dos campos e os valores devem ser
-            tuplas contendo (label:str, type_input:str), em que:
+            tuplas contendo (label:str, type_input:str, requirement_level:str),
+             em que:
               - label: texto do label associado ao campo no formulário.
-              - type_input: tipo do campo (ex: InputType.TEXT, InputType.SELECT, InputType.CHECKBOX).
+              - type_input: tipo do campo (ex: InputType.TEXT,
+                InputType.SELECT, InputType.CHECKBOX).
+              - requirement_level: se "required" ou "optional"
 
         Exceções
         --------
         TypeError
-            É lançada se algum valor do `campos_map` não for uma tupla de dois
+            É lançada se algum valor do `campos_map` não for uma tupla de três
             strings, indicando erro na configuração do mapeamento.
 
         Exemplo
         -------
         ```python
         campos_map = {
-        ...     "nome": ("Nome:", InputType.TEXT),
-        ...     "sexo": ("Sexo:", InputType.CHECKBOX),
-        ...     "nacionalidade": ("Nacionalidade:", InputType.SELECT)
+        ...     "nome": ("Nome:", InputType.TEXT, "required"),
+        ...     "sexo": ("Sexo:", InputType.CHECKBOX, "required"),
+        ...     "escolaridade": ("Nacionalidade:", InputType.SELECT,
+        "optional")
         ... }
         data = {
         ...     "nome": "Maria",
         ...     "sexo": "F",
-        ...     "nacionalidade": "BRASILEIRO"
+        ...     "escolaridade": "01"
         ... }
         xpath.fill_form_fields(data, campos_map)
         ```
@@ -1213,20 +1228,22 @@ class XPathConstructor:
 
             # Verificação do tipo esperado
             campo_info = campos_map[nome_campo]
-            if not (isinstance(campo_info, tuple) and len(campo_info) == 2
+            if not (isinstance(campo_info, tuple) and len(campo_info) == 3
                     and all(isinstance(x, str) for x in campo_info)):
                 raise TypeError(
                     f"O valor de campos_map['{nome_campo}'] deve ser uma "
-                    f"tupla (label:str, type_input:str), "
-                    f"mas foi recebido: {campo_info!r}"
+                    f"tupla (label:str, type_input:str, requirement_level:str)"
+                    f", mas foi recebido: {campo_info!r}"
                 )
 
-            label, type_input = campo_info
+            label, type_input, _ = campo_info
             self.find_form_input(label, type_input).fill(
                 str(valor), type_input)
 
     def get_select_options(
-            self, timeout: int = 10, min_options: int = 2) -> dict[str, str]:
+            self, min_options: int = 2,
+            timeout: int = 10,
+            interval: float = 0.2) -> dict[str, str]:
         """
         Retorna um dicionário com todas as opções de um campo <select>.
 
@@ -1267,7 +1284,7 @@ class XPathConstructor:
             Se o select não carregar o número mínimo de opções no tempo limite.
         """
         locator = self.wait_and_get(timeout)
-        interval = 0.2
+        interval = interval if interval is not None else self.RETRY_INTERVAL
         elapsed = 0
         # Aguarda o select carregar as opções mínimas
         while elapsed < timeout:
@@ -1292,6 +1309,38 @@ class XPathConstructor:
             options_dict[value] = label
         return options_dict
 
+    def wait_for_label_visible(self, label_text: str, timeout: float = 10,
+                               interval: float = 0.2) -> bool:
+        """
+        Aguarda até que o label de um campo dependente esteja visível na página.
+        Pode ser implementado como método da própria classe.
+
+        Parâmetros
+        ----------
+        label_text : str
+            Texto exato do label esperado.
+        timeout : float
+            Tempo máximo para aguardar o label (segundos).
+        interval : float
+            Intervalo entre tentativas (segundos).
+
+        Retorno
+        -------
+        bool
+            True se o label for localizado dentro do timeout, False caso contrário.
+        """
+        elapsed = 0
+        interval = interval if interval is not None else self.RETRY_INTERVAL
+        selector = f"//label[normalize-space(text())='{label_text}']"
+        while elapsed < timeout:
+            if self.page.locator(selector).count() > 0:
+                return True
+            time.sleep(interval)
+            elapsed += interval
+        self.reset()
+        return False
+
 
 def log(xpath_constructor: XPathConstructor):
     logger.debug('\n' + xpath_constructor.xpath)
+

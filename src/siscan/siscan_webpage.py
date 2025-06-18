@@ -1,12 +1,18 @@
+import re
 import time
 
+from jsonschema.exceptions import ValidationError, SchemaError
+from pathlib import Path
+
 import logging
-from typing import Optional, Callable, Any
+from typing import Optional, Callable, Any, Union
 
 from src.siscan.exception import SiscanLoginError, \
     SiscanMenuNotFoundError, PacienteDuplicadoException, SiscanException, \
-    CartaoSusNotFoundError, SiscanInvalidFieldValueError, \
-    SiscanRequiredFieldNotProvidedError
+    CartaoSusNotFoundError, SiscanInvalidFieldValueError
+from src.siscan.utils.SchemaMapExtractor import SchemaMapExtractor
+from src.siscan.utils.schema_validator import SchemaValidator, \
+    SchemaValidationError
 from src.siscan.webtools.webpage import WebPage, RequirementLevel
 from src.siscan.webtools.xpath_constructor import XPathConstructor, InputType
 
@@ -14,74 +20,61 @@ logger = logging.getLogger(__name__)
 
 
 class SiscanWebPage(WebPage):
-    MAP_DATA_FIND_CARTAO_SUS = {
-        "cartao_sus": ("Cartão SUS", InputType.TEXT,
-                       RequirementLevel.REQUIRED),
-        "cpf": ("CPF", InputType.TEXT, RequirementLevel.OPTIONAL),
-        "nome": ("Nome", InputType.TEXT, RequirementLevel.REQUIRED),
-        "nome_da_mae": ("Nome da Mãe", InputType.TEXT,
-                        RequirementLevel.REQUIRED),
-        "data_de_nascimento": ("Data de Nascimento", InputType.DATE,
-                               RequirementLevel.REQUIRED),
-        "nacionalidade": ("Nacionalidade", InputType.SELECT,
-                          RequirementLevel.REQUIRED),
-        "sexo": ("Sexo", InputType.CHECKBOX, RequirementLevel.REQUIRED),
-    }
-    MAP_DATA_CARTAO_SUS = {
-        "raca_cor": ("Raça/Cor", InputType.TEXT, RequirementLevel.REQUIRED),
-        "uf": ("UF", InputType.TEXT, RequirementLevel.REQUIRED),
-        "municipio": ("Município", InputType.TEXT, RequirementLevel.REQUIRED),
-        "tipo_logradouro": ("Tipo Logradouro", InputType.TEXT, RequirementLevel.REQUIRED),
-        "nome_logradouro": ("Nome Logradouro", InputType.TEXT, RequirementLevel.REQUIRED),
-        "numero": ("Numero", InputType.TEXT, RequirementLevel.REQUIRED),
-        "bairro": ("Bairro", InputType.TEXT, RequirementLevel.REQUIRED),
-        "cep": ("Cep", InputType.TEXT, RequirementLevel.REQUIRED),
-    }
-    MAP_DATA_CARTAO_SUS.update(MAP_DATA_FIND_CARTAO_SUS)
-    # Remover CPF pois não é necessário no formulário
-    MAP_DATA_CARTAO_SUS.pop("cpf", None)
+    MAP_DATA_FIND_CARTAO_SUS = [
+        "cartao_sus",
+        "cpf",
+        "nome",
+        "nome_da_mae",
+        "data_de_nascimento",
+        "nacionalidade",
+        "sexo"
+    ]
+    MAP_DATA_CARTAO_SUS = [
+        "raca_cor",
+        "uf",
+        "municipio",
+        "tipo_logradouro",
+        "nome_logradouro",
+        "numero",
+        "bairro",
+        "cep"
+    ]
+    MAP_SCHEMA_FIELDS = MAP_DATA_FIND_CARTAO_SUS + MAP_DATA_CARTAO_SUS
 
-    # Mapeamento de campos para valores específicos
-    FIELDS_MAP = {
-        "sexo": {
-            "M": "M",  # Masculino
-            "F": "F",  # Feminino
-        }
-    }
+    def __init__(self, url_base: str, user: str, password: str,
+                 schema_path: Union[str, Path]):
+        super().__init__(url_base, user, password, schema_path)
+        map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
+            schema_path, fields=SiscanWebPage.MAP_SCHEMA_FIELDS)
+        SiscanWebPage.MAP_DATA_LABEL = map_data_label
+        self.FIELDS_MAP.update(fields_map)
 
     def validation(self, data: dict):
-        for nome_campo in self.FIELDS_MAP.keys():
-            _, _, requirement_level = self.get_field_metadata(
-                nome_campo
+        try:
+            SchemaValidator.validate_data(data, self.schema_path)
+            logger.debug("Dados válidos")
+        except SchemaValidationError as ve:
+            # Exemplo: acesso aos detalhes
+            for campo in ve.required_missing:
+                logger.error("Campo obrigatório ausente: %s", campo)
+            for err in ve.pattern_errors:
+                logger.error("Erro de padrão: %s", err.message)
+            for err in ve.enum_errors:
+                logger.error("Erro de enum: %s", err.message)
+            for field_required, field_trigger, trigger_value in ve.conditional_failure:
+                logger.error("Campo condicional: '%s' (devido a '%s' == '%s')",
+                             field_required, field_trigger, trigger_value)
+            for err in ve.outros_erros:
+                logger.error("Outro erro: %s", err.message)
+
+            raise SiscanInvalidFieldValueError(
+                context=None,
+                data=data,
+                message=ve.message
             )
-            if nome_campo not in data.keys():
-                if requirement_level.is_required():
-                    raise SiscanRequiredFieldNotProvidedError(
-                        context=None,
-                        field_name=nome_campo
-                    )
-            elif isinstance(data.get(nome_campo), list):
-                # Se o campo for uma lista, verifica se algum valor é válido
-                if not any(item in self.FIELDS_MAP[nome_campo].keys()
-                           for item in data[nome_campo]):
-                    raise SiscanInvalidFieldValueError(
-                        context=None,
-                        field_name=nome_campo,
-                        data=data,
-                        options_values=self.FIELDS_MAP[nome_campo].keys()
-                    )
-            elif not data.get(nome_campo) in self.FIELDS_MAP[nome_campo].keys():
-                raise SiscanInvalidFieldValueError(
-                    context=None,
-                    field_name=nome_campo,
-                    data=data,
-                    options_values=self.FIELDS_MAP[nome_campo].keys()
-            )
-        for key, value in data.items():
-            if not value:
-                raise SiscanInvalidFieldValueError(
-                    context=None,
-                    message="Campo '{key}' não pode estar vazio.")
+
+        except ValidationError as ve:
+            logger.error(ve)
 
     def authenticate(self):
         """
@@ -299,6 +292,157 @@ class SiscanWebPage(WebPage):
         xpath_obj = XPathConstructor(
             self.context,
             xpath=f"//fieldset[legend[normalize-space(text())='{card_name}']]"
-                  f"//label[normalize-space(text())={field_name}]"
+                  f"//label[normalize-space(text())='{field_name}']"
                   f"/following-sibling::input[1]")
+
         xpath_obj.fill(value)
+
+    def preencher_campo_condicional(
+            self,
+            data: dict,
+            campo_chave: str,
+            valor_verdadeiro: str,
+            campos_dependentes: list,
+            label_dependente: str = None,
+            erro_dependente_msg: str = None,
+            timeout_label: float = 10
+    ):
+        """
+        Método genérico para preenchimento e validação de campos dependentes
+        condicionados ao valor de um campo chave.
+
+        Parâmetros
+        ----------
+        data : dict
+            Dicionário de dados do formulário.
+        campo_chave : str
+            Nome do campo condicional (ex: 'fez_mamografia_alguma_vez').
+        valor_verdadeiro : str
+            Valor do campo_chave que indica preenchimento dos campos dependentes.
+        campos_dependentes : list
+            Lista de campos dependentes.
+        label_dependente : str, opcional
+            Label do campo dependente (se único).
+        erro_dependente_msg : str, opcional
+            Mensagem de erro customizada para preenchimento indevido.
+        timeout_label : float, opcional
+            Tempo máximo para aguardar o campo dependente (em segundos).
+        """
+        text, value = self.select_value(campo_chave, data)
+        for campo_dependente in campos_dependentes:
+            valor_dependente = data.get(campo_dependente)
+            # Só deve preencher campo dependente se resposta for verdadeira
+            if text == valor_verdadeiro:
+                if valor_dependente:
+                    label_campo = label_dependente or self.get_field_label(
+                        campo_dependente)
+                    # Aguarda o label/campo dependente surgir na página (AJAX)
+                    xpath = XPathConstructor(self.context)
+                    if not xpath.wait_for_label_visible(label_campo,
+                                                       timeout=timeout_label):
+                        raise TimeoutError(
+                            f"Label '{label_campo}' para campo dependente '{campo_dependente}' "
+                            f"não apareceu após selecionar '{campo_chave}'."
+                        )
+                    time.sleep(0.2)
+                    self.fill_field_in_card(
+                        card_name=label_campo,
+                        field_name=label_campo,
+                        value=valor_dependente
+                    )
+            else:
+                # Se não deveria preencher e o valor foi fornecido, lança exceção
+                if valor_dependente:
+                    msg = erro_dependente_msg or (
+                        f"O campo '{campo_dependente}' não deve ser preenchido"
+                        f" se '{campo_chave}' for diferente de "
+                        f"'{valor_verdadeiro}'."
+                    )
+                    raise SiscanInvalidFieldValueError(
+                        context=None, field_name=campo_dependente,
+                        data=data, message=msg
+                    )
+            # Limpa do dicionário após processar
+            data.pop(campo_dependente, None)
+        data.pop(campo_chave, None)
+
+    def preencher_campo_dependente_multiplo(
+            self,
+            data: dict,
+            campo_chave: str,
+            condicoes_dependentes: dict,
+            label_dependentes: dict = None,
+            erro_dependente_msg: str = None,
+            timeout: int = 10
+    ):
+        """
+        Preenche campos dependentes condicionais com base no valor do campo chave,
+        aguardando o carregamento dinâmico via AJAX se necessário.
+
+        Parâmetros:
+        -----------
+        data : dict
+            Dicionário com os dados do formulário.
+        campo_chave : str
+            Nome do campo chave a ser avaliado.
+        condicoes_dependentes : dict
+            Mapeamento do valor do campo chave para lista de campos dependentes obrigatórios.
+        label_dependentes : dict
+            Mapeamento campo -> label de exibição (opcional).
+        erro_dependente_msg : str
+            Mensagem de erro customizada (opcional).
+        timeout : int
+            Tempo máximo para aguardar o campo dependente (em segundos).
+        """
+
+        valor = data.get(campo_chave)
+        dependentes = condicoes_dependentes.get(valor, [])
+        labels = label_dependentes or {}
+
+        # Clique no campo-chave, se necessário (personalize conforme sua API)
+        self.select_radio_value(campo_chave, valor)
+
+        for dep in dependentes:
+            valor_dep = data.get(dep)
+            if not valor_dep:
+                raise SiscanInvalidFieldValueError(
+                    context=None,
+                    field_name=dep,
+                    data=data,
+                    message=erro_dependente_msg or
+                            f"O campo {dep} é obrigatório para o valor "
+                            f"'{valor}' de {campo_chave}."
+                )
+
+            # Retry aguardando o campo dependente ficar disponível após AJAX
+            selector_label = self.xpath.get_label_selector(
+                dep, labels.get(dep, "Ano:"))
+            elapsed = 0
+            interval = 0.5
+            found = False
+            while elapsed < timeout:
+                try:
+                    if self.page.query_selector(selector_label):
+                        found = True
+                        break
+                except Exception as e:
+                    logger.debug(
+                        f"Tentativa de localizar campo dependente falhou: {e}")
+                time.sleep(interval)
+                elapsed += interval
+
+            if not found:
+                raise TimeoutError(
+                    f"Campo dependente '{dep}' não apareceu após selecionar "
+                    f"'{campo_chave}'='{valor}'.")
+
+            # Preencher o campo dependente
+            self.fill_field_in_card(
+                card_name=self.get_field_label(dep),
+                field_name=labels.get(dep, "Ano:"),
+                value=valor_dep
+            )
+            data.pop(dep, None)
+
+        data.pop(campo_chave, None)
+
