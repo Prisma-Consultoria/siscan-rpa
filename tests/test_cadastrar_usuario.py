@@ -1,7 +1,6 @@
-import os
 import sqlite3
 import pytest
-from main import app, get_db
+from main import app
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):

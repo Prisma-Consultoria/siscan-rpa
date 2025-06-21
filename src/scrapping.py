@@ -5,7 +5,7 @@ from src.siscan.utils.schema_validator import SchemaValidator
 # Ativa o logging no nível DEBUG para todo o projeto
 logging.basicConfig(
     level=logging.DEBUG,  # Troque para logging.INFO caso deseje menos verbosidade
-    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 
 from pathlib import Path
@@ -13,8 +13,7 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
-from src.siscan.requisicao_exame_mamografia import \
-    RequisicaoExameMamografia
+from src.siscan.requisicao_exame_mamografia import RequisicaoExameMamografia
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +27,8 @@ def main():
 
     requisicao = RequisicaoExameMamografia(
         url_base=os.getenv("SISCAN_URL", "https://siscan.saude.gov.br/"),
-        user=os.getenv("SISCAN_USER"),
-        password=os.getenv("SISCAN_PASSWORD")
+        user=os.getenv("SISCAN_USER", ""),
+        password=os.getenv("SISCAN_PASSWORD", ""),
     )
 
     dados_path = Path(__file__).parent / "dados.json"

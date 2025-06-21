@@ -1,12 +1,46 @@
 import os
 import sqlite3
-import pytest
-from main import app, get_db
+import sys
+import json
+from pathlib import Path
 
-@pytest.fixture(scope="session")
-def test_db(tmp_path_factory, monkeypatch):
+import pytest
+from faker import Faker
+from validate_docbr import CNS
+import brazilcep.client as bc
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization
+
+# make src available as 'main'
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+priv = ROOT / "rsa_private_key.pem"
+pub = ROOT / "rsa_public_key.pem"
+if not priv.exists() or not pub.exists():
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    priv.write_bytes(
+        key.private_bytes(
+            serialization.Encoding.PEM,
+            serialization.PrivateFormat.PKCS8,
+            serialization.NoEncryption(),
+        )
+    )
+    pub.write_bytes(
+        key.public_key().public_bytes(
+            serialization.Encoding.PEM,
+            serialization.PublicFormat.SubjectPublicKeyInfo,
+        )
+    )
+
+from main import app
+
+@pytest.fixture
+def test_db(tmp_path_factory):
     db_path = tmp_path_factory.mktemp("data") / "test.db"
-    monkeypatch.setenv("DATABASE_URL", str(db_path))
+    os.environ["DATABASE_URL"] = str(db_path)
+    import main
+    main.DATABASE = str(db_path)
 
     conn = sqlite3.connect(str(db_path))
     conn.execute("""
@@ -24,3 +58,84 @@ def client(test_db):
     app.config["TESTING"] = True
     with app.test_client() as client:
         yield client
+
+@pytest.fixture(autouse=True)
+def mock_run_rpa(monkeypatch):
+    def fake_run_rpa(form_type, data):
+        return {"success": True, "screenshots": []}
+
+    monkeypatch.setattr("main._run_rpa", fake_run_rpa)
+
+@pytest.fixture(scope="session")
+def fake_json_file(tmp_path_factory):
+    """Gera arquivo JSON com dados de exemplo."""
+    fake = Faker("pt_BR")
+    cns = CNS()
+
+    base_year = fake.random_int(min=2000, max=2025)
+
+    data = {
+        "cartao_sus": cns.generate(),
+        "nome": fake.name().upper(),
+        "apelido": fake.first_name().upper(),
+        "data_de_nascimento": fake.date_of_birth(minimum_age=30, maximum_age=80).strftime("%d/%m/%Y"),
+        "nacionalidade": "BRASILEIRO",
+        "sexo": fake.random_element(elements=("F", "M")),
+        "nome_da_mae": fake.name_female().upper(),
+        "raca_cor": "BRANCA",
+        "escolaridade": "4",
+        "uf": fake.estado_sigla(),
+        "municipio": fake.city().upper(),
+        "tipo_logradouro": "RUA",
+        "nome_logradouro": fake.street_name().upper(),
+        "numero": str(fake.random_int(min=1, max=9999)),
+        "bairro": fake.bairro().upper(),
+        "cep": bc._format_cep(fake.postcode()),
+        "ponto_de_referencia": "PONTO DE REFERÊNCIA",
+        "unidade_requisitante": fake.numerify("#######"),
+        "prestador": fake.company().upper(),
+        "num_prontuario": fake.numerify("#########"),
+        "tem_nodulo_ou_caroco_na_mama": ["01", "02"],
+        "apresenta_risco_elevado_para_cancer_mama": "01",
+        "fez_mamografia_alguma_vez": "01",
+        "ano_que_fez_a_ultima_mamografia": str(base_year),
+        "antes_desta_consulta_teve_as_mamas_examinadas_por_um_profissional": "03",
+        "fez_radioterapia_na_mama_ou_no_plastrao": "01",
+        "radioterapia_localizacao": "03",
+        "ano_da_radioterapia_direita": str(base_year),
+        "ano_da_radioterapia_esquerda": str(base_year),
+        "fez_cirurgia_de_mama": "01",
+        "ano_biopsia_cirurgica_incisional_direita": str(base_year),
+        "ano_biopsia_cirurgica_incisional_esquerda": str(base_year + 1),
+        "ano_biopsia_cirurgica_excisional_direita": str(base_year + 2),
+        "ano_biopsia_cirurgica_excisional_esquerda": str(base_year + 3),
+        "ano_segmentectomia_direita": str(base_year + 4),
+        "ano_segmentectomia_esquerda": str(base_year + 5),
+        "ano_centralectomia_direita": str(base_year + 6),
+        "ano_centralectomia_esquerda": str(base_year + 7),
+        "ano_dutectomia_direita": str(base_year + 8),
+        "ano_dutectomia_esquerda": str(base_year + 9),
+        "ano_mastectomia_direita": str(base_year + 10),
+        "ano_mastectomia_esquerda": str(base_year + 11),
+        "ano_mastectomia_poupadora_pele_direita": str(base_year + 12),
+        "ano_mastectomia_poupadora_pele_esquerda": str(base_year + 13),
+        "ano_mastectomia_poupadora_pele_complexo_papilar_direita": str(base_year + 14),
+        "ano_mastectomia_poupadora_pele_complexo_papilar_esquerda": str(base_year + 15),
+        "ano_linfadenectomia_axilar_direita": str(base_year + 16),
+        "ano_linfadenectomia_axilar_esquerda": str(base_year + 17),
+        "ano_biopsia_linfonodo_sentinela_direita": str(base_year + 18),
+        "ano_biopsia_linfonodo_sentinela_esquerda": str(base_year + 19),
+        "ano_reconstrucao_mamaria_direita": str(base_year + 20),
+        "ano_reconstrucao_mamaria_esquerda": str(base_year + 21),
+        "ano_mastoplastia_redutora_direita": str(base_year + 22),
+        "ano_mastoplastia_redutora_esquerda": str(base_year + 23),
+        "ano_inclusao_implantes_direita": str(base_year + 24),
+        "ano_inclusao_implantes_esquerda": str(base_year + 25),
+        "mamografia_de_rastreamento": "01",
+        "data_da_solicitacao": fake.date_between(start_date="-30d", end_date="today").strftime("%d/%m/%Y"),
+    }
+
+    path = tmp_path_factory.mktemp("data") / "dados.json"
+    with open(path, "w", encoding="utf-8") as fp:
+        json.dump(data, fp, ensure_ascii=False, indent=2)
+    return path
