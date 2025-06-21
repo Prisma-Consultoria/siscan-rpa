@@ -5,3 +5,6 @@ users.db
 rsa_private_key.pem
 rsa_public_key.pem
 static/tmp/
+
+*.png
+/src/dados.json

@@ -2,3 +2,4 @@ Flask
 cryptography
 playwright
 pytest
+python-dotenv==1.1.0

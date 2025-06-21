@@ -1,0 +1,542 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MamografiaRequest",
+  "type": "object",
+  "properties": {
+    "cartao_sus": {
+      "type": "string",
+      "minLength": 15,
+      "maxLength": 15,
+      "title": "Cartão SUS",
+      "description": "Número do Cartão SUS (15 dígitos)",
+      "x-widget": "text"
+    },
+    "cpf": {
+      "type": ["string", "null"],
+      "pattern": "^\\d{11}$",
+      "title": "CPF",
+      "description": "CPF do paciente (apenas números, 11 dígitos) - opcional",
+      "x-widget": "text"
+    },
+    "nome": {
+      "type": "string",
+      "minLength": 1,
+      "title": "Nome",
+      "description": "Nome completo do paciente",
+      "x-widget": "text"
+    },
+    "nome_da_mae": {
+      "type": "string",
+      "minLength": 1,
+      "title": "Nome da Mãe",
+      "description": "Nome completo da mãe do paciente",
+      "x-widget": "text"
+    },
+    "data_de_nascimento": {
+      "type": "string",
+      "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
+      "title": "Data de Nascimento",
+      "description": "Data de nascimento no formato DD/MM/AAAA",
+      "x-widget": "date"
+    },
+    "nacionalidade": {
+      "type": "string",
+      "title": "Nacionalidade",
+      "description": "Nacionalidade do paciente",
+      "x-widget": "select"
+    },
+    "sexo": {
+      "type": "string",
+      "enum": ["M", "F"],
+      "title": "Sexo",
+      "description": "Sexo biológico do paciente (M=Masculino, F=Feminino)",
+      "x-widget": "checkbox"
+    },
+    "raca_cor": {
+      "type": "string",
+      "title": "Raça/Cor",
+      "description": "Raça/Cor declarada pelo paciente",
+      "x-widget": "text"
+    },
+    "uf": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 2,
+      "title": "UF",
+      "description": "Unidade Federativa (UF) com 2 letras",
+      "x-widget": "text"
+    },
+    "municipio": {
+      "type": "string",
+      "title": "Município",
+      "description": "Nome do município de residência",
+      "x-widget": "text"
+    },
+    "tipo_logradouro": {
+      "type": "string",
+      "title": "Tipo Logradouro",
+      "description": "Tipo de logradouro (ex: Rua, Avenida)",
+      "x-widget": "text"
+    },
+    "nome_logradouro": {
+      "type": "string",
+      "title": "Nome Logradouro",
+      "description": "Nome do logradouro",
+      "x-widget": "text"
+    },
+    "numero": {
+      "type": "string",
+      "title": "Numero",
+      "description": "Número do endereço",
+      "x-widget": "text"
+    },
+    "bairro": {
+      "type": "string",
+      "title": "Bairro",
+      "description": "Bairro de residência",
+      "x-widget": "text"
+    },
+    "cep": {
+      "type": "string",
+      "pattern": "^\\d{8}$",
+      "title": "Cep",
+      "description": "CEP (apenas números, 8 dígitos)",
+      "x-widget": "text"
+    },
+    "apelido": {
+      "type": ["string", "null"],
+      "title": "Apelido",
+      "description": "Apelido do paciente (opcional)",
+      "x-widget": "text"
+    },
+    "escolaridade": {
+      "type": "string",
+      "enum": ["0", "1", "2", "3", "4", "5"],
+      "title": "Escolaridade:",
+      "description": "Nível de escolaridade (0=Selecione, 1=Analfabeto, 2=Ensino Fundamental Incompleto, 3=Ensino Fundamental Completo, 4=Ensino Médio Completo, 5=Ensino Superior Completo)",
+      "x-widget": "select"
+    },
+    "ponto_de_referencia": {
+      "type": ["string", "null"],
+      "title": "Ponto de Referência",
+      "description": "Ponto de referência (opcional)",
+      "x-widget": "text"
+    },
+    "unidade_requisitante": {
+      "type": "string",
+      "title": "Unidade Requisitante",
+      "description": "CNES da unidade requisitante",
+      "x-widget": "select"
+    },
+    "prestador": {
+      "type": "string",
+      "title": "Prestador",
+      "description": "Nome do prestador de serviço",
+      "x-widget": "select"
+    },
+    "num_prontuario": {
+      "type": "string",
+      "title": "Nº do Prontuário",
+      "description": "Número do prontuário do paciente",
+      "x-widget": "text"
+    },
+    "tem_nodulo_ou_caroco_na_mama": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["01", "02", "04"]
+      },
+      "title": "TEM NÓDULO OU CAROÇO NA MAMA?",
+      "description": "Presença de nódulo ou caroço na mama: 01=Sim Mama Direita, 02=Sim Mama Esquerda, 04=Não",
+      "x-widget": "checkbox"
+    },
+    "apresenta_risco_elevado_para_cancer_mama": {
+      "type": "string",
+      "enum": ["01", "02", "03"],
+      "title": "APRESENTA RISCO ELEVADO PARA CÂNCER DE MAMA?",
+      "description": "Risco elevado para câncer de mama: 01=Sim, 02=Não, 03=Não sabe",
+      "x-widget": "radio"
+    },
+    "antes_desta_consulta_teve_as_mamas_examinadas_por_um_profissional": {
+      "type": "string",
+      "enum": ["01", "02", "03"],
+      "title": "ANTES DESTA CONSULTA, TEVE AS MAMAS EXAMINADAS POR UM PROFISSIONAL DE SAÚDE?",
+      "description": "As mamas já foram examinadas por profissional: 01=Sim, 02=Nunca, 03=Não sabe",
+      "x-widget": "radio"
+    },
+    "fez_mamografia_alguma_vez": {
+      "type": "string",
+      "enum": ["01", "02", "03"],
+      "title": "FEZ MAMOGRAFIA ALGUMA VEZ?",
+      "description": "Já fez mamografia alguma vez: 01=Sim, 02=Não, 03=Não sabe",
+      "x-widget": "radio"
+    },
+    "ano_que_fez_a_ultima_mamografia": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "QUANDO FEZ A ÚLTIMA MAMOGRAFIA?",
+      "description": "Ano da última mamografia (AAAA)",
+      "x-widget": "text"
+    },
+    "fez_radioterapia_na_mama_ou_no_plastrao": {
+      "type": "string",
+      "enum": ["01", "02", "03"],
+      "title": "FEZ RADIOTERAPIA NA MAMA OU NO PLASTRÃO?",
+      "description": "Fez radioterapia na mama ou plastrão: 01=Sim, 02=Não, 03=Não sabe",
+      "x-widget": "radio"
+    },
+    "radioterapia_localizacao": {
+      "type": ["string", "null"],
+      "enum": ["01", "02", "03", null],
+      "title": "RADIOTERAPIA - LOCALIZAÇÃO",
+      "description": "Localização da radioterapia: 01=Esquerda, 02=Direita, 03=Ambas",
+      "x-widget": "radio"
+    },
+    "ano_da_radioterapia_direita": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "ANO DA RADIOTERAPIA - DIREITA",
+      "description": "Ano da radioterapia - mama direita (AAAA)",
+      "x-widget": "text"
+    },
+    "ano_da_radioterapia_esquerda": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "ANO DA RADIOTERAPIA - ESQUERDA",
+      "description": "Ano da radioterapia - mama esquerda (AAAA)",
+      "x-widget": "text"
+    },
+    "fez_cirurgia_de_mama": {
+      "type": "string",
+      "enum": ["01", "02"],
+      "title": "FEZ CIRURGIA DE MAMA?",
+      "description": "Fez cirurgia de mama: 01=Sim, 02=Não",
+      "x-widget": "radio"
+    },
+    "ano_biopsia_cirurgica_incisional_direita": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Biópsia cirúrgica incisional (Direita)",
+      "description": "Ano da biópsia cirúrgica incisional (direita)",
+      "x-widget": "text"
+    },
+    "ano_biopsia_cirurgica_incisional_esquerda": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Biópsia cirúrgica incisional (Esquerda)",
+      "description": "Ano da biópsia cirúrgica incisional (esquerda)",
+      "x-widget": "text"
+    },
+    "ano_biopsia_cirurgica_excisional_direita": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Biópsia cirúrgica excisional (Direita)",
+      "description": "Ano da biópsia cirúrgica excisional (direita)",
+      "x-widget": "text"
+    },
+    "ano_biopsia_cirurgica_excisional_esquerda": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Biópsia cirúrgica excisional (Esquerda)",
+      "description": "Ano da biópsia cirúrgica excisional (esquerda)",
+      "x-widget": "text"
+    },
+    "ano_segmentectomia_direita": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Segmentectomia (Direita)",
+      "description": "Ano da segmentectomia (direita)",
+      "x-widget": "text"
+    },
+    "ano_segmentectomia_esquerda": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Segmentectomia (Esquerda)",
+      "description": "Ano da segmentectomia (esquerda)",
+      "x-widget": "text"
+    },
+    "ano_centralectomia_direita": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Centralectomia (Direita)",
+      "description": "Ano da centralectomia (direita)",
+      "x-widget": "text"
+    },
+    "ano_centralectomia_esquerda": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Centralectomia (Esquerda)",
+      "description": "Ano da centralectomia (esquerda)",
+      "x-widget": "text"
+    },
+    "ano_dutectomia_direita": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Dutectomia (Direita)",
+      "description": "Ano da dutectomia (direita)",
+      "x-widget": "text"
+    },
+    "ano_dutectomia_esquerda": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Dutectomia (Esquerda)",
+      "description": "Ano da dutectomia (esquerda)",
+      "x-widget": "text"
+    },
+    "ano_mastectomia_direita": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Mastectomia (Direita)",
+      "description": "Ano da mastectomia (direita)",
+      "x-widget": "text"
+    },
+    "ano_mastectomia_esquerda": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Mastectomia (Esquerda)",
+      "description": "Ano da mastectomia (esquerda)",
+      "x-widget": "text"
+    },
+    "ano_mastectomia_poupadora_pele_direita": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Mastectomia poupadora de pele (Direita)",
+      "description": "Ano da mastectomia poupadora de pele (direita)",
+      "x-widget": "text"
+    },
+    "ano_mastectomia_poupadora_pele_esquerda": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Mastectomia poupadora de pele (Esquerda)",
+      "description": "Ano da mastectomia poupadora de pele (esquerda)",
+      "x-widget": "text"
+    },
+    "ano_mastectomia_poupadora_pele_complexo_papilar_direita": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Mastectomia poupadora de pele e complexo aréolo papilar (Direita)",
+      "description": "Ano da mastectomia poupadora de pele e complexo aréolo papilar (direita)",
+      "x-widget": "text"
+    },
+    "ano_mastectomia_poupadora_pele_complexo_papilar_esquerda": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Mastectomia poupadora de pele e complexo aréolo papilar (Esquerda)",
+      "description": "Ano da mastectomia poupadora de pele e complexo aréolo papilar (esquerda)",
+      "x-widget": "text"
+    },
+    "ano_linfadenectomia_axilar_direita": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Linfadenectomia axilar (Direita)",
+      "description": "Ano da linfadenectomia axilar (direita)",
+      "x-widget": "text"
+    },
+    "ano_linfadenectomia_axilar_esquerda": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Linfadenectomia axilar (Esquerda)",
+      "description": "Ano da linfadenectomia axilar (esquerda)",
+      "x-widget": "text"
+    },
+    "ano_biopsia_linfonodo_sentinela_direita": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Biópsia de linfonodo sentinela (Direita)",
+      "description": "Ano da biópsia de linfonodo sentinela (direita)",
+      "x-widget": "text"
+    },
+    "ano_biopsia_linfonodo_sentinela_esquerda": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Biópsia de linfonodo sentinela (Esquerda)",
+      "description": "Ano da biópsia de linfonodo sentinela (esquerda)",
+      "x-widget": "text"
+    },
+    "ano_reconstrucao_mamaria_direita": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Reconstrução mamária (Direita)",
+      "description": "Ano da reconstrução mamária (direita)",
+      "x-widget": "text"
+    },
+    "ano_reconstrucao_mamaria_esquerda": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Reconstrução mamária (Esquerda)",
+      "description": "Ano da reconstrução mamária (esquerda)",
+      "x-widget": "text"
+    },
+    "ano_mastoplastia_redutora_direita": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Mastoplastia redutora (Direita)",
+      "description": "Ano da mastoplastia redutora (direita)",
+      "x-widget": "text"
+    },
+    "ano_mastoplastia_redutora_esquerda": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Mastoplastia redutora (Esquerda)",
+      "description": "Ano da mastoplastia redutora (esquerda)",
+      "x-widget": "text"
+    },
+    "ano_inclusao_implantes_direita": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Inclusão de implantes (Direita)",
+      "description": "Ano da inclusão de implantes (direita)",
+      "x-widget": "text"
+    },
+    "ano_inclusao_implantes_esquerda": {
+      "type": "string",
+      "pattern": "^\\d{4}$",
+      "title": "Inclusão de implantes (Esquerda)",
+      "description": "Ano da inclusão de implantes (esquerda)",
+      "x-widget": "text"
+    },
+    "tipo_exame_mama": {
+      "type": "string",
+      "enum": ["01", "03", "05"],
+      "title": "Mama",
+      "description": "Tipo de exame de mama: 01=Mamografia, 03=Cito de Mama, 05=Histo de Mama",
+      "x-widget": "radio"
+    },
+    "tipo_de_mamografia": {
+      "type": "string",
+      "enum": ["Diagnóstica", "Rastreamento"],
+      "title": "TIPO DE MAMOGRAFIA",
+      "description": "Tipo de mamografia: 01=Diagnóstica, 02=Rastreamento",
+      "x-widget": "radio"
+    },
+    "mamografia_de_rastreamento": {
+      "type": ["string", "null"],
+      "enum": ["01", "02", "03", null],
+      "title": "MAMOGRAFIA DE RASTREAMENTO",
+      "description": "Indicação da mamografia de rastreamento: 01=População alvo, 02=Risco elevado, 03=Paciente já tratado",
+      "x-widget": "radio"
+    },
+    "data_da_solicitacao": {
+      "type": "string",
+      "pattern": "^\\d{2}/\\d{2}/\\d{4}$",
+      "title": "Data da Solicitação",
+      "description": "Data da solicitação do exame no formato DD/MM/AAAA",
+      "x-widget": "date"
+    }
+  },
+  "required": [
+    "cartao_sus",
+    "nome",
+    "data_de_nascimento",
+    "nacionalidade",
+    "sexo",
+    "nome_da_mae",
+    "raca_cor",
+    "uf",
+    "municipio",
+    "tipo_logradouro",
+    "nome_logradouro",
+    "numero",
+    "bairro",
+    "cep",
+    "unidade_requisitante",
+    "prestador",
+    "num_prontuario",
+    "tem_nodulo_ou_caroco_na_mama",
+    "apresenta_risco_elevado_para_cancer_mama",
+    "fez_mamografia_alguma_vez",
+    "antes_desta_consulta_teve_as_mamas_examinadas_por_um_profissional",
+    "fez_radioterapia_na_mama_ou_no_plastrao",
+    "fez_cirurgia_de_mama",
+    "tipo_de_mamografia"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "tem_nodulo_ou_caroco_na_mama": {
+            "contains": { "const": "04" }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "tem_nodulo_ou_caroco_na_mama": {
+            "minItems": 1,
+            "maxItems": 1,
+            "items": { "const": "04" }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "fez_mamografia_alguma_vez": { "const": "01" } } },
+      "then": { "required": ["ano_que_fez_a_ultima_mamografia"] },
+      "else": {
+        "not": { "required": ["ano_que_fez_a_ultima_mamografia"] }
+      }
+    },
+    {
+      "if": { "properties": { "fez_radioterapia_na_mama_ou_no_plastrao": { "const": "01" } } },
+      "then": { "required": ["radioterapia_localizacao"] },
+      "else": {
+        "not": { "required": ["radioterapia_localizacao"] }
+      }
+    },
+    {
+      "if": { "properties": { "radioterapia_localizacao": { "const": "02" } } },
+      "then": { "required": ["ano_da_radioterapia_direita"] }
+    },
+    {
+      "if": { "properties": { "radioterapia_localizacao": { "const": "01" } } },
+      "then": { "required": ["ano_da_radioterapia_esquerda"] }
+    },
+    {
+      "if": { "properties": { "radioterapia_localizacao": { "const": "03" } } },
+      "then": { "required": ["ano_da_radioterapia_direita", "ano_da_radioterapia_esquerda"] }
+    },
+    {
+      "if": { "properties": { "fez_cirurgia_de_mama": { "const": "01" } } },
+      "else": {
+        "not": {
+          "anyOf": [
+            { "required": ["ano_biopsia_cirurgica_incisional_direita"] },
+            { "required": ["ano_biopsia_cirurgica_incisional_esquerda"] },
+            { "required": ["ano_biopsia_cirurgica_excisional_direita"] },
+            { "required": ["ano_biopsia_cirurgica_excisional_esquerda"] },
+            { "required": ["ano_segmentectomia_direita"] },
+            { "required": ["ano_segmentectomia_esquerda"] },
+            { "required": ["ano_centralectomia_direita"] },
+            { "required": ["ano_centralectomia_esquerda"] },
+            { "required": ["ano_dutectomia_direita"] },
+            { "required": ["ano_dutectomia_esquerda"] },
+            { "required": ["ano_mastectomia_direita"] },
+            { "required": ["ano_mastectomia_esquerda"] },
+            { "required": ["ano_mastectomia_poupadora_pele_direita"] },
+            { "required": ["ano_mastectomia_poupadora_pele_esquerda"] },
+            { "required": ["ano_mastectomia_poupadora_pele_complexo_papilar_direita"] },
+            { "required": ["ano_mastectomia_poupadora_pele_complexo_papilar_esquerda"] },
+            { "required": ["ano_linfadenectomia_axilar_direita"] },
+            { "required": ["ano_linfadenectomia_axilar_esquerda"] },
+            { "required": ["ano_biopsia_linfonodo_sentinela_direita"] },
+            { "required": ["ano_biopsia_linfonodo_sentinela_esquerda"] },
+            { "required": ["ano_reconstrucao_mamaria_direita"] },
+            { "required": ["ano_reconstrucao_mamaria_esquerda"] },
+            { "required": ["ano_mastoplastia_redutora_direita"] },
+            { "required": ["ano_mastoplastia_redutora_esquerda"] },
+            { "required": ["ano_inclusao_implantes_direita"] },
+            { "required": ["ano_inclusao_implantes_esquerda"] }
+          ]
+        }
+      }
+    },
+    {
+      "if": { "properties": { "tipo_de_mamografia": { "const": "Rastreamento" } } },
+      "then": { "required": ["mamografia_de_rastreamento"] },
+      "else": {
+        "not": { "required": ["mamografia_de_rastreamento"] }
+      }
+    }
+  ],
+  "additionalProperties": false
+}
