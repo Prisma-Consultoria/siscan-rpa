@@ -1,16 +1,13 @@
-from typing import Union
 import re
 
 from pathlib import Path
 
 import logging
 
-from src.siscan.exception import CartaoSusNotFoundError, \
-    SiscanInvalidFieldValueError
+from src.siscan.exception import CartaoSusNotFoundError
 from src.siscan.requisicao_exame import RequisicaoExame
 from src.siscan.utils.SchemaMapExtractor import SchemaMapExtractor
-from src.siscan.webtools.webpage import RequirementLevel
-from src.siscan.webtools.xpath_constructor import XPathConstructor, InputType
+from src.siscan.webtools.xpath_constructor import XPathConstructor
 
 logger = logging.getLogger(__name__)
 

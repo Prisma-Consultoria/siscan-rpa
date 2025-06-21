@@ -1367,7 +1367,7 @@ class XPathConstructor:
     def get_select_options(
             self, min_options: int = 2,
             timeout: float = DEFAULT_TIMEOUT,
-            interval: float = None) -> dict[str, str]:
+            interval: float | None = None) -> dict[str, str]:
         """
         Retorna um dicionário com todas as opções de um campo <select>.
 

@@ -25,7 +25,10 @@ class RequirementLevel(Enum):
 
 
 class WebPage(ABC):
-    # Mapeamento de campos para valores específicos
+    """
+    Classe abstrata para navegação de páginas desde a página de origem e autenticação
+    """
+
     FIELDS_MAP: dict[str, dict[str, str]] = {}
 
     def __init__(self, url_base: str, user: str, password: str,
