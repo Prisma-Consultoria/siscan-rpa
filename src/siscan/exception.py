@@ -1,3 +1,4 @@
+from typing import Iterable
 from utils import messages as msg
 
 
@@ -6,7 +7,7 @@ class SiscanException(Exception):
     Exceção base para falhas no SIScan.
     Permite extrair mensagens de erro da página Playwright.
     """
-    def __init__(self, ctx, m=None):
+    def __init__(self, ctx, m: str | None = None):
         self.ctx = ctx
         self.msg = m or ""
         if ctx is not None:
@@ -55,7 +56,8 @@ class SiscanMenuNotFoundError(SiscanException):
     """
     Exceção disparada quando um menu ou ação de menu não é encontrado no SIScan.
     """
-    def __init__(self, ctx, menu_name: str = None, action: str = None, m: str = None):
+    def __init__(self, ctx, menu_name: str | None = None,
+                 action: str | None = None, m: str | None = None):
         if m is not None:
             mensagem = m
         elif menu_name and action:
@@ -71,9 +73,9 @@ class CartaoSusNotFoundError(SiscanException):
     """
     Exceção disparada quando o Cartão SUS informado não é localizado no SIScan.
     """
-    def __init__(self, ctx, cartao_sus: str = None, m: str = None):
+    def __init__(self, ctx, cartao_sus: str | None = None, m: str | None = None):
         if m is not None:
-            mensagem = msg
+            mensagem = m
         elif cartao_sus:
             mensagem = msg.CARTAO_SUS_NOT_FOUND_VAL(cartao_sus)
         else:
@@ -86,7 +88,7 @@ class PacienteDuplicadoException(SiscanException):
     Exceção disparada quando mais de um paciente é encontrado na busca do SIScan,
     impossibilitando a seleção automática e exigindo intervenção manual.
     """
-    def __init__(self, ctx, m: str = None):
+    def __init__(self, ctx, m: str | None = None):
         if m is not None:
             mensagem = m
         else:
@@ -99,7 +101,7 @@ class XpathNotFoundError(SiscanException):
     Exceção disparada quando um elemento (Locator) não é encontrado ou
     não pode ser resolvido na página do SIScan.
     """
-    def __init__(self, ctx, xpath: str = None, m: str = None):
+    def __init__(self, ctx, xpath: str | None = None, m: str | None = None):
         if m is not None:
             mensagem = m
         elif xpath:
@@ -118,7 +120,7 @@ class FieldValueNotFoundError(SiscanException):
     """
     def __init__(self, context, field_name: str, value, m: str | None = None):
         mensagem = m or msg.FIELD_VALUE_NOT_FOUND(field_name, value)
-        super().__init__(context, msg=mensagem)
+        super().__init__(context, m=mensagem)
         self.field_name = field_name
         self.value = value
 
@@ -173,9 +175,9 @@ class SiscanInvalidFieldValueError(SiscanException):
     data : dict, opcional
         Dicionário de dados submetidos, utilizado para identificar o valor
         problemático.
-    options_values : list, opcional
-        Lista de valores válidos para o campo, utilizada para construção
-        da mensagem de erro.
+    options_values : Iterable[str], opcional
+        Coleção de valores válidos para o campo, utilizada para
+        construção da mensagem de erro.
     message : str, opcional
         Mensagem customizada de erro. Se fornecida, sobrescreve as
         mensagens padrão.
@@ -185,7 +187,7 @@ class SiscanInvalidFieldValueError(SiscanException):
     def __init__(self, context,
                  field_name: str | None = None,
                  data: dict | None = None,
-                 options_values: list | None = None,
+                 options_values: Iterable[str] | None = None,
                  message: str | None = None
                  ):
         if data and field_name and options_values:
