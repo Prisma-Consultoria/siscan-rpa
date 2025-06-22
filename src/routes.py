@@ -17,9 +17,8 @@ with open("rsa_public_key.pem", "rb") as f:
 
 
 @router.post("/cadastrar-usuario", status_code=201)
-def cadastrar_usuario(data: dict):
-    username = data.get("username")
-    password = data.get("password")
+def cadastrar_usuario(username: str, password: str):
+
     if not username or not password:
         raise HTTPException(status_code=400, detail=msg.ERR_USERNAME_PASSWORD_REQUIRED)
 

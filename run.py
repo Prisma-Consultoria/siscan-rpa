@@ -1,5 +1,5 @@
 from src.main import app
-import uvicorn
 
-if __name__ == '__main__':
-    uvicorn.run(app, host='0.0.0.0', port=5000)
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("src.main:app", host="0.0.0.0", port=5001, reload=True)

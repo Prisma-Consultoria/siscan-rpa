@@ -2,7 +2,6 @@ from src.siscan.utils.validator import Validator
 from pathlib import Path
 
 from src.env import SISCAN_URL, SISCAN_USER, SISCAN_PASSWORD
-from dotenv import load_dotenv
 import logging
 
 from src.siscan.requisicao_exame_mamografia import RequisicaoExameMamografia
@@ -14,8 +13,6 @@ logger = logging.getLogger(__name__)
 def main():
     current_path = Path(__file__).resolve()
     root_path = current_path.parent.parent
-    env_path = root_path / ".env"
-    load_dotenv(dotenv_path=env_path)
 
     requisicao = RequisicaoExameMamografia(
         url_base=SISCAN_URL,
@@ -23,13 +20,9 @@ def main():
         password=SISCAN_PASSWORD,
     )
 
-    fake_path = root_path / "fake_data.json"
-    if fake_path.exists():
-        dados_path = fake_path
-    else:
-        dados_path = Path(__file__).parent / "dados.json"
+    data_path = root_path / "fake_data.json"
 
-    dados = Validator.load_json(dados_path)
+    dados = Validator.load_json(data_path)
 
     # requisicao.buscar_cartao_sus(dados)
 

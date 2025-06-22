@@ -8,7 +8,6 @@ from src.siscan.exception import CartaoSusNotFoundError
 from src.siscan.requisicao_exame import RequisicaoExame
 from src.siscan.utils.SchemaMapExtractor import SchemaMapExtractor
 from src.siscan.webtools.xpath_constructor import XPathConstructor
-from src.siscan.webtools.webpage import RequirementLevel
 from utils import messages as msg
 
 logger = logging.getLogger(__name__)
