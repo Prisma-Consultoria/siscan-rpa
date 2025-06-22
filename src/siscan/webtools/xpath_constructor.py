@@ -894,7 +894,7 @@ class XPathConstructor:
         logger.debug(f"XPath: {self}")
         return self
 
-    def fill(self, value: str, input_type: str | InputType = None,
+    def fill(self, value: str | list | None, input_type: str | InputType = None,
              timeout: float = DEFAULT_TIMEOUT,
              reset=True) -> 'XPathConstructor':
         """
@@ -915,9 +915,9 @@ class XPathConstructor:
 
         Parâmetros
         ----------
-        value : str
+        value : str | list | None
             Valor a ser preenchido no campo (ou lista de valores para
-            checkboxes).
+            checkboxes). Pode ser None para campos opcionais.
         type_input : str, opcional
             Tipo do campo ('texto', 'select', 'checkbox', 'radio', 'lista').
             O padrão é 'texto'.
@@ -1086,10 +1086,12 @@ class XPathConstructor:
         logger.debug(f"XPath do botão <a> localizado: {self._xpath}")
         return self
 
-    def click(self,
-              timeout: float = DEFAULT_TIMEOUT,
-              interval: float = None,
-              wait_for_selector: str = None, reset=True) -> 'XPathConstructor':
+    def click(
+            self,
+            timeout: float = DEFAULT_TIMEOUT,
+            interval: float | None = None,
+            wait_for_selector: str | None = None,
+            reset=True) -> 'XPathConstructor':
         """
         Realiza o clique forçado no elemento localizado pelo XPath corrente,
         repetindo tentativas até sucesso ou atingir o tempo limite. Se
@@ -1112,7 +1114,7 @@ class XPathConstructor:
             Intervalo, em segundos, entre cada tentativa de clique.
         reset : bool, opcional (default=True)
             Se True, reseta o XPath interno após o clique bem-sucedido.
-        wait_for_selector : str, opcional (default=None)
+        wait_for_selector : str | None, opcional (default=None)
             Se definido, após o clique o método aguardará até o seletor CSS ou
             XPath informado estar presente e visível.
 

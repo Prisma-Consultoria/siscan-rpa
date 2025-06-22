@@ -8,6 +8,7 @@ from src.siscan.exception import CartaoSusNotFoundError
 from src.siscan.requisicao_exame import RequisicaoExame
 from src.siscan.utils.SchemaMapExtractor import SchemaMapExtractor
 from src.siscan.webtools.xpath_constructor import XPathConstructor
+from src.siscan.webtools.webpage import RequirementLevel
 from utils import messages as msg
 
 logger = logging.getLogger(__name__)
@@ -87,16 +88,16 @@ class RequisicaoExameMamografia(RequisicaoExame):
 
         super().validation(data)
 
-    def get_map_label(self) -> dict[str, tuple[str, str]]:
+    def get_map_label(self) -> dict[str, tuple[str, str, str]]:
         """
         Retorna o mapeamento de campos do formulário com seus respectivos
         labels e tipos, específico para o exame de Mamografia.
 
         Retorna
         -------
-        dict[str, tuple[str, str]]
+        dict[str, tuple[str, str, str]]
             Dicionário onde a chave é o nome do campo e o valor é uma tupla
-            contendo o label e o tipo do campo.
+            contendo o label, o tipo do campo e o nível de obrigatoriedade.
         """
         map_label = {
             **RequisicaoExameMamografia.MAP_DATA_LABEL,
@@ -210,7 +211,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
 
         self.take_screenshot("screenshot_04_requisicao_exame_mamografia.png")
 
-    def preencher_ano_cirurgia(self, data: str,):
+    def preencher_ano_cirurgia(self, data: dict):
         anos_procedimentos = [
             "ano_biopsia_cirurgica_incisional_direita",
             "ano_biopsia_cirurgica_incisional_esquerda",
