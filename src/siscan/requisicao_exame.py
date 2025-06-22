@@ -9,7 +9,6 @@ import logging
 from src.siscan.exception import SiscanInvalidFieldValueError
 from src.siscan.siscan_webpage import SiscanWebPage
 from src.siscan.utils.SchemaMapExtractor import SchemaMapExtractor
-from src.siscan.webtools.webpage import RequirementLevel
 from src.siscan.webtools.xpath_constructor import XPathConstructor, InputType
 
 logger = logging.getLogger(__name__)
@@ -80,7 +79,7 @@ class RequisicaoExame(SiscanWebPage):
     def buscar_cartao_sus(self, data: dict):
         self._buscar_cartao_sus(data, menu_action=self._novo_exame)
 
-    def seleciona_unidade_requisitante(self, data: dict = None):
+    def seleciona_unidade_requisitante(self, data: dict | None = None):
         """
         Seleciona e valida a unidade requisitante a partir dos dados
         fornecidos.

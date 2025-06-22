@@ -52,3 +52,16 @@ Ou com Docker Compose:
 ```bash
 docker compose up -d --build
 ```
+
+Para rodar apenas o teste de scrapping
+
+```bash
+pytest # Gera o json teste faker dentre os testes, necessário para
+python -m src.scrapping # rodar o scrapping
+```
+
+## Rodando testes
+
+```bash
+pytest
+```

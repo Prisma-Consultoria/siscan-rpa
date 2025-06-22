@@ -115,7 +115,7 @@ class FieldValueNotFoundError(SiscanException):
     FIELDS_MAP. Isto é, o valor fornecido para um select, radio ou checkbox
     não consta entre as opções disponíveis.
     """
-    def __init__(self, context, field_name: str, value, msg: str = None):
+    def __init__(self, context, field_name: str, value, msg: str | None = None):
         mensagem = (msg or
             f"Valor '{value}' não encontrado na lista de opções válidas para "
             f"o campo '{field_name}'.")
@@ -184,10 +184,10 @@ class SiscanInvalidFieldValueError(SiscanException):
     """
 
     def __init__(self, context,
-                 field_name: str = None,
-                 data: dict = None,
-                 options_values: list = None,
-                 message: str = None
+                 field_name: str | None = None,
+                 data: dict | None = None,
+                 options_values: list | None = None,
+                 message: str | None = None
                  ):
         if data and field_name and options_values:
             msg = (

@@ -1,17 +1,9 @@
-import logging
-
 from src.siscan.utils.schema_validator import SchemaValidator
-
-# Ativa o logging no nível DEBUG para todo o projeto
-logging.basicConfig(
-    level=logging.DEBUG,  # Troque para logging.INFO caso deseje menos verbosidade
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-)
-
 from pathlib import Path
 
-import os
+from src.env import SISCAN_URL, SISCAN_USER, SISCAN_PASSWORD
 from dotenv import load_dotenv
+import logging
 
 from src.siscan.requisicao_exame_mamografia import RequisicaoExameMamografia
 
@@ -26,9 +18,9 @@ def main():
     load_dotenv(dotenv_path=env_path)
 
     requisicao = RequisicaoExameMamografia(
-        url_base=os.getenv("SISCAN_URL", "https://siscan.saude.gov.br/"),
-        user=os.getenv("SISCAN_USER", ""),
-        password=os.getenv("SISCAN_PASSWORD", ""),
+        url_base=SISCAN_URL,
+        user=SISCAN_USER,
+        password=SISCAN_PASSWORD,
     )
 
     dados_path = Path(__file__).parent / "dados.json"

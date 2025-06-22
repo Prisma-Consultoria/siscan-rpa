@@ -9,3 +9,5 @@ brazilcep==7.0.0
 fastapi==0.115.13
 uvicorn
 httpx
+jsonschema==4.24.0
+SQLAlchemy==2.0.41
