@@ -56,11 +56,27 @@ def mock_run_rpa(monkeypatch):
 
 @pytest.fixture(scope="session")
 def fake_json_file(tmp_path_factory):
-    """Gera arquivo JSON com dados de exemplo."""
+    """Gera um arquivo JSON com dados de exemplo para testes e scrapping."""
     fake = Faker("pt_BR")
     cns = CNS()
 
     base_year = fake.random_int(min=2000, max=2025)
+
+    cirurgias = [
+        "biopsia_cirurgica_incisional",
+        "biopsia_cirurgica_excisional",
+        "segmentectomia",
+        "centralectomia",
+        "dutectomia",
+        "mastectomia",
+        "mastectomia_poupadora_pele",
+        "mastectomia_poupadora_pele_complexo_papilar",
+        "linfadenectomia_axilar",
+        "biopsia_linfonodo_sentinela",
+        "reconstrucao_mamaria",
+        "mastoplastia_redutora",
+        "inclusao_implantes",
+    ]
 
     data = {
         "cartao_sus": cns.generate(),
@@ -93,37 +109,16 @@ def fake_json_file(tmp_path_factory):
         "ano_da_radioterapia_direita": str(base_year),
         "ano_da_radioterapia_esquerda": str(base_year),
         "fez_cirurgia_de_mama": "01",
-        "ano_biopsia_cirurgica_incisional_direita": str(base_year),
-        "ano_biopsia_cirurgica_incisional_esquerda": str(base_year + 1),
-        "ano_biopsia_cirurgica_excisional_direita": str(base_year + 2),
-        "ano_biopsia_cirurgica_excisional_esquerda": str(base_year + 3),
-        "ano_segmentectomia_direita": str(base_year + 4),
-        "ano_segmentectomia_esquerda": str(base_year + 5),
-        "ano_centralectomia_direita": str(base_year + 6),
-        "ano_centralectomia_esquerda": str(base_year + 7),
-        "ano_dutectomia_direita": str(base_year + 8),
-        "ano_dutectomia_esquerda": str(base_year + 9),
-        "ano_mastectomia_direita": str(base_year + 10),
-        "ano_mastectomia_esquerda": str(base_year + 11),
-        "ano_mastectomia_poupadora_pele_direita": str(base_year + 12),
-        "ano_mastectomia_poupadora_pele_esquerda": str(base_year + 13),
-        "ano_mastectomia_poupadora_pele_complexo_papilar_direita": str(base_year + 14),
-        "ano_mastectomia_poupadora_pele_complexo_papilar_esquerda": str(base_year + 15),
-        "ano_linfadenectomia_axilar_direita": str(base_year + 16),
-        "ano_linfadenectomia_axilar_esquerda": str(base_year + 17),
-        "ano_biopsia_linfonodo_sentinela_direita": str(base_year + 18),
-        "ano_biopsia_linfonodo_sentinela_esquerda": str(base_year + 19),
-        "ano_reconstrucao_mamaria_direita": str(base_year + 20),
-        "ano_reconstrucao_mamaria_esquerda": str(base_year + 21),
-        "ano_mastoplastia_redutora_direita": str(base_year + 22),
-        "ano_mastoplastia_redutora_esquerda": str(base_year + 23),
-        "ano_inclusao_implantes_direita": str(base_year + 24),
-        "ano_inclusao_implantes_esquerda": str(base_year + 25),
+        **{f"ano_{c}_direita": str(base_year + i) for i, c in enumerate(cirurgias)},
+        **{f"ano_{c}_esquerda": str(base_year + i + 1) for i, c in enumerate(cirurgias)},
         "mamografia_de_rastreamento": "01",
         "data_da_solicitacao": fake.date_between(start_date="-30d", end_date="today").strftime("%d/%m/%Y"),
     }
 
-    path = tmp_path_factory.mktemp("data") / "dados.json"
-    with open(path, "w", encoding="utf-8") as fp:
-        json.dump(data, fp, ensure_ascii=False, indent=2)
-    return path
+    output_path = Path("./fake_data.json")
+
+    if not output_path.exists():
+        with open(output_path, "w", encoding="utf-8") as fp:
+            json.dump(data, fp, ensure_ascii=False, indent=2)
+
+    return output_path
