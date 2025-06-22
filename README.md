@@ -5,7 +5,8 @@ Este projeto implementa uma automação (RPA) para interação com o sistema SIS
 ## Estrutura do projeto
 
 - **run.py** – ponto de entrada que carrega variáveis de ambiente e executa o servidor FastAPI via Uvicorn.
-- **src/main.py** – aplicação FastAPI com os seguintes endpoints:
+- **src/main.py** – inicializa a aplicação FastAPI e registra as rotas.
+- **src/routes.py** – define os endpoints da API:
   - `/cadastrar-usuario` – cadastro de usuários com senha criptografada em SQLite.
   - `/preencher-solicitacao-mamografia` – inicia o RPA para preencher uma solicitação de exame.
   - `/preencher-laudo-mamografia` – inicia o RPA para preencher um laudo de mamografia.
