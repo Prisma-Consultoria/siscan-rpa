@@ -15,7 +15,8 @@ from src.siscan.exception import (
     SiscanInvalidFieldValueError,
 )
 from src.siscan.utils.SchemaMapExtractor import SchemaMapExtractor
-from src.siscan.utils.schema_validator import SchemaValidator, SchemaValidationError
+from src.siscan.utils.validator import Validator, SchemaValidationError
+from utils.schema import create_model_from_json_schema
 from src.siscan.webtools.webpage import WebPage
 from src.siscan.webtools.xpath_constructor import XPathConstructor
 
@@ -48,6 +49,7 @@ class SiscanWebPage(WebPage):
         self, url_base: str, user: str, password: str, schema_path: Union[str, Path]
     ):
         super().__init__(url_base, user, password, schema_path)
+        self.schema_model = create_model_from_json_schema("SchemaModel", Path(schema_path))
         map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
             schema_path, fields=SiscanWebPage.MAP_SCHEMA_FIELDS
         )
@@ -56,7 +58,7 @@ class SiscanWebPage(WebPage):
 
     def validation(self, data: dict):
         try:
-            SchemaValidator.validate_data(data, self.schema_path)
+            Validator.validate_data(data, self.schema_model)
             logger.debug("Dados válidos")
         except SchemaValidationError as ve:
             # Exemplo: acesso aos detalhes

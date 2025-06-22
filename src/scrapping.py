@@ -1,4 +1,4 @@
-from src.siscan.utils.schema_validator import SchemaValidator
+from src.siscan.utils.validator import Validator
 from pathlib import Path
 
 from src.env import SISCAN_URL, SISCAN_USER, SISCAN_PASSWORD
@@ -29,7 +29,7 @@ def main():
     else:
         dados_path = Path(__file__).parent / "dados.json"
 
-    dados = SchemaValidator.load_json(dados_path)
+    dados = Validator.load_json(dados_path)
 
     # requisicao.buscar_cartao_sus(dados)
 
