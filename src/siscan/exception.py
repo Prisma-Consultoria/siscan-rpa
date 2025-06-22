@@ -6,9 +6,9 @@ class SiscanException(Exception):
     Exceção base para falhas no SIScan.
     Permite extrair mensagens de erro da página Playwright.
     """
-    def __init__(self, ctx, msg=None):
+    def __init__(self, ctx, m=None):
         self.ctx = ctx
-        self.msg = msg or ""
+        self.msg = m or ""
         if ctx is not None:
             self.msg = f"{self.msg}. {self.get_error_messages(ctx)}"
 
@@ -47,17 +47,17 @@ class SiscanLoginError(SiscanException):
     """
     Exceção disparada em caso de falha de login no SIScan.
     """
-    def __init__(self, ctx, msg=None):
-        super().__init__(ctx, msg or msg.LOGIN_FAIL)
+    def __init__(self, ctx, m=None):
+        super().__init__(ctx, m or msg.LOGIN_FAIL)
 
 
 class SiscanMenuNotFoundError(SiscanException):
     """
     Exceção disparada quando um menu ou ação de menu não é encontrado no SIScan.
     """
-    def __init__(self, ctx, menu_name: str = None, action: str = None, msg: str = None):
-        if msg is not None:
-            mensagem = msg
+    def __init__(self, ctx, menu_name: str = None, action: str = None, m: str = None):
+        if m is not None:
+            mensagem = m
         elif menu_name and action:
             mensagem = msg.MENU_ACTION_NOT_FOUND(menu_name, action)
         elif menu_name:
@@ -71,8 +71,8 @@ class CartaoSusNotFoundError(SiscanException):
     """
     Exceção disparada quando o Cartão SUS informado não é localizado no SIScan.
     """
-    def __init__(self, ctx, cartao_sus: str = None, msg: str = None):
-        if msg is not None:
+    def __init__(self, ctx, cartao_sus: str = None, m: str = None):
+        if m is not None:
             mensagem = msg
         elif cartao_sus:
             mensagem = msg.CARTAO_SUS_NOT_FOUND_VAL(cartao_sus)
@@ -86,9 +86,9 @@ class PacienteDuplicadoException(SiscanException):
     Exceção disparada quando mais de um paciente é encontrado na busca do SIScan,
     impossibilitando a seleção automática e exigindo intervenção manual.
     """
-    def __init__(self, ctx, msg: str = None):
-        if msg is not None:
-            mensagem = msg
+    def __init__(self, ctx, m: str = None):
+        if m is not None:
+            mensagem = m
         else:
             mensagem = msg.MULTIPLE_PATIENTS
         super().__init__(ctx, mensagem)
@@ -99,9 +99,9 @@ class XpathNotFoundError(SiscanException):
     Exceção disparada quando um elemento (Locator) não é encontrado ou
     não pode ser resolvido na página do SIScan.
     """
-    def __init__(self, ctx, xpath: str = None, msg: str = None):
-        if msg is not None:
-            mensagem = msg
+    def __init__(self, ctx, xpath: str = None, m: str = None):
+        if m is not None:
+            mensagem = m
         elif xpath:
             mensagem = msg.XPATH_NOT_FOUND_VAL(xpath)
         else:
@@ -116,8 +116,8 @@ class FieldValueNotFoundError(SiscanException):
     FIELDS_MAP. Isto é, o valor fornecido para um select, radio ou checkbox
     não consta entre as opções disponíveis.
     """
-    def __init__(self, context, field_name: str, value, msg: str | None = None):
-        mensagem = msg or msg.FIELD_VALUE_NOT_FOUND(field_name, value)
+    def __init__(self, context, field_name: str, value, m: str | None = None):
+        mensagem = m or msg.FIELD_VALUE_NOT_FOUND(field_name, value)
         super().__init__(context, msg=mensagem)
         self.field_name = field_name
         self.value = value
@@ -189,15 +189,15 @@ class SiscanInvalidFieldValueError(SiscanException):
                  message: str | None = None
                  ):
         if data and field_name and options_values:
-            msg = msg.INVALID_FIELD_VALUE_OPTIONS(
+            m = msg.INVALID_FIELD_VALUE_OPTIONS(
                 field_name,
                 data.get(field_name),
                 options_values,
             )
         elif field_name:
-            msg = msg.FIELD_REQUIRED(field_name)
+            m = msg.FIELD_REQUIRED(field_name)
         if message:
-            msg = message
+            m = message
 
-        super().__init__(context, msg)
+        super().__init__(context, m)
         self.field_name = field_name
