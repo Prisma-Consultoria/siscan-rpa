@@ -1,11 +1,14 @@
 import sqlite3
 import pytest
+from fastapi.testclient import TestClient
 from main import app
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     db_file = tmp_path / "test.db"
     monkeypatch.setenv("DATABASE_URL", str(db_file))
+    import src.env as env
+    env.DATABASE = str(db_file)
     # re-cria a tabela em test.db
     conn = sqlite3.connect(str(db_file))
     conn.execute("""
@@ -17,13 +20,13 @@ def client(tmp_path, monkeypatch):
     conn.commit()
     conn.close()
 
-    with app.test_client() as client:
+    with TestClient(app) as client:
         yield client
 
 def test_register_success(client):
     res = client.post("/cadastrar-usuario", json={"username": "alice", "password": "secret"})
     assert res.status_code == 201
-    data = res.get_json()
+    data = res.json()
     assert data["message"] == "user created"
 
 def test_register_missing_fields(client):
