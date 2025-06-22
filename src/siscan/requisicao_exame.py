@@ -10,6 +10,7 @@ from src.siscan.exception import SiscanInvalidFieldValueError
 from src.siscan.siscan_webpage import SiscanWebPage
 from src.siscan.utils.SchemaMapExtractor import SchemaMapExtractor
 from src.siscan.webtools.xpath_constructor import XPathConstructor, InputType
+from src.siscan.webtools.webpage import RequirementLevel
 
 logger = logging.getLogger(__name__)
 
@@ -46,19 +47,24 @@ class RequisicaoExame(SiscanWebPage):
         raise NotImplementedError("O método select_type_exam deve ser "
                                   "implementado na subclasse.")
 
-    def get_map_label(self) -> dict[str, tuple[str, str]]:
+    def get_map_label(self) -> dict[str, tuple[str, str, str]]:
         """
         Retorna o mapeamento de campos do formulário com seus respectivos
         labels e tipos.
 
         Retorna
         -------
-        dict[str, tuple[str, str]]
+        dict[str, tuple[str, str, str]]
             Dicionário onde a chave é o nome do campo e o valor é uma tupla
-            contendo o label e o tipo do campo.
+            contendo o label, o tipo do campo e o nível de
+            obrigatoriedade.
         """
         return {
-            "cartao_sus": ("Cartão SUS", InputType.TEXT),
+            "cartao_sus": (
+                "Cartão SUS",
+                InputType.TEXT,
+                RequirementLevel.REQUIRED,
+            ),
             **RequisicaoExame.MAP_DATA_LABEL,
         }
 
