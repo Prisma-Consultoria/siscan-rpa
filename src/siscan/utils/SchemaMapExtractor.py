@@ -2,7 +2,7 @@ from pathlib import Path
 
 from typing import Tuple, Dict, Any, List, Optional, Union
 
-from src.siscan.utils.schema_validator import SchemaValidator
+from src.siscan.utils.validator import Validator
 
 
 class SchemaMapExtractor:
@@ -20,7 +20,7 @@ class SchemaMapExtractor:
         map_data_label = {}
         fields_map = {}
 
-        schema = SchemaValidator.load_json(schema_path)
+        schema = Validator.load_json(schema_path)
 
         properties = schema.get("properties", {})
         required_fields = schema.get("required", [])
