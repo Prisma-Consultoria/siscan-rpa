@@ -23,7 +23,12 @@ def main():
         password=SISCAN_PASSWORD,
     )
 
-    dados_path = Path(__file__).parent / "dados.json"
+    fake_path = root_path / "fake_data.json"
+    if fake_path.exists():
+        dados_path = fake_path
+    else:
+        dados_path = Path(__file__).parent / "dados.json"
+
     dados = SchemaValidator.load_json(dados_path)
 
     # requisicao.buscar_cartao_sus(dados)
