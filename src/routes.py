@@ -1,8 +1,10 @@
-import sqlite3
 from fastapi import APIRouter, HTTPException
+from sqlalchemy.exc import IntegrityError
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import padding
-from env import get_db
+from .env import get_db
+from .models import User
+from .utils.helpers import _run_rpa
 
 router = APIRouter()
 
@@ -28,29 +30,26 @@ def cadastrar_usuario(data: dict):
             label=None,
         ),
     )
-    conn = get_db()
+    db = get_db()
     try:
-        conn.execute(
-            "INSERT INTO users(username, password) VALUES(?, ?)", (username, encrypted)
-        )
-        conn.commit()
-    except sqlite3.IntegrityError:
+        db.add(User(username=username, password=encrypted))
+        db.commit()
+    except IntegrityError:
+        db.rollback()
         raise HTTPException(status_code=409, detail="username already exists")
     finally:
-        conn.close()
+        db.close()
 
     return {"message": "user created"}
 
 
 @router.post("/preencher-solicitacao-mamografia")
 def preencher_solicitacao(data: dict):
-    from main import _run_rpa
     result = _run_rpa("solicitacao", data)
     return result
 
 
 @router.post("/preencher-laudo-mamografia")
 def preencher_laudo(data: dict):
-    from main import _run_rpa
     result = _run_rpa("laudo", data)
     return result

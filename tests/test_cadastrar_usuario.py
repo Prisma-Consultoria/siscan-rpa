@@ -1,24 +1,15 @@
-import sqlite3
 import pytest
 from fastapi.testclient import TestClient
-from main import app
+from src.main import app
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     db_file = tmp_path / "test.db"
     monkeypatch.setenv("DATABASE_URL", str(db_file))
     import src.env as env
-    env.DATABASE = str(db_file)
-    # re-cria a tabela em test.db
-    conn = sqlite3.connect(str(db_file))
-    conn.execute("""
-    CREATE TABLE users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        password BLOB NOT NULL
-    )""")
-    conn.commit()
-    conn.close()
+    env.init_engine(str(db_file))
+    from src import models  # noqa: F401
+    env.Base.metadata.create_all(bind=env.engine)
 
     with TestClient(app) as client:
         yield client

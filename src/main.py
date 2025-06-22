@@ -1,7 +1,8 @@
 from fastapi import FastAPI
-from env import get_db
-from routes import router
 import logging
+from .env import Base, engine
+from .routes import router
+from . import models
 
 logging.basicConfig(
     level=logging.DEBUG,  # Troque para logging.INFO caso deseje menos verbosidade
@@ -10,17 +11,8 @@ logging.basicConfig(
 
 app = FastAPI()
 
-# Cria tabela de usuários se não existir
-conn = get_db()
-conn.execute("""
-CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    password BLOB NOT NULL
-)
-""")
-conn.commit()
-conn.close()
+# Cria tabelas a partir dos models
+Base.metadata.create_all(bind=engine)
 
 app.include_router(router)
 
