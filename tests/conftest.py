@@ -8,6 +8,7 @@ import pytest
 from faker import Faker
 from validate_docbr import CNS
 import brazilcep.client as bc
+from fastapi.testclient import TestClient
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 
@@ -39,8 +40,8 @@ from main import app
 def test_db(tmp_path_factory):
     db_path = tmp_path_factory.mktemp("data") / "test.db"
     os.environ["DATABASE_URL"] = str(db_path)
-    import main
-    main.DATABASE = str(db_path)
+    import src.env as env
+    env.DATABASE = str(db_path)
 
     conn = sqlite3.connect(str(db_path))
     conn.execute("""
@@ -55,8 +56,7 @@ def test_db(tmp_path_factory):
 
 @pytest.fixture
 def client(test_db):
-    app.config["TESTING"] = True
-    with app.test_client() as client:
+    with TestClient(app) as client:
         yield client
 
 @pytest.fixture(autouse=True)

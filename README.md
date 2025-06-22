@@ -1,11 +1,11 @@
 # RPA SISCAN
 
-Este projeto implementa uma automação (RPA) para interação com o sistema SIScan utilizando Playwright e Flask.
+Este projeto implementa uma automação (RPA) para interação com o sistema SIScan utilizando Playwright e FastAPI.
 
 ## Estrutura do projeto
 
-- **run.py** – ponto de entrada que carrega variáveis de ambiente e executa o servidor Flask.
-- **src/main.py** – aplicação Flask com os seguintes endpoints:
+- **run.py** – ponto de entrada que carrega variáveis de ambiente e executa o servidor FastAPI via Uvicorn.
+- **src/main.py** – aplicação FastAPI com os seguintes endpoints:
   - `/cadastrar-usuario` – cadastro de usuários com senha criptografada em SQLite.
   - `/preencher-solicitacao-mamografia` – inicia o RPA para preencher uma solicitação de exame.
   - `/preencher-laudo-mamografia` – inicia o RPA para preencher um laudo de mamografia.
@@ -43,7 +43,7 @@ Para rodar localmente:
 ```bash
 conda create -n siscan python=3.11
 conda activate siscan
-python main.py
+python run.py
 ```
 
 Ou com Docker Compose:

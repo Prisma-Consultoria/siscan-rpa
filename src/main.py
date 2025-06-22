@@ -1,5 +1,5 @@
 import sqlite3
-from flask import Flask, request, jsonify
+from fastapi import FastAPI, HTTPException
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 from playwright.sync_api import sync_playwright
@@ -11,7 +11,7 @@ with open("rsa_private_key.pem", "rb") as f:
 with open("rsa_public_key.pem", "rb") as f:
     public_key = serialization.load_pem_public_key(f.read())
 
-app = Flask(__name__)
+app = FastAPI()
 
 
 # Cria tabela de usuários se não existir
@@ -27,13 +27,12 @@ conn.commit()
 conn.close()
 
 
-@app.route("/cadastrar-usuario", methods=["POST"])
-def cadastrar_usuario():
-    data = request.get_json() or {}
+@app.post("/cadastrar-usuario", status_code=201)
+def cadastrar_usuario(data: dict):
     username = data.get("username")
     password = data.get("password")
     if not username or not password:
-        return jsonify({"error": "username and password required"}), 400
+        raise HTTPException(status_code=400, detail="username and password required")
 
     encrypted = public_key.encrypt(
         password.encode(),
@@ -50,25 +49,23 @@ def cadastrar_usuario():
         )
         conn.commit()
     except sqlite3.IntegrityError:
-        return jsonify({"error": "username already exists"}), 409
+        raise HTTPException(status_code=409, detail="username already exists")
     finally:
         conn.close()
 
-    return jsonify({"message": "user created"}), 201
+    return {"message": "user created"}
 
 
-@app.route("/preencher-solicitacao-mamografia", methods=["POST"])
-def preencher_solicitacao():
-    data = request.get_json() or {}
+@app.post("/preencher-solicitacao-mamografia")
+def preencher_solicitacao(data: dict):
     result = _run_rpa("solicitacao", data)
-    return jsonify(result), 200
+    return result
 
 
-@app.route("/preencher-laudo-mamografia", methods=["POST"])
-def preencher_laudo():
-    data = request.get_json() or {}
+@app.post("/preencher-laudo-mamografia")
+def preencher_laudo(data: dict):
     result = _run_rpa("laudo", data)
-    return jsonify(result), 200
+    return result
 
 
 def _run_rpa(form_type, data):
@@ -96,4 +93,5 @@ def _run_rpa(form_type, data):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=5000)
