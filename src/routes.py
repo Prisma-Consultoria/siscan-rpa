@@ -16,8 +16,16 @@ with open("rsa_public_key.pem", "rb") as f:
     public_key = serialization.load_pem_public_key(f.read())
 
 
-@router.post("/cadastrar-usuario", status_code=201)
-def cadastrar_usuario(username: str, password: str):
+@router.post(
+    "/cadastrar-usuario",
+    status_code=201,
+    summary="Cadastrar Usuário",
+    description="Registra um novo usuário no banco de dados",
+)
+def cadastrar_usuario(data: dict):
+    """Cadastrar novo usuário e armazenar a senha criptografada."""
+    username = data.get("username")
+    password = data.get("password")
 
     if not username or not password:
         raise HTTPException(status_code=400, detail=msg.ERR_USERNAME_PASSWORD_REQUIRED)
@@ -43,13 +51,23 @@ def cadastrar_usuario(username: str, password: str):
     return {"message": msg.USER_CREATED}
 
 
-@router.post("/preencher-solicitacao-mamografia")
+@router.post(
+    "/preencher-solicitacao-mamografia",
+    summary="Preencher Solicitação de Mamografia",
+    description="Executa o RPA para preencher a solicitação de mamografia no SIScan",
+)
 def preencher_solicitacao(data: dict):
+    """Preencher automaticamente a solicitação de mamografia no SIScan."""
     result = _run_rpa("solicitacao", data)
     return result
 
 
-@router.post("/preencher-laudo-mamografia")
+@router.post(
+    "/preencher-laudo-mamografia",
+    summary="Preencher Laudo de Mamografia",
+    description="Executa o RPA para preencher o laudo de mamografia no SIScan",
+)
 def preencher_laudo(data: dict):
+    """Preencher automaticamente o laudo de mamografia no SIScan."""
     result = _run_rpa("laudo", data)
     return result
