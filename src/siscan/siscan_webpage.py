@@ -19,6 +19,7 @@ from src.siscan.utils.validator import Validator, SchemaValidationError
 from utils.schema import create_model_from_json_schema
 from src.siscan.webtools.webpage import WebPage
 from src.siscan.webtools.xpath_constructor import XPathConstructor
+from utils import messages as msg
 
 logger = logging.getLogger(__name__)
 
@@ -178,7 +179,7 @@ class SiscanWebPage(WebPage):
                 self.context,
                 menu_name=menu_name,
                 action=menu_action_text,
-                msg="Menu não localizado após múltiplas tentativas.",
+                msg=msg.MENU_ACCESS_TIMEOUT,
             )
         )
 

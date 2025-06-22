@@ -5,6 +5,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from .env import get_db
 from .models import User
 from .utils.helpers import _run_rpa
+from utils import messages as msg
 
 router = APIRouter()
 
@@ -20,7 +21,7 @@ def cadastrar_usuario(data: dict):
     username = data.get("username")
     password = data.get("password")
     if not username or not password:
-        raise HTTPException(status_code=400, detail="username and password required")
+        raise HTTPException(status_code=400, detail=msg.ERR_USERNAME_PASSWORD_REQUIRED)
 
     encrypted = public_key.encrypt(
         password.encode(),
@@ -36,11 +37,11 @@ def cadastrar_usuario(data: dict):
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status_code=409, detail="username already exists")
+        raise HTTPException(status_code=409, detail=msg.ERR_USERNAME_EXISTS)
     finally:
         db.close()
 
-    return {"message": "user created"}
+    return {"message": msg.USER_CREATED}
 
 
 @router.post("/preencher-solicitacao-mamografia")

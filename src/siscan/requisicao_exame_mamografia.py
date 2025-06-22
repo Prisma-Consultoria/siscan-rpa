@@ -8,6 +8,7 @@ from src.siscan.exception import CartaoSusNotFoundError
 from src.siscan.requisicao_exame import RequisicaoExame
 from src.siscan.utils.SchemaMapExtractor import SchemaMapExtractor
 from src.siscan.webtools.xpath_constructor import XPathConstructor
+from utils import messages as msg
 
 logger = logging.getLogger(__name__)
 
@@ -133,9 +134,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
             label_dependentes={
                 "ano_que_fez_a_ultima_mamografia": "Ano:",
             },
-            erro_dependente_msg=(
-                "Campos 'Ano' de 'QUANDO FEZ A ÚLTIMA MAMOGRAFIA?' do card "
-                "'FEZ MAMOGRAFIA ALGUMA VEZ?' é obrigatório.")
+            erro_dependente_msg=msg.ANO_MAMOGRAFIA_REQUIRED
         )
 
     def preenche_fez_radioterapia_na_mama_ou_no_plastao(self, data: dict):
@@ -159,8 +158,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
                     "ano_da_radioterapia_esquerda":
                         "Ano da Radioterapia - Esquerda:",
                 },
-                erro_dependente_msg="Campos de ano da radioterapia "
-                                    "obrigatórios conforme a localização."
+                erro_dependente_msg=msg.ANO_RADIOTERAPIA_REQUIRED
             )
 
     def preenche_fez_cirurgia_cirurgica(self, data: dict):
@@ -186,8 +184,10 @@ class RequisicaoExameMamografia(RequisicaoExame):
 
         # Verifica se o Cartão SUS foi informado
         if not data.get("cartao_sus"):
-            raise CartaoSusNotFoundError(self.context,
-                                         "Cartão SUS não informado.")
+            raise CartaoSusNotFoundError(
+                self.context,
+                msg.CARTAO_SUS_NAO_INFORMADO,
+            )
         super().preencher(data)
 
         xpath = XPathConstructor(self.context)

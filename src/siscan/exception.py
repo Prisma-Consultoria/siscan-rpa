@@ -1,3 +1,6 @@
+from utils import messages as msg
+
+
 class SiscanException(Exception):
     """
     Exceção base para falhas no SIScan.
@@ -45,7 +48,7 @@ class SiscanLoginError(SiscanException):
     Exceção disparada em caso de falha de login no SIScan.
     """
     def __init__(self, ctx, msg=None):
-        super().__init__(ctx, msg or "Falha na autenticação do SIScan.")
+        super().__init__(ctx, msg or msg.LOGIN_FAIL)
 
 
 class SiscanMenuNotFoundError(SiscanException):
@@ -56,11 +59,11 @@ class SiscanMenuNotFoundError(SiscanException):
         if msg is not None:
             mensagem = msg
         elif menu_name and action:
-            mensagem = f"Menu '{menu_name}' com ação '{action}' não encontrado no SIScan."
+            mensagem = msg.MENU_ACTION_NOT_FOUND(menu_name, action)
         elif menu_name:
-            mensagem = f"Menu '{menu_name}' não encontrado no SIScan."
+            mensagem = msg.MENU_NOT_FOUND(menu_name)
         else:
-            mensagem = "Menu ou ação de menu não encontrado no SIScan."
+            mensagem = msg.MENU_OR_ACTION_NOT_FOUND
         super().__init__(ctx, mensagem)
 
 
@@ -72,9 +75,9 @@ class CartaoSusNotFoundError(SiscanException):
         if msg is not None:
             mensagem = msg
         elif cartao_sus:
-            mensagem = f"Não existe paciente com o Cartão SUS informado: {cartao_sus}."
+            mensagem = msg.CARTAO_SUS_NOT_FOUND_VAL(cartao_sus)
         else:
-            mensagem = "Não existe paciente com o Cartão SUS informado."
+            mensagem = msg.CARTAO_SUS_NOT_FOUND
         super().__init__(ctx, mensagem)
 
 
@@ -87,7 +90,7 @@ class PacienteDuplicadoException(SiscanException):
         if msg is not None:
             mensagem = msg
         else:
-            mensagem = "Foram encontrados múltiplos pacientes na busca. A seleção não pode ser realizada automaticamente."
+            mensagem = msg.MULTIPLE_PATIENTS
         super().__init__(ctx, mensagem)
 
 
@@ -100,11 +103,9 @@ class XpathNotFoundError(SiscanException):
         if msg is not None:
             mensagem = msg
         elif xpath:
-            mensagem = (f"Elemento com XPath '{xpath}' não encontrado "
-                        f"ou não resolvível na página do SIScan.")
+            mensagem = msg.XPATH_NOT_FOUND_VAL(xpath)
         else:
-            mensagem = ("Elemento não encontrado "
-                        "ou não resolvível na página do SIScan.")
+            mensagem = msg.XPATH_NOT_FOUND
         super().__init__(ctx, mensagem)
 
 
@@ -116,9 +117,7 @@ class FieldValueNotFoundError(SiscanException):
     não consta entre as opções disponíveis.
     """
     def __init__(self, context, field_name: str, value, msg: str | None = None):
-        mensagem = (msg or
-            f"Valor '{value}' não encontrado na lista de opções válidas para "
-            f"o campo '{field_name}'.")
+        mensagem = msg or msg.FIELD_VALUE_NOT_FOUND(field_name, value)
         super().__init__(context, msg=mensagem)
         self.field_name = field_name
         self.value = value
@@ -190,14 +189,13 @@ class SiscanInvalidFieldValueError(SiscanException):
                  message: str | None = None
                  ):
         if data and field_name and options_values:
-            msg = (
-                f"O valor '{data.get(field_name)}' "
-                f"fornecido para o campo '{field_name}' não consta na "
-                f"lista de opções válidas. "
-                f"Opções válidas: {', '.join(options_values)}."
+            msg = msg.INVALID_FIELD_VALUE_OPTIONS(
+                field_name,
+                data.get(field_name),
+                options_values,
             )
         elif field_name:
-            msg = f"O campo '{field_name}' deve ser informado."
+            msg = msg.FIELD_REQUIRED(field_name)
         if message:
             msg = message
 
