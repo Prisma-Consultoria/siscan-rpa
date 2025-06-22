@@ -1,5 +1,5 @@
 from playwright.sync_api import sync_playwright
-from env import PRODUCTION, TAKE_SCREENSHOT
+from ..env import PRODUCTION, TAKE_SCREENSHOT
 
 def _run_rpa(form_type, data):
     screenshots = []

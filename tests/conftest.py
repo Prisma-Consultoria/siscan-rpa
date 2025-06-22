@@ -1,6 +1,4 @@
 import os
-import sqlite3
-import sys
 import json
 from pathlib import Path
 
@@ -12,9 +10,7 @@ from fastapi.testclient import TestClient
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 
-# make src available as 'main'
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
 
 priv = ROOT / "rsa_private_key.pem"
 pub = ROOT / "rsa_public_key.pem"
@@ -34,24 +30,16 @@ if not priv.exists() or not pub.exists():
         )
     )
 
-from main import app
+from src.main import app
 
 @pytest.fixture
 def test_db(tmp_path_factory):
     db_path = tmp_path_factory.mktemp("data") / "test.db"
     os.environ["DATABASE_URL"] = str(db_path)
     import src.env as env
-    env.DATABASE = str(db_path)
-
-    conn = sqlite3.connect(str(db_path))
-    conn.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        password BLOB NOT NULL
-    )""")
-    conn.commit()
-    conn.close()
+    env.init_engine(str(db_path))
+    from src import models  # noqa: F401
+    env.Base.metadata.create_all(bind=env.engine)
     return db_path
 
 @pytest.fixture
@@ -64,7 +52,7 @@ def mock_run_rpa(monkeypatch):
     def fake_run_rpa(form_type, data):
         return {"success": True, "screenshots": []}
 
-    monkeypatch.setattr("main._run_rpa", fake_run_rpa)
+    monkeypatch.setattr("src.routes._run_rpa", fake_run_rpa)
 
 @pytest.fixture(scope="session")
 def fake_json_file(tmp_path_factory):
