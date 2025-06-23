@@ -1,4 +1,3 @@
-import asyncio
 from playwright.async_api import async_playwright
 from ..env import PRODUCTION, TAKE_SCREENSHOT
 
@@ -6,7 +5,7 @@ async def run_rpa(form_type, data):
     """Executa o fluxo do RPA utilizando Playwright assíncrono."""
     screenshots = []
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=not PRODUCTION)
+        browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
         # TODO: implementar login no SISCAN usando CPF/senha de users db
 
