@@ -32,9 +32,9 @@ class WebPage(ABC):
     FIELDS_MAP: dict[str, dict[str, str]] = {}
 
     def __init__(
-        self, url_base: str, user: str, password: str, schema_path: Union[str, Path]
+        self, base_url: str, user: str, password: str, schema_path: Union[str, Path]
     ):
-        self._url_base = url_base
+        self._base_url = base_url
         self._user = user
         self._password = password
         self._schema_path = schema_path
@@ -51,7 +51,7 @@ class WebPage(ABC):
 
     def _initialize_context(self):
         self._context = SiscanBrowserContext(
-            url_base=self._url_base,
+            base_url=self._base_url,
             headless=False,  # Para depuração, use False
             timeout=15000,
         )
@@ -393,7 +393,7 @@ class WebPage(ABC):
             data_final[field_name] = value
         return fields_map, data_final
 
-    def load_select_options(self, field_name: str):
+    async def load_select_options(self, field_name: str):
         """
         Atualiza o mapeamento de opções de um campo <select> a partir da
         interface da página.
@@ -417,7 +417,7 @@ class WebPage(ABC):
         """
         xpath = XPathConstructor(self.context)
         field_label, field_type, _ = self.get_field_metadata(field_name)
-        xpath.find_form_input(field_label, field_type)
+        await xpath.find_form_input(field_label, field_type)
         self.update_field_map_from_select(field_name, xpath)
 
     def select_value(

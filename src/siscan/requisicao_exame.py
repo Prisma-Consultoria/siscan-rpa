@@ -27,9 +27,9 @@ class RequisicaoExame(SiscanWebPage):
         "prestador"
     ]
 
-    def __init__(self, url_base: str, user: str, password: str,
+    def __init__(self, base_url: str, user: str, password: str,
                  schema_path: Union[str, Path]):
-        super().__init__(url_base, user, password, schema_path)
+        super().__init__(base_url, user, password, schema_path)
         map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
             schema_path, fields=RequisicaoExame.MAP_SCHEMA_FIELDS)
         RequisicaoExame.MAP_DATA_LABEL = map_data_label
@@ -77,7 +77,7 @@ class RequisicaoExame(SiscanWebPage):
         if event_button:
 
             xpath = XPathConstructor(self.context)
-            await (await xpath.find_form_anchor_button("Novo Exame")).handle_click()
+            await xpath.find_form_anchor_button("Novo Exame").handle_click()
 
         await xpath.wait_page_ready()
         return xpath

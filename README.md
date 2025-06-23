@@ -11,7 +11,6 @@ Este projeto implementa uma automação (RPA) para interação com o sistema SIS
   - `/preencher-solicitacao-mamografia` – inicia o RPA para preencher uma solicitação de exame.
   - `/preencher-laudo-mamografia` – inicia o RPA para preencher um laudo de mamografia.
   Utiliza Playwright para abrir o navegador e ainda possui *TODOs* de implementação.
-- **src/scrapping.py** – script de exemplo que executa o fluxo de requisição de mamografia diretamente.
 - **src/siscan/** – código principal de automação:
   - `context.py` controla o navegador e coleta mensagens informativas.
   - `siscan_webpage.py` define lógica comum de login e navegação.
@@ -51,13 +50,6 @@ Ou com Docker Compose:
 
 ```bash
 docker compose up -d --build
-```
-
-Para rodar apenas o teste de scrapping
-
-```bash
-pytest # Gera o json teste faker dentre os testes, necessário para
-python -m src.scrapping # rodar o scrapping
 ```
 
 ## Rodando testes

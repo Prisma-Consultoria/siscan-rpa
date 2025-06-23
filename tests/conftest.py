@@ -49,7 +49,6 @@ def client(test_db):
 
 @pytest.fixture(scope="session")
 def fake_json_file(tmp_path_factory):
-    """Gera um arquivo JSON com dados de exemplo para testes e scrapping."""
     fake = Faker("pt_BR")
     cns = CNS()
 

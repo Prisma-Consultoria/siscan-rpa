@@ -47,9 +47,9 @@ class SiscanWebPage(WebPage):
     MAP_SCHEMA_FIELDS = MAP_DATA_FIND_CARTAO_SUS + MAP_DATA_CARTAO_SUS
 
     def __init__(
-        self, url_base: str, user: str, password: str, schema_path: Union[str, Path]
+        self, base_url: str, user: str, password: str, schema_path: Union[str, Path]
     ):
-        super().__init__(url_base, user, password, schema_path)
+        super().__init__(base_url, user, password, schema_path)
         self.schema_model = create_model_from_json_schema("SchemaModel", Path(schema_path))
         map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
             schema_path, fields=SiscanWebPage.MAP_SCHEMA_FIELDS
@@ -111,7 +111,8 @@ class SiscanWebPage(WebPage):
         pass_input = await xpath.find_form_input("Senha:")
         await pass_input.handle_fill(self._password)
         await self.take_screenshot("screenshot_01_autenticar.png")
-        await (await xpath.find_form_button("Acessar")).handle_click()
+        acessar_btn = await xpath.find_form_button("Acessar")
+        await acessar_btn.handle_click()
         logger.debug("Botao acessar clicado")
 
         # Aguarda confirmação de login bem-sucedido
