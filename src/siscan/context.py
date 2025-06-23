@@ -1,7 +1,34 @@
 import logging
+import asyncio
+from typing import Optional, Any
+from playwright.async_api import async_playwright, Browser, Page
 
-from typing import Optional
-from playwright.sync_api import sync_playwright, Browser, Page
+
+def _syncify_result(result: Any):
+    """Recursively wrap Playwright objects to behave synchronously."""
+    if isinstance(result, list):
+        return [_syncify_result(r) for r in result]
+    if hasattr(result, "__class__") and result.__class__.__module__.startswith("playwright."):
+        return _SyncWrapper(result)
+    return result
+
+
+class _SyncWrapper:
+    """Wrap async Playwright objects exposing sync-like methods."""
+
+    def __init__(self, obj: Any):
+        object.__setattr__(self, "_obj", obj)
+
+    def __getattr__(self, name: str):
+        attr = getattr(self._obj, name)
+        if callable(attr):
+            def _call(*args, **kwargs):
+                result = asyncio.run(attr(*args, **kwargs))
+                return _syncify_result(result)
+
+            return _call
+        return _syncify_result(attr)
+
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +107,9 @@ class SiscanBrowserContext:
             self._browser.close()
             self._browser = None
             self._page = None
+        if getattr(self, "_playwright", None):
+            asyncio.run(self._playwright.stop())
+            self._playwright = None
 
     def goto(self, path: str, wait_until: str = "load", **kwargs) -> Page:
         """
@@ -110,10 +140,17 @@ class SiscanBrowserContext:
     def get_browser_and_page(self) -> tuple:
         if self._browser and self._page:
             return self._browser, self._page
-        playwright = sync_playwright().start()
-        self._browser = playwright.chromium.launch(headless=self.headless)
-        self._page = self._browser.new_page()
-        self._page.goto(self._url_base, wait_until="load")
+
+        async def _launch():
+            playwright = await async_playwright().start()
+            browser = await playwright.chromium.launch(headless=self.headless)
+            page = await browser.new_page()
+            await page.goto(self._url_base, wait_until="load")
+            return playwright, browser, page
+
+        self._playwright, browser, page = asyncio.run(_launch())
+        self._browser = _SyncWrapper(browser)
+        self._page = _SyncWrapper(page)
         return self._browser, self._page
 
     def collect_information_popup(self) -> dict[str, list[str]]:
@@ -125,44 +162,42 @@ class SiscanBrowserContext:
         dict
             Dicionário {data: [lista de linhas de conteúdo]}
         """
-        context = self._page.context
-        popup = None
-        for current_page in context.pages:
-            if current_page != self._page and "popupMensagensInformativas.jsf" in current_page.url:
-                popup = current_page
-                break
-        if not popup:
-            return {}
+        async def _collect():
+            context = self._page.context
+            popup = None
+            for current_page in context.pages:
+                if current_page != self._page and "popupMensagensInformativas.jsf" in current_page.url:
+                    popup = current_page
+                    break
+            if not popup:
+                return {}
 
-        popup.wait_for_load_state("domcontentloaded")
+            await popup.wait_for_load_state("domcontentloaded")
 
-        # Para cada tr da tabela de informes:
-        trs = popup.locator('table#listaMensagens tr.rich-table-row')
+            trs = popup.locator('table#listaMensagens tr.rich-table-row')
+            count = await trs.count()
 
-        for i in range(trs.count()):
-            tr = trs.nth(i)
+            for i in range(count):
+                tr = trs.nth(i)
+                date_elem = tr.locator('p[align="center"] > b > span')
+                if await date_elem.count() == 0:
+                    continue
+                notice_date = (await date_elem.first.inner_text()).strip()
 
-            # Localiza o <span> que está após o <label> (na mesma linha do "Informe de")
-            date_elem = tr.locator('p[align="center"] > b > span')
-            if date_elem.count() == 0:
-                continue
-            notice_date = date_elem.first.inner_text().strip()
+                subject_elem = tr.locator("p").nth(1)
+                notice_subject = (await subject_elem.inner_text()).strip()
 
-            subject_elem = tr.locator("p").nth(1)
-            notice_subject = subject_elem.inner_text().strip()
+                lines = []
+                ps = tr.locator('div#divDesc p')
+                ps_count = await ps.count()
+                for j in range(ps_count):
+                    texto = (await ps.nth(j).inner_text()).strip()
+                    if texto:
+                        lines.append(texto)
+                self._information_messages[(notice_date, notice_subject)] = lines
 
-            # Todas as linhas de texto do conteúdo
-            lines = []
+            await popup.close()
+            return self._information_messages
 
-            # Coleta todos os <div id="divDesc"> > <p>
-            ps = tr.locator('div#divDesc p')
-            for j in range(ps.count()):
-                texto = ps.nth(j).inner_text().strip()
-                if texto:
-                    lines.append(texto)
-            self._information_messages[(notice_date, notice_subject)] = lines
-
-        # Fecha a popup após coleta
-        popup.close()
-        return self._information_messages
+        return asyncio.run(_collect())
 
