@@ -905,30 +905,9 @@ class XPathConstructor:
             self.reset()
         return self
 
-    def find_form_button(self, button_text: str) -> 'XPathConstructor':
+    async def find_form_button(self, button_text: str) -> 'XPathConstructor':
         """
         Localiza um botão de formulário pelo texto apresentado ao usuário.
-
-        Este método constrói um XPath capaz de localizar, em ordem de
-        prioridade:
-            - Um elemento <input> do tipo 'submit' cujo atributo 'value'
-              corresponda exatamente ao texto informado;
-            - Um elemento <button> cujo texto interno corresponda exatamente
-              ao texto informado;
-            - Um elemento <a> com classe 'form-button' e cujo texto interno
-              corresponda exatamente ao texto informado.
-
-        Parâmetros
-        ----------
-        button_text : str
-            Texto exibido no botão do formulário, conforme apresentado na
-            interface.
-
-        Retorno
-        -------
-        self : XPathConstructor
-            Retorna a própria instância para permitir o encadeamento de
-            métodos.
 
         Exemplo
         -------
