@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Optional
 import time
 import logging
-from playwright.sync_api import Page, Locator, TimeoutError, ElementHandle
+from playwright.async_api import Page, Locator, TimeoutError, ElementHandle
 from src.siscan.context import SiscanBrowserContext
 from src.siscan.exception import SiscanMenuNotFoundError, \
     XpathNotFoundError, SiscanException
@@ -73,7 +73,7 @@ class XPathConstructor:
                 f"input_type='{self._input_type}')")
 
     def _get_input_type(
-            self, default_input_type: str | InputType = None) -> InputType:
+            self, default_input_type: str | InputType | None = None) -> InputType:
         """
         Obtém o tipo de input como Enum InputType a partir de string ou já
         do próprio Enum.
@@ -197,7 +197,7 @@ class XPathConstructor:
             raise XpathNotFoundError(
                 self._context,
                 xpath=self._xpath,
-                msg=f"Erro inesperado ao obter locator: {e}"
+                m=f"Erro inesperado ao obter locator: {e}"
             )
             raise
 
@@ -242,7 +242,7 @@ class XPathConstructor:
             raise XpathNotFoundError(
                 self._context,
                 xpath=self._xpath,
-                msg=f"Elemento não visível: XPath '{self._xpath}' "
+                m=f"Elemento não visível: XPath '{self._xpath}' "
                     f"não se tornou visível dentro do tempo limite."
             )
         except XpathNotFoundError:
@@ -254,7 +254,7 @@ class XPathConstructor:
             raise XpathNotFoundError(
                 self._context,
                 xpath=self._xpath,
-                msg=f"Erro inesperado ao aguardar elemento: {e}"
+                m=f"Erro inesperado ao aguardar elemento: {e}"
             )
         return locator
 
@@ -389,7 +389,7 @@ class XPathConstructor:
             raise XpathNotFoundError(
                 self._context,
                 xpath=self._xpath,
-                msg=f"Campo não preenchido ou visível: XPath '{self._xpath}' "
+                m=f"Campo não preenchido ou visível: XPath '{self._xpath}' "
                     f"não atendeu às condições dentro do tempo limite."
             )
         except XpathNotFoundError:
@@ -402,7 +402,7 @@ class XPathConstructor:
             raise XpathNotFoundError(
                 self._context,
                 xpath=self._xpath,
-                msg=f"Erro inesperado ao aguardar o preenchimento: {e}"
+                m=f"Erro inesperado ao aguardar o preenchimento: {e}"
             )
 
     def wait_page_ready(
@@ -459,7 +459,7 @@ class XPathConstructor:
                          f"carregou dentro de . Erro: {e}")
             raise SiscanException(
                 self._context,
-                msg=f"Página não carregada ou jQuery indisponível dentro do "
+                m=f"Página não carregada ou jQuery indisponível dentro do "
                     f"tempo limite: {e}"
             )
         except Exception as e:
@@ -468,7 +468,7 @@ class XPathConstructor:
                          f"página: {e}")
             raise SiscanException(
                 self._context,
-                msg=f"Erro inesperado ao aguardar a prontidão da página: {e}"
+                m=f"Erro inesperado ao aguardar a prontidão da página: {e}"
             )
 
     def get_value(
@@ -588,7 +588,7 @@ class XPathConstructor:
                         else:
                             text = value
                     return (text, value)
-            return (None, None)
+            return ("", "")
         elif input_type in ("div", "span"):
             text = locator.inner_text().strip()
             return (text, text)
@@ -598,7 +598,7 @@ class XPathConstructor:
 
     def _select_option_with_retry(
             self, obj_locator, value: str, timeout: float = DEFAULT_TIMEOUT,
-            interval: float = None):
+            interval: float | None = None):
         """
         Realiza a seleção de uma opção em um campo <select>, com tentativas
         repetidas até que a opção desejada esteja disponível ou até que o tempo
@@ -894,7 +894,7 @@ class XPathConstructor:
         logger.debug(f"XPath: {self}")
         return self
 
-    def fill(self, value: str, input_type: str | InputType = None,
+    def fill(self, value: str | list | None, input_type: str | InputType = None,
              timeout: float = DEFAULT_TIMEOUT,
              reset=True) -> 'XPathConstructor':
         """
@@ -915,9 +915,9 @@ class XPathConstructor:
 
         Parâmetros
         ----------
-        value : str
+        value : str | list | None
             Valor a ser preenchido no campo (ou lista de valores para
-            checkboxes).
+            checkboxes). Pode ser None para campos opcionais.
         type_input : str, opcional
             Tipo do campo ('texto', 'select', 'checkbox', 'radio', 'lista').
             O padrão é 'texto'.
@@ -1086,10 +1086,12 @@ class XPathConstructor:
         logger.debug(f"XPath do botão <a> localizado: {self._xpath}")
         return self
 
-    def click(self,
-              timeout: float = DEFAULT_TIMEOUT,
-              interval: float = None,
-              wait_for_selector: str = None, reset=True) -> 'XPathConstructor':
+    def click(
+            self,
+            timeout: float = DEFAULT_TIMEOUT,
+            interval: float | None = None,
+            wait_for_selector: str | None = None,
+            reset=True) -> 'XPathConstructor':
         """
         Realiza o clique forçado no elemento localizado pelo XPath corrente,
         repetindo tentativas até sucesso ou atingir o tempo limite. Se
@@ -1112,7 +1114,7 @@ class XPathConstructor:
             Intervalo, em segundos, entre cada tentativa de clique.
         reset : bool, opcional (default=True)
             Se True, reseta o XPath interno após o clique bem-sucedido.
-        wait_for_selector : str, opcional (default=None)
+        wait_for_selector : str | None, opcional (default=None)
             Se definido, após o clique o método aguardará até o seletor CSS ou
             XPath informado estar presente e visível.
 
@@ -1367,7 +1369,7 @@ class XPathConstructor:
     def get_select_options(
             self, min_options: int = 2,
             timeout: float = DEFAULT_TIMEOUT,
-            interval: float = None) -> dict[str, str]:
+            interval: float | None = None) -> dict[str, str]:
         """
         Retorna um dicionário com todas as opções de um campo <select>.
 

@@ -1,30 +1,23 @@
-import os
-import sqlite3
 import pytest
-from main import app, get_db
+from fastapi.testclient import TestClient
+from src.main import app
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     db_file = tmp_path / "test.db"
     monkeypatch.setenv("DATABASE_URL", str(db_file))
-    # re-cria a tabela em test.db
-    conn = sqlite3.connect(str(db_file))
-    conn.execute("""
-    CREATE TABLE users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        password BLOB NOT NULL
-    )""")
-    conn.commit()
-    conn.close()
+    import src.env as env
+    env.init_engine(str(db_file))
+    from src import models  # noqa: F401
+    env.Base.metadata.create_all(bind=env.engine)
 
-    with app.test_client() as client:
+    with TestClient(app) as client:
         yield client
 
 def test_register_success(client):
     res = client.post("/cadastrar-usuario", json={"username": "alice", "password": "secret"})
     assert res.status_code == 201
-    data = res.get_json()
+    data = res.json()
     assert data["message"] == "user created"
 
 def test_register_missing_fields(client):

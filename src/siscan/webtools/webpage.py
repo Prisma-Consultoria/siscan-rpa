@@ -25,7 +25,10 @@ class RequirementLevel(Enum):
 
 
 class WebPage(ABC):
-    # Mapeamento de campos para valores específicos
+    """
+    Classe abstrata para navegação de páginas desde a página de origem e autenticação
+    """
+
     FIELDS_MAP: dict[str, dict[str, str]] = {}
 
     def __init__(self, url_base: str, user: str, password: str,
@@ -59,7 +62,7 @@ class WebPage(ABC):
         raise NotImplementedError("Subclasses devem implementar este método.")
 
     @abstractmethod
-    def get_map_label(self) -> dict[str, tuple[str, str]]:
+    def get_map_label(self) -> dict[str, tuple[str, str, str]]:
         """
         Método abstrato que deve ser implementado por subclasses para retornar
         o mapeamento de labels. Deve retornar um dicionário onde as chaves
@@ -93,7 +96,7 @@ class WebPage(ABC):
         ----------
         field_name : str
             Nome lógico do campo para o qual se deseja obter as informações.
-        map_label : Optional[dict[str, tuple]], opcional
+        map_label : Optional[dict[str, tuple[str, str, str]]], opcional
             Dicionário de mapeamento de campos. Caso não seja informado,
             utiliza o mapeamento padrão retornado por `get_map_label()`.
 
@@ -139,7 +142,7 @@ class WebPage(ABC):
 
     def get_field_label(
             self, field_name: str,
-            map_label: Optional[dict[str, tuple[str, str]]] = None) -> str:
+            map_label: Optional[dict[str, tuple[str, str, str]]] = None) -> str:
         """
         Retorna o texto do label associado ao nome lógico do campo, com base no
         mapeamento informado.
@@ -154,7 +157,7 @@ class WebPage(ABC):
         ----------
         campo : str
             Nome lógico do campo para o qual se deseja obter o label.
-        map_label : Optional[dict[str, tuple[str, str]]], opcional
+        map_label : Optional[dict[str, tuple[str, str, str]]], opcional
             Dicionário de mapeamento de campos. Caso não seja informado,
             utiliza o mapeamento padrão retornado por `get_map_label()`.
 
@@ -187,7 +190,7 @@ class WebPage(ABC):
 
     def get_field_type(
             self, field_name: str,
-            map_label: Optional[dict[str, tuple[str, str]]] = None) -> str:
+            map_label: Optional[dict[str, tuple[str, str, str]]] = None) -> str:
         """
         Retorna o tipo de campo associado ao nome lógico do campo, com base no
         mapeamento informado.
@@ -202,7 +205,7 @@ class WebPage(ABC):
         ----------
         campo : str
             Nome lógico do campo para o qual se deseja obter o tipo.
-        map_label : Optional[dict[str, tuple[str, str]]], opcional
+        map_label : Optional[dict[str, tuple[str, str, str]]], opcional
             Dicionário de mapeamento de campos. Caso não seja informado,
             utiliza o mapeamento padrão retornado por `get_map_label()`.
 
@@ -236,7 +239,7 @@ class WebPage(ABC):
 
     def get_field_required(
             self, field_name: str,
-            map_label: Optional[dict[str, tuple[str, str]]] = None) -> str:
+            map_label: Optional[dict[str, tuple[str, str, str]]] = None) -> str:
         if map_label is None:
             value = self.get_map_label().get(field_name)
         else:
@@ -339,9 +342,9 @@ class WebPage(ABC):
 
     def mount_fields_map_and_data(
             self, data: dict,
-            map_label: dict[str, tuple[str, str]],
+            map_label: dict[str, tuple[str, str, str]],
             suffix: Optional[str] = ":"
-    ) -> tuple[dict[str, tuple[str, str]], dict[str, str]]:
+    ) -> tuple[dict[str, tuple[str, str, str]], dict[str, str]]:
         """
         Gera o dicionário campos_map e o dicionário data_final para uso em
         preenchimento genérico de formulários.
@@ -350,15 +353,15 @@ class WebPage(ABC):
         ----------
         data : dict
             Dicionário de dados originais (nomes de campos como chave).
-        map_label : dict[str, tuple[str, str]]
+        map_label : dict[str, tuple[str, str, str]]
             Dicionário com nomes de campos como chave e tuplas contendo
-            (label, tipo de campo) como valor.
+            (label, tipo de campo, requirement_level) como valor.
         suffix : str, opcional (default=":")
 
         Retorna
         -------
         tuple (campos_map, data_final)
-            - campos_map: dict[str, tuple[str, str]]
+            - campos_map: dict[str, tuple[str, str, str]]
             - data_final: dict[str, str]
         """
         if suffix is None:

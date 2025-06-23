@@ -1,6 +1,14 @@
-Flask
 cryptography
 playwright
 pytest
 pytest-playwright
 python-dotenv==1.1.0
+pydantic==2.11.7
+Faker==37.4.0
+validate-docbr==1.11.1
+brazilcep==7.0.0
+fastapi==0.115.13
+uvicorn
+httpx
+jsonschema==4.24.0
+SQLAlchemy==2.0.41
