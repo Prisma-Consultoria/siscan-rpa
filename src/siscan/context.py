@@ -162,7 +162,7 @@ class SiscanBrowserContext:
         self._page = _SyncWrapper(page)
         return self._browser, self._page
 
-    def collect_information_popup(self) -> dict[str, list[str]]:
+    def collect_information_popup(self, timeout: int = 3000) -> dict[str, list[str]]:
         """
         Coleta todos os informes da popup, estruturando como {data: [linhas de texto, ...]}, e fecha a popup.
 
@@ -174,12 +174,23 @@ class SiscanBrowserContext:
         async def _collect():
             context = self._page.context
             popup = None
-            for current_page in context.pages:
-                if current_page != self._page and "popupMensagensInformativas.jsf" in current_page.url:
-                    popup = current_page
+            start = asyncio.get_event_loop().time()
+            while (asyncio.get_event_loop().time() - start) * 1000 < timeout:
+                for current_page in context.pages:
+                    if (
+                        current_page != self._page
+                        and "popupMensagensInformativas.jsf" in current_page.url
+                    ):
+                        popup = current_page
+                        break
+                if popup:
                     break
+                await asyncio.sleep(0.1)
             if not popup:
+                logger.debug("Nenhuma popup de informacoes encontrada")
                 return {}
+
+            logger.debug("Coletando mensagens da popup de informacoes")
 
             await popup.wait_for_load_state("domcontentloaded")
 

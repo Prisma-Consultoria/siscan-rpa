@@ -97,15 +97,19 @@ class SiscanWebPage(WebPage):
 
         logger.debug("Autenticando usuario %s", self._user)
         self.context.goto("/login.jsf", wait_until="load")
+        logger.debug("Pagina de login carregada")
 
         # Aguarda possível popup abrir e fecha se necessário
         self.context.collect_information_popup()
+        logger.debug("Popup de informacao tratada")
 
         xpath = XPathConstructor(self.context)
+        logger.debug("Preenchendo formulario de login")
         xpath.find_form_input("E-mail:").fill(self._user)
         xpath.find_form_input("Senha:").fill(self._password)
         self.take_screenshot("screenshot_01_autenticar.png")
         xpath.find_form_button("Acessar").click()
+        logger.debug("Botao acessar clicado")
 
         # Aguarda confirmação de login bem-sucedido
         try:
@@ -114,6 +118,7 @@ class SiscanWebPage(WebPage):
             )
         except Exception:
             raise SiscanLoginError(self.context)
+        logger.debug("Login realizado com sucesso")
         self.take_screenshot("screenshot_02_tela_principal.png")
 
     def acessar_menu(
