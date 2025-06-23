@@ -1,6 +1,6 @@
 from src.siscan.utils.validator import Validator
 from pathlib import Path
-
+import asyncio
 from src.env import SISCAN_URL, SISCAN_USER, SISCAN_PASSWORD
 import logging
 
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 # python -m src.siscan.scrapping
-def main():
+async def main():
     current_path = Path(__file__).resolve()
     root_path = current_path.parent.parent
 
@@ -26,7 +26,7 @@ def main():
 
     # requisicao.buscar_cartao_sus(dados)
 
-    requisicao.preencher(dados)
+    await asyncio.to_thread(requisicao.preencher, dados)
 
     informations = requisicao.context.information_messages
     if informations:
@@ -38,6 +38,5 @@ def main():
 
     requisicao.context.close()
 
-
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
