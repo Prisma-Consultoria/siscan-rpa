@@ -96,19 +96,22 @@ class SiscanWebPage(WebPage):
         """
 
         logger.debug("Autenticando usuario %s", self._user)
-        await self.context.goto("/login.jsf")
+        await self.context.handle_goto("/login.jsf")
         logger.debug("Pagina de login carregada")
 
         # Aguarda possível popup abrir e fecha se necessário
-        self.context.collect_information_popup()
+        await self.context.collect_information_popup()
         logger.debug("Popup de informacao tratada")
 
         xpath = XPathConstructor(self.context)
+
         logger.debug("Preenchendo formulario de login")
-        xpath.find_form_input("E-mail:").fill(self._user)
-        xpath.find_form_input("Senha:").fill(self._password)
-        self.take_screenshot("screenshot_01_autenticar.png")
-        xpath.find_form_button("Acessar").click()
+        user_input = await xpath.find_form_input("E-mail:")
+        await user_input.handle_fill(self._user)
+        pass_input = await xpath.find_form_input("Senha:")
+        await pass_input.handle_fill(self._password)
+        await self.take_screenshot("screenshot_01_autenticar.png")
+        await xpath.find_form_button("Acessar").handle_click()
         logger.debug("Botao acessar clicado")
 
         # Aguarda confirmação de login bem-sucedido
@@ -119,7 +122,7 @@ class SiscanWebPage(WebPage):
         except Exception:
             raise SiscanLoginError(self.context)
         logger.debug("Login realizado com sucesso")
-        self.take_screenshot("screenshot_02_tela_principal.png")
+        await self.take_screenshot("screenshot_02_tela_principal.png")
 
     def acessar_menu(
         self,
@@ -211,7 +214,7 @@ class SiscanWebPage(WebPage):
         # Se chegou aqui, só há um resultado: clicar no botão
         # 'Selecionar Paciente' (última coluna)
         botao_selecionar = rows.nth(0).locator("a[title='Selecionar Paciente']")
-        botao_selecionar.click()
+        botao_selecionar.handle_click()
 
     def _buscar_cartao_sus(self, data: dict, menu_action: Callable[[], Any]):
         """
@@ -226,7 +229,7 @@ class SiscanWebPage(WebPage):
         :return: None
         """
         xpath = menu_action()
-        xpath.find_search_link_after_input(self.get_field_label("cartao_sus")).click()
+        xpath.find_search_link_after_input(self.get_field_label("cartao_sus")).handle_click()
         xpath.wait_page_ready()
 
         # Preenche os campos de busca do Cartão SUS
@@ -236,13 +239,13 @@ class SiscanWebPage(WebPage):
         xpath.fill_form_fields(data_final, fields_map)
 
         # Clica no botão de buscar
-        xpath.find_form_button("Pesquisar").click(
+        xpath.find_form_button("Pesquisar").handle_click(
             wait_for_selector="table#frm\\:listaPaciente"
         )
 
         self.seleciona_um_paciente()
 
-    def preencher_cartao_sus(
+    async def preencher_cartao_sus(
         self,
         numero: str,
         timeout: int = XPathConstructor.DEFAULT_TIMEOUT,
@@ -282,7 +285,7 @@ class SiscanWebPage(WebPage):
             cartao_sus_ele = xpath.find_form_input(
                 self.get_field_label("cartao_sus")
             ).wait_until_enabled()
-            cartao_sus_ele.fill(numero, reset=False)
+            await cartao_sus_ele.handle_fill(numero, reset=False)
             cartao_sus_ele.on_blur()
             cartao_sus_ele.reset()
             xpath.wait_page_ready()
@@ -316,22 +319,17 @@ class SiscanWebPage(WebPage):
             time.sleep(interval)
             elapsed += interval
 
-    def fill_field_in_card(self, card_name: str, field_name: str, value: str):
+    async def fill_field_in_card(self, card_name: str, field_name: str, value: str):
         logger.debug(
             f"Preenchendo campo '{field_name}' de '{card_name}' com o valor '{value}'"
         )
-        # //fieldset[legend[normalize-space(text())='{card_name}']]//input[@type='text']
-        # //fieldset[legend[normalize-space(text())='{card_name}']]//label[normalize-space(text())='{field_name}']/@for
         xpath_obj = XPathConstructor(
             self.context,
             xpath=f"//fieldset[legend[normalize-space(text())='{card_name}']]"
-            f"//input[@type='text']",
-            # xpath=f"//fieldset[legend[normalize-space(text())='{card_name}']]"
-            #       f"//label[normalize-space(text())='{field_name}']"
-            #       f"/following-sibling::input[1]"
+            f"//input[@type='text']"
         )
 
-        xpath_obj.fill(value)
+        await xpath_obj.handle_fill(value)
 
     def preencher_campo_dependente_multiplo(
         self,

@@ -16,7 +16,7 @@ class SiscanException(Exception):
         super().__init__(self.msg)
 
     @classmethod
-    def get_error_messages(cls, ctx):
+    async def get_error_messages(cls, ctx):
         """
         Busca mensagens de erro padrão na página atual do contexto Playwright.
 
@@ -34,7 +34,7 @@ class SiscanException(Exception):
         ]
         mensagens = []
         for seletor in seletores:
-            elementos = ctx.page.query_selector_all(seletor)
+            elementos = await ctx.page.query_selector_all(seletor)
             for el in elementos:
                 texto = el.inner_text().strip()
                 if texto:

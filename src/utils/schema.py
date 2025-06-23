@@ -55,7 +55,7 @@ def create_model_from_json_schema(name: str, schema_path: Path) -> type[BaseMode
 
 
 # Cria modelo para requisicao mamografia
-SCHEMA_DIR = Path(__file__).resolve().parents[1] / "src" / "siscan" / "schemas"
+SCHEMA_DIR = Path(__file__).resolve().parents[1] / "siscan" / "schemas"
 MAMO_SCHEMA_PATH = SCHEMA_DIR / "requisicao_exame_mamografia_rastreamento.schema.json"
 MamografiaRequest = create_model_from_json_schema("MamografiaRequest", MAMO_SCHEMA_PATH)
 

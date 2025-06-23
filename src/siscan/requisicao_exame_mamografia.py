@@ -67,11 +67,16 @@ class RequisicaoExameMamografia(RequisicaoExame):
             "02": "N",
         }
     }
-    def __init__(self, url_base: str, user: str, password: str):
+    def __init__(self, base_url: str, user: str, password: str):
         schema_path = Path(
             __file__).parent / "schemas" / "requisicao_exame_mamografia_rastreamento.schema.json"
+        
+        # Verifica se o arquivo de schema existe
+        if not schema_path.is_file():
+            raise FileNotFoundError(
+                f"Arquivo de schema '{schema_path}' nao encontrado.")
 
-        super().__init__(url_base, user, password, schema_path)
+        super().__init__(base_url, user, password, schema_path)
 
         map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
             schema_path, fields=RequisicaoExameMamografia.MAP_SCHEMA_FIELDS)
@@ -171,7 +176,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
         if text == "Rastreamento":
             self.select_value("mamografia_de_rastreamento", data)
 
-    def preencher(self, data: dict):
+    async def preencher(self, data: dict):
         """
         Preenche o formulário de requisição de exame com os dados fornecidos.
 
@@ -191,7 +196,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
         super().preencher(data)
 
         xpath = XPathConstructor(self.context)
-        xpath.find_form_button("Avançar").click()
+        await xpath.find_form_button("Avançar").handle_click()
 
         self.preecher_fez_mamografia_alguma_vez(data)
         self.preenche_fez_radioterapia_na_mama_ou_no_plastao(data)
@@ -262,6 +267,6 @@ class RequisicaoExameMamografia(RequisicaoExame):
                 raise ValueError("O parâmetro 'lado' deve ser "
                                  "'direita' ou 'esquerda'.")
             xpath = XPathConstructor(self.context, xpath=base_xpath)
-            xpath.fill(self.get_field_value(campo_nome, data),
+            xpath.handle_fill(self.get_field_value(campo_nome, data),
                        self.get_field_type(campo_nome))
             data.pop(campo_nome)

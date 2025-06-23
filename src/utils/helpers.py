@@ -10,7 +10,7 @@ async def run_rpa(form_type, data):
         # TODO: implementar login no SISCAN usando CPF/senha de users db
 
         # TODO: navegar até o formulário e preencher campos com 'data'
-        # Exemplo: page.fill("input[name=campo1]", data.get("campo1", ""))
+        # Exemplo: page.handle_fill("input[name=campo1]", data.get("campo1", ""))
 
         if not PRODUCTION and TAKE_SCREENSHOT:
             for i in range(1, 4):

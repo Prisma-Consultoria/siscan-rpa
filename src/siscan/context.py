@@ -5,59 +5,23 @@ from  src.utils import messages as msg
 from playwright.async_api import async_playwright, Browser, Page
 
 
-def _syncify_result(result: Any):
-    """Recursively wrap Playwright objects to behave synchronously."""
-    if isinstance(result, list):
-        return [_syncify_result(r) for r in result]
-    if hasattr(result, "__class__") and result.__class__.__module__.startswith("playwright."):
-        return _SyncWrapper(result)
-    return result
-
-
-class _SyncWrapper:
-    """Wrap async Playwright objects exposing sync-like methods."""
-
-    def __init__(self, obj: Any):
-        object.__setattr__(self, "_obj", obj)
-
-    def __getattr__(self, name: str):
-        attr = getattr(self._obj, name)
-        if callable(attr):
-            def _call(*args, **kwargs):
-                result = asyncio.run(attr(*args, **kwargs))
-                return _syncify_result(result)
-
-            return _call
-        return _syncify_result(attr)
-
-
 logger = logging.getLogger(__name__)
 
 
 class SiscanBrowserContext:
     """
-    Centraliza as configurações de contexto e inicialização do Playwright para o SIScan.
-
-    Atributos
-    ---------
-    url_base : str
-        URL base do SIScan.
-    headless : bool
-        Define se o navegador será executado em modo headless.
-    timeout : int
-        Timeout padrão (ms) para operações de navegação.
-
+    Centraliza as configurações de contexto e inicialização do Playwright para o SISCAN.
     """
 
     def __init__(
         self,
-        url_base: str = "https://siscan.saude.gov.br/",
+        base_url: str = "https://siscan.saude.gov.br/",
         headless: bool = True,
         timeout: int = 10000
     ):
-        self._url_base = url_base
-        self.headless = headless
+        self._base_url = base_url
         self._timeout = timeout
+        self.headless = headless
 
         self._browser: Optional[Browser] = None
         self._page: Optional[Page] = None
@@ -65,11 +29,11 @@ class SiscanBrowserContext:
         self._information_messages: dict[str, list[str]] = {}
 
     @property
-    def url_base(self) -> str:
+    def base_url(self) -> str:
         """
         Retorna a URL base do SIScan.
         """
-        return self._url_base
+        return self._base_url
 
     #@property
     def timeout(self) -> int:
@@ -88,19 +52,19 @@ class SiscanBrowserContext:
     @property
     def browser(self) -> Browser:
         """
-        Retorna o navegador Playwright atual. Se não estiver inicializado, chama get_browser_and_page.
+        Retorna o navegador Playwright atual. Se não estiver inicializado, chama startup.
         """
         if self._browser is None:
-            self._browser, self._page = self.get_browser_and_page()
+            self._browser, self._page = self.startup()
         return self._browser
 
     @property
     def page(self) -> Page:
         """
-        Retorna a página Playwright atual. Se não estiver inicializada, chama get_browser_and_page.
+        Retorna a página Playwright atual. Se não estiver inicializada, chama startup.
         """
         if self._page is None:
-            self._browser, self._page = self.get_browser_and_page()
+            self._browser, self._page = self.startup()
         return self._page
 
     def close(self):
@@ -112,27 +76,10 @@ class SiscanBrowserContext:
             asyncio.run(self._playwright.stop())
             self._playwright = None
 
-    async def goto(self, path: str, **kwargs) -> Page:
-        """
-        Navega para o caminho informado, relativo à url_base, utilizando a página Playwright.
-
-        Parâmetros
-        ----------
-        path : str
-            Caminho relativo, por exemplo '/login'.
-        wait_until : str
-            Estratégia de espera após navegação ('load', 'domcontentloaded', etc.)
-        kwargs : dict
-            Parâmetros adicionais para page.goto.
-
-        Retorno
-        -------
-        Page
-            A página Playwright navegada para o URL construído.
-        """
+    async def handle_goto(self, path: str, **kwargs) -> Page:
         if not self._page:
-            self.get_browser_and_page()
-        url = self._url_base.rstrip('/') + '/' + path.lstrip('/')
+            await self.startup()
+        url = self._base_url.rstrip('/') + '/' + path.lstrip('/')
         logger.debug(f"Navegando para: {url}")
         if self._page:
             await self._page.goto(url, **kwargs)
@@ -140,8 +87,8 @@ class SiscanBrowserContext:
             raise Exception(msg.CONTEXT_NOT_INITIALIZED)
 
         return self._page
-
-    def get_browser_and_page(self) -> tuple:
+    
+    async def startup(self) -> tuple[Browser, Page]:
         if self._browser and self._page:
             return self._browser, self._page
 
@@ -151,8 +98,12 @@ class SiscanBrowserContext:
                 playwright = await async_playwright().start()
                 logger.debug("Abrindo navegador Chromium")
                 browser = await playwright.chromium.launch(headless=self.headless)
+                logger.debug("Modo headless: %s", self.headless)
+
                 page = await browser.new_page()
-                await page.goto(self._url_base, wait_until="load")
+
+                logger.debug("Navegando para %s", self._base_url)
+                await page.goto(self._base_url, wait_until="load")
                 return playwright, browser, page
             except Exception:
                 logger.exception(
@@ -161,12 +112,12 @@ class SiscanBrowserContext:
                 )
                 raise
 
-        self._playwright, browser, page = asyncio.run(_launch())
-        self._browser = _SyncWrapper(browser)
-        self._page = _SyncWrapper(page)
+        self._playwright, browser, page = await _launch()
+        self._browser = browser
+        self._page = page
         return self._browser, self._page
 
-    def collect_information_popup(self, timeout: int = 3000) -> dict[str, list[str]]:
+    async def collect_information_popup(self, timeout: int = 3000) -> dict[str, list[str]]:
         """
         Coleta todos os informes da popup, estruturando como {data: [linhas de texto, ...]}, e fecha a popup.
 
@@ -175,53 +126,53 @@ class SiscanBrowserContext:
         dict
             Dicionário {data: [lista de linhas de conteúdo]}
         """
-        async def _collect():
-            context = self._page.context
-            popup = None
-            start = asyncio.get_event_loop().time()
-            while (asyncio.get_event_loop().time() - start) * 1000 < timeout:
-                for current_page in context.pages:
-                    if (
-                        current_page != self._page
-                        and "popupMensagensInformativas.jsf" in current_page.url
-                    ):
-                        popup = current_page
-                        break
-                if popup:
+        if not self._page:
+            await self.startup()
+        context = self._page.context
+        popup = None
+        start = asyncio.get_event_loop().time()
+        while (asyncio.get_event_loop().time() - start) * 1000 < timeout:
+            for current_page in context.pages:
+                if (
+                    current_page != self._page
+                    and "popupMensagensInformativas.jsf" in current_page.url
+                ):
+                    popup = current_page
                     break
-                await asyncio.sleep(0.1)
-            if not popup:
-                logger.debug("Nenhuma popup de informacoes encontrada")
-                return {}
+            if popup:
+                break
+            await asyncio.sleep(0.1)
+        if not popup:
+            logger.debug("Nenhuma popup de informacoes encontrada")
+            return {}
 
-            logger.debug("Coletando mensagens da popup de informacoes")
+        logger.debug("Coletando mensagens da popup de informacoes")
 
-            await popup.wait_for_load_state("domcontentloaded")
+        await popup.wait_for_load_state("domcontentloaded")
 
-            trs = popup.locator('table#listaMensagens tr.rich-table-row')
-            count = await trs.count()
+        trs = popup.locator('table#listaMensagens tr.rich-table-row')
+        count = await trs.count()
 
-            for i in range(count):
-                tr = trs.nth(i)
-                date_elem = tr.locator('p[align="center"] > b > span')
-                if await date_elem.count() == 0:
-                    continue
-                notice_date = (await date_elem.first.inner_text()).strip()
+        for i in range(count):
+            tr = trs.nth(i)
+            date_elem = tr.locator('p[align="center"] > b > span')
+            if await date_elem.count() == 0:
+                continue
+            notice_date = (await date_elem.first.inner_text()).strip()
 
-                subject_elem = tr.locator("p").nth(1)
-                notice_subject = (await subject_elem.inner_text()).strip()
+            subject_elem = tr.locator("p").nth(1)
+            notice_subject = (await subject_elem.inner_text()).strip()
 
-                lines = []
-                ps = tr.locator('div#divDesc p')
-                ps_count = await ps.count()
-                for j in range(ps_count):
-                    texto = (await ps.nth(j).inner_text()).strip()
-                    if texto:
-                        lines.append(texto)
-                self._information_messages[(notice_date, notice_subject)] = lines
+            lines = []
+            ps = tr.locator('div#divDesc p')
+            ps_count = await ps.count()
+            for j in range(ps_count):
+                texto = (await ps.nth(j).inner_text()).strip()
+                if texto:
+                    lines.append(texto)
+            self._information_messages[(notice_date, notice_subject)] = lines
 
-            await popup.close()
-            return self._information_messages
+        await popup.close()
 
-        return asyncio.run(_collect())
+        return self._information_messages
 

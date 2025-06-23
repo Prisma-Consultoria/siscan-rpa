@@ -31,8 +31,9 @@ class WebPage(ABC):
 
     FIELDS_MAP: dict[str, dict[str, str]] = {}
 
-    def __init__(self, url_base: str, user: str, password: str,
-                 schema_path: Union[str, Path]):
+    def __init__(
+        self, url_base: str, user: str, password: str, schema_path: Union[str, Path]
+    ):
         self._url_base = url_base
         self._user = user
         self._password = password
@@ -52,10 +53,9 @@ class WebPage(ABC):
         self._context = SiscanBrowserContext(
             url_base=self._url_base,
             headless=False,  # Para depuração, use False
-            timeout=15000
+            timeout=15000,
         )
         self.authenticate()
-
 
     @abstractmethod
     def authenticate(self):
@@ -80,9 +80,7 @@ class WebPage(ABC):
         return self._schema_path
 
     def get_field_metadata(
-            self,
-            field_name: str,
-            map_label: Optional[dict[str, tuple]] = None
+        self, field_name: str, map_label: Optional[dict[str, tuple]] = None
     ) -> tuple[str, InputType, RequirementLevel]:
         """
         Retorna o label, o tipo e o indicador de obrigatoriedade de um campo,
@@ -141,8 +139,10 @@ class WebPage(ABC):
         return value
 
     def get_field_label(
-            self, field_name: str,
-            map_label: Optional[dict[str, tuple[str, str, str]]] = None) -> str:
+        self,
+        field_name: str,
+        map_label: Optional[dict[str, tuple[str, str, str]]] = None,
+    ) -> str:
         """
         Retorna o texto do label associado ao nome lógico do campo, com base no
         mapeamento informado.
@@ -189,8 +189,10 @@ class WebPage(ABC):
         return value[0]
 
     def get_field_type(
-            self, field_name: str,
-            map_label: Optional[dict[str, tuple[str, str, str]]] = None) -> str:
+        self,
+        field_name: str,
+        map_label: Optional[dict[str, tuple[str, str, str]]] = None,
+    ) -> str:
         """
         Retorna o tipo de campo associado ao nome lógico do campo, com base no
         mapeamento informado.
@@ -238,8 +240,10 @@ class WebPage(ABC):
         return value[1]
 
     def get_field_required(
-            self, field_name: str,
-            map_label: Optional[dict[str, tuple[str, str, str]]] = None) -> str:
+        self,
+        field_name: str,
+        map_label: Optional[dict[str, tuple[str, str, str]]] = None,
+    ) -> str:
         if map_label is None:
             value = self.get_map_label().get(field_name)
         else:
@@ -249,8 +253,7 @@ class WebPage(ABC):
             raise ValueError(f"Campo '{field_name}' não está mapeado.")
         return value[2]
 
-    def get_field_value(
-            self, field_name: str, data: dict) -> Optional[str | list]:
+    def get_field_value(self, field_name: str, data: dict) -> Optional[str | list]:
         """
         Obtém o valor correspondente ao campo informado, realizando a conversão
         conforme o mapeamento definido em `FIELDS_MAP`, caso aplicável.
@@ -285,17 +288,18 @@ class WebPage(ABC):
                     f"O valor do campo '{field_name}' é uma lista ({value}). "
                     f"O mapeamento FIELDS_MAP espera um valor escalar. "
                     f"Ignorando o mapeamento e retornado o valor real "
-                    f"fornecido em 'data'.")
+                    f"fornecido em 'data'."
+                )
             else:
                 value = self.FIELDS_MAP[field_name].get(value, None)
         return value
 
     def update_field_map_from_select(
-            self,
-            field_name: str,
-            xpath: XPathConstructor,
-            label_as_key: bool = True,
-            timeout: int = 10
+        self,
+        field_name: str,
+        xpath: XPathConstructor,
+        label_as_key: bool = True,
+        timeout: int = 10,
     ) -> None:
         """
         Atualiza o dicionário FIELDS_MAP[field_name] com opções do select da
@@ -341,9 +345,10 @@ class WebPage(ABC):
         xpath.reset()
 
     def mount_fields_map_and_data(
-            self, data: dict,
-            map_label: dict[str, tuple[str, str, str]],
-            suffix: Optional[str] = ":"
+        self,
+        data: dict,
+        map_label: dict[str, tuple[str, str, str]],
+        suffix: Optional[str] = ":",
     ) -> tuple[dict[str, tuple[str, str, str]], dict[str, str]]:
         """
         Gera o dicionário campos_map e o dicionário data_final para uso em
@@ -371,15 +376,20 @@ class WebPage(ABC):
         data_final = {}
         for field_name in data.keys():
             if field_name not in map_label.keys():
-                logger.warning(f"Campo '{field_name}' não está mapeado ou não "
-                               f"é editável. Ignorado.")
+                logger.warning(
+                    f"Campo '{field_name}' não está mapeado ou não "
+                    f"é editável. Ignorado."
+                )
                 continue
-            field_label, field_type, requirement_level = (
-                self.get_field_metadata(field_name, map_label))
+            field_label, field_type, requirement_level = self.get_field_metadata(
+                field_name, map_label
+            )
             value = self.get_field_value(field_name, data)
-            fields_map[field_name] = (f"{field_label}{suffix}",
-                                      field_type,
-                                      requirement_level)
+            fields_map[field_name] = (
+                f"{field_label}{suffix}",
+                field_type,
+                requirement_level,
+            )
             data_final[field_name] = value
         return fields_map, data_final
 
@@ -411,7 +421,7 @@ class WebPage(ABC):
         self.update_field_map_from_select(field_name, xpath)
 
     def select_value(
-            self, field_name: str, data: dict
+        self, field_name: str, data: dict
     ) -> tuple[str, str] | list[tuple[str, str]]:
         """
         Seleciona ou preenche um valor em um campo de formulário identificado
@@ -492,20 +502,27 @@ class WebPage(ABC):
         field_label, field_type, _ = self.get_field_metadata(field_name)
 
         type_exam_elem = xpath.find_form_input(field_label, field_type)
-        xpath_obj = type_exam_elem.fill(self.get_field_value(field_name, data),
-                                        field_type,
-                                        reset=False)
+        xpath_obj = type_exam_elem.handle_fill(
+            self.get_field_value(field_name, data), field_type, reset=False
+        )
         value = xpath_obj.get_value(field_type)
         # Para campos que retornam tupla (texto, valor)
         if isinstance(value, tuple):
             _, _value = value
             # Checa se existe o valor no FIELDS_MAP (se aplicável)
-            if (field_name in self.FIELDS_MAP
-                    and _value not in self.FIELDS_MAP[field_name].values()):
+            if (
+                field_name in self.FIELDS_MAP
+                and _value not in self.FIELDS_MAP[field_name].values()
+            ):
                 raise FieldValueNotFoundError(self.context, field_name, _value)
         return value
 
-    def take_screenshot(self, filename: Optional[str] = None, full_page: bool = True, subdir: Optional[str] = None) -> Path:
+    async def take_screenshot(
+        self,
+        filename: Optional[str] = None,
+        full_page: bool = True,
+        subdir: Optional[str] = None,
+    ) -> Path:
         """
         Realiza um screenshot (print da tela) da página atual e salva em arquivo.
 
@@ -523,13 +540,6 @@ class WebPage(ABC):
         -------
         Path
             Caminho absoluto do arquivo de imagem salvo.
-
-        Exemplo
-        -------
-        ```python
-        caminho = self.take_screenshot()
-        print(f"Print salvo em: {caminho}")
-        ```
         """
         page = self.context.page  # page Playwright ativo no contexto
         if filename is None:
@@ -540,6 +550,7 @@ class WebPage(ABC):
             filepath = Path(subdir) / filename
         else:
             filepath = Path(filename)
-        page.screenshot(path=str(filepath), full_page=full_page)
+
+        await page.screenshot(path=str(filepath), full_page=full_page)
         logger.info(f"Screenshot salvo em: {filepath.resolve()}")
         return filepath.resolve()

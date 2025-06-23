@@ -77,7 +77,7 @@ class RequisicaoExame(SiscanWebPage):
         if event_button:
 
             xpath = XPathConstructor(self.context)
-            xpath.find_form_anchor_button("Novo Exame").click()
+            xpath.find_form_anchor_button("Novo Exame").handle_click()
 
         xpath.wait_page_ready()
         return xpath
