@@ -142,11 +142,20 @@ class SiscanBrowserContext:
             return self._browser, self._page
 
         async def _launch():
-            playwright = await async_playwright().start()
-            browser = await playwright.chromium.launch(headless=self.headless)
-            page = await browser.new_page()
-            await page.goto(self._url_base, wait_until="load")
-            return playwright, browser, page
+            logger.debug("Inicializando Playwright")
+            try:
+                playwright = await async_playwright().start()
+                logger.debug("Abrindo navegador Chromium")
+                browser = await playwright.chromium.launch(headless=self.headless)
+                page = await browser.new_page()
+                await page.goto(self._url_base, wait_until="load")
+                return playwright, browser, page
+            except Exception:
+                logger.exception(
+                    "Falha ao iniciar o navegador do Playwright. "
+                    "Certifique-se de que os browsers estao instalados com 'playwright install'."
+                )
+                raise
 
         self._playwright, browser, page = asyncio.run(_launch())
         self._browser = _SyncWrapper(browser)

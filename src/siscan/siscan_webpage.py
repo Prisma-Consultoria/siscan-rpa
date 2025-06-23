@@ -95,6 +95,7 @@ class SiscanWebPage(WebPage):
         Exception se autenticação falhar.
         """
 
+        logger.debug("Autenticando usuario %s", self._user)
         self.context.goto("/login.jsf", wait_until="load")
 
         # Aguarda possível popup abrir e fecha se necessário
