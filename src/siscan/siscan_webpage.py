@@ -179,7 +179,7 @@ class SiscanWebPage(WebPage):
                 self.context,
                 menu_name=menu_name,
                 action=menu_action_text,
-                msg=msg.MENU_ACCESS_TIMEOUT,
+                m=msg.MENU_ACCESS_TIMEOUT,
             )
         )
 

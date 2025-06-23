@@ -73,7 +73,7 @@ class XPathConstructor:
                 f"input_type='{self._input_type}')")
 
     def _get_input_type(
-            self, default_input_type: str | InputType = None) -> InputType:
+            self, default_input_type: str | InputType | None = None) -> InputType:
         """
         Obtém o tipo de input como Enum InputType a partir de string ou já
         do próprio Enum.
@@ -197,7 +197,7 @@ class XPathConstructor:
             raise XpathNotFoundError(
                 self._context,
                 xpath=self._xpath,
-                msg=f"Erro inesperado ao obter locator: {e}"
+                m=f"Erro inesperado ao obter locator: {e}"
             )
             raise
 
@@ -242,7 +242,7 @@ class XPathConstructor:
             raise XpathNotFoundError(
                 self._context,
                 xpath=self._xpath,
-                msg=f"Elemento não visível: XPath '{self._xpath}' "
+                m=f"Elemento não visível: XPath '{self._xpath}' "
                     f"não se tornou visível dentro do tempo limite."
             )
         except XpathNotFoundError:
@@ -254,7 +254,7 @@ class XPathConstructor:
             raise XpathNotFoundError(
                 self._context,
                 xpath=self._xpath,
-                msg=f"Erro inesperado ao aguardar elemento: {e}"
+                m=f"Erro inesperado ao aguardar elemento: {e}"
             )
         return locator
 
@@ -389,7 +389,7 @@ class XPathConstructor:
             raise XpathNotFoundError(
                 self._context,
                 xpath=self._xpath,
-                msg=f"Campo não preenchido ou visível: XPath '{self._xpath}' "
+                m=f"Campo não preenchido ou visível: XPath '{self._xpath}' "
                     f"não atendeu às condições dentro do tempo limite."
             )
         except XpathNotFoundError:
@@ -402,7 +402,7 @@ class XPathConstructor:
             raise XpathNotFoundError(
                 self._context,
                 xpath=self._xpath,
-                msg=f"Erro inesperado ao aguardar o preenchimento: {e}"
+                m=f"Erro inesperado ao aguardar o preenchimento: {e}"
             )
 
     def wait_page_ready(
@@ -459,7 +459,7 @@ class XPathConstructor:
                          f"carregou dentro de . Erro: {e}")
             raise SiscanException(
                 self._context,
-                msg=f"Página não carregada ou jQuery indisponível dentro do "
+                m=f"Página não carregada ou jQuery indisponível dentro do "
                     f"tempo limite: {e}"
             )
         except Exception as e:
@@ -468,7 +468,7 @@ class XPathConstructor:
                          f"página: {e}")
             raise SiscanException(
                 self._context,
-                msg=f"Erro inesperado ao aguardar a prontidão da página: {e}"
+                m=f"Erro inesperado ao aguardar a prontidão da página: {e}"
             )
 
     def get_value(
@@ -588,7 +588,7 @@ class XPathConstructor:
                         else:
                             text = value
                     return (text, value)
-            return (None, None)
+            return ("", "")
         elif input_type in ("div", "span"):
             text = locator.inner_text().strip()
             return (text, text)
@@ -598,7 +598,7 @@ class XPathConstructor:
 
     def _select_option_with_retry(
             self, obj_locator, value: str, timeout: float = DEFAULT_TIMEOUT,
-            interval: float = None):
+            interval: float | None = None):
         """
         Realiza a seleção de uma opção em um campo <select>, com tentativas
         repetidas até que a opção desejada esteja disponível ou até que o tempo
