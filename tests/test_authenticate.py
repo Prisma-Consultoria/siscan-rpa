@@ -1,17 +1,13 @@
-import os
-import pytest
 from src.siscan.requisicao_exame_mamografia import RequisicaoExameMamografia
 from src.siscan.context import SiscanBrowserContext
+from src.env import SISCAN_USER, SISCAN_PASSWORD, SISCAN_URL
 
-
-def test_authenticate(monkeypatch):
-    monkeypatch.setenv("SISCAN_USER", "dummy@example.com")
-    monkeypatch.setenv("SISCAN_PASSWORD", "dummy")
+def test_authenticate():
 
     requisicao = RequisicaoExameMamografia(
-        url_base=os.getenv("SISCAN_URL", "https://siscan.saude.gov.br/"),
-        user=os.getenv("SISCAN_USER"),
-        password=os.getenv("SISCAN_PASSWORD"),
+        url_base=SISCAN_URL,
+        user=SISCAN_USER,
+        password=SISCAN_PASSWORD,
     )
     # Use contexto headless para nao abrir janela durante testes
     requisicao._context = SiscanBrowserContext(

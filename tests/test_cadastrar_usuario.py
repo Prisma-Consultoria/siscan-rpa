@@ -3,9 +3,8 @@ from fastapi.testclient import TestClient
 from src.main import app
 
 @pytest.fixture
-def client(tmp_path, monkeypatch):
+def client(tmp_path):
     db_file = tmp_path / "test.db"
-    monkeypatch.setenv("DATABASE_URL", str(db_file))
     import src.env as env
     env.init_engine(str(db_file))
     from src import models  # noqa: F401

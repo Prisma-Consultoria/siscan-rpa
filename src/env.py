@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-load_dotenv()
+load_dotenv(override=True)
 
 PRODUCTION = os.getenv("PRODUCTION", "false").lower() == "true"
 TAKE_SCREENSHOT = os.getenv("TAKE_SCREENSHOT", "false").lower() == "true"
