@@ -113,7 +113,7 @@ class XPathConstructor:
         self._xpath = ''
         self._input_type = None
 
-    def exists(self, timeout: float = DEFAULT_TIMEOUT) -> bool:
+    async def exists(self, timeout: float = DEFAULT_TIMEOUT) -> bool:
         """
         Verifica se o elemento identificado pelo XPath corrente existe no DOM.
         Não lança exceção se não encontrar o elemento, apenas retorna False.
@@ -130,11 +130,10 @@ class XPathConstructor:
         """
         try:
             locator = self.page.locator(f'xpath={self._xpath}')
-            # Aguarda até timeout, pode ser útil em campos dinâmicos
-            locator.wait_for(
+            await locator.wait_for(
                 state="attached",
                 timeout=timeout * self.TIMEOUT_MS_FACTOR)
-            return locator.count() > 0
+            return await locator.count() > 0
         except Exception:
             return False
 
@@ -164,10 +163,10 @@ class XPathConstructor:
         # Recomendada pelo Playwright.
         # Locator é a forma preferida de interagir com elementos
         try:
-            if self.exists(timeout=DEFAULT_TIMEOUT):
+            if await self.exists(timeout=DEFAULT_TIMEOUT):
                 logger.debug(f"Obtendo locator com XPath: {self._xpath}")
-                elem = await self.page.locator(f'xpath={self._xpath}')
-                if elem.count() == 0:
+                elem = self.page.locator(f'xpath={self._xpath}')
+                if await elem.count() == 0:
                     raise XpathNotFoundError(self._context, xpath=self._xpath)
                 # Se elem for uma lista (ex: múltiplos elementos), retorna o primeiro
                 logger.debug(f"Locator obtido: {elem}")
@@ -226,7 +225,7 @@ class XPathConstructor:
             )
         return locator
 
-    def wait_until_enabled(self, locator: Locator = None,
+    async def wait_until_enabled(self, locator: Locator = None,
                            timeout: float = DEFAULT_TIMEOUT):
         """
         Aguarda até que o campo identificado pelo XPath atual esteja
@@ -251,18 +250,18 @@ class XPathConstructor:
         xpath.wait_until_enabled(timeout=15)
         ```
         """
-        locator = locator or self.get()
+        locator = locator or await self.get_locator()
         elapsed = 0
         interval = 0.2
         while elapsed < timeout:
             try:
                 # Se não existe ou está invisível, ignore erro
-                if locator.count() == 0:
+                if await locator.count() == 0:
                     time.sleep(interval)
                     elapsed += interval
                     continue
                 # Verifica atributo disabled
-                if locator.is_visible() and locator.is_enabled():
+                if await locator.is_visible() and await locator.is_enabled():
                     logger.debug(f"Elemento enable, xpath: {self.xpath}")
                     return self
             except Exception:
@@ -329,19 +328,20 @@ class XPathConstructor:
             # Primeiro, espera até o elemento estar visível
             logger.debug(f"Aguardando preenchimento do campo localizado por "
                          f"XPath: {self._xpath}")
-            locator.wait_for(state="visible",
-                             timeout=timeout * (self.TIMEOUT_MS_FACTOR/2)
-                             )
+            await locator.wait_for(
+                state="visible",
+                timeout=timeout * (self.TIMEOUT_MS_FACTOR / 2)
+            )
 
             # Em seguida, espera até o atributo 'value' ser diferente de vazio
             logger.debug(
                 f"Esperando o campo com XPath '{self._xpath}' "
                 f"ter valor preenchido.")
-            self.page.wait_for_function(
+            await self.page.wait_for_function(
                 """(element) => {
                     return element.value.length > 0;
                 }""",
-                arg=locator.element_handle(),
+                arg=await locator.element_handle(),
                 timeout=timeout * (self.TIMEOUT_MS_FACTOR/2)
             )
             logger.info(
@@ -373,7 +373,7 @@ class XPathConstructor:
                 m=f"Erro inesperado ao aguardar o preenchimento: {e}"
             )
 
-    def wait_page_ready(
+    async def wait_page_ready(
             self, timeout: float = DEFAULT_TIMEOUT) -> 'XPathConstructor':
         """
         Aguarda até que a página esteja completamente carregada e o jQuery
@@ -403,7 +403,7 @@ class XPathConstructor:
             logger.debug(f"Aguardando o estado 'networkidle' da página. "
                          f"Timeout: {timeout * self.TIMEOUT_MS_FACTOR} "
                          f"milessegundos.")
-            self.page.wait_for_load_state(
+            await self.page.wait_for_load_state(
                 "networkidle", timeout=timeout * self.TIMEOUT_MS_FACTOR)
             logger.debug("Estado 'networkidle' alcançado.")
 
@@ -413,7 +413,7 @@ class XPathConstructor:
             logger.debug(f"Verificando a disponibilidade do jQuery na página. "
                          f"Timeout: {timeout * self.TIMEOUT_MS_FACTOR} "
                          f"milessegundos.")
-            self.page.wait_for_function(
+            await self.page.wait_for_function(
                 "window.jQuery !== undefined "
                 "&& typeof jQuery === 'function'",
                 timeout=timeout * self.TIMEOUT_MS_FACTOR
@@ -439,7 +439,7 @@ class XPathConstructor:
                 m=f"Erro inesperado ao aguardar a prontidão da página: {e}"
             )
 
-    def get_value(
+    async def get_value(
             self, input_type: str | InputType = None,
             timeout: float = DEFAULT_TIMEOUT
     ) -> tuple[str, str] | list[tuple[str, str]]:
@@ -491,41 +491,41 @@ class XPathConstructor:
         texto, valor = xpath.get_value(InputType.TEXT)
         ```
         """
-        locator = self.wait_and_get(timeout)
+        locator = await self.wait_and_get(timeout)
         input_type = self._get_input_type(input_type)
 
         if input_type in (InputType.TEXT, InputType.TEXTAREA):
-            value = locator.input_value()
+            value = await locator.input_value()
             return (value, value)
         elif input_type == InputType.SELECT:
             # Retorna o texto visível da opção selecionada
             selected_option = locator.locator('option:checked')
-            value = selected_option.get_attribute("value")
-            text = selected_option.inner_text().strip()
+            value = await selected_option.get_attribute("value")
+            text = (await selected_option.inner_text()).strip()
             return (text, value)
         elif input_type == InputType.CHECKBOX:
             # Checa quantos checkboxes existem
             checkboxes = locator.locator("input[type='checkbox']")
-            count = checkboxes.count()
+            count = await checkboxes.count()
             # Um único checkbox count = 1
             # Múltiplos checkboxes count > 1
             result = []
             for i in range(count):
                 text = None
                 cb = checkboxes.nth(i)
-                if cb.is_checked():
-                    value = cb.get_attribute("value")
-                    checkbox_id = cb.get_attribute("id")
+                if await cb.is_checked():
+                    value = await cb.get_attribute("value")
+                    checkbox_id = await cb.get_attribute("id")
                     if checkbox_id:
                         # Busca o label associado ao id
                         label_elem = locator.page.locator(
                             f"label[for='{checkbox_id}']")
-                        if label_elem.count() > 0:
-                            text = label_elem.nth(0).inner_text().strip()
+                        if await label_elem.count() > 0:
+                            text = (await label_elem.nth(0).inner_text()).strip()
                     if not text:
-                        label_elem = cb.evaluate_handle("node => node.closest('label')")
+                        label_elem = await cb.evaluate_handle("node => node.closest('label')")
                         if label_elem and isinstance(label_elem, ElementHandle):
-                            text = label_elem.inner_text().strip()
+                            text = (await label_elem.inner_text()).strip()
                         else:
                             text = value
                     result.append((text, value))
@@ -535,33 +535,33 @@ class XPathConstructor:
         elif input_type == InputType.RADIO:
             # Retorna o value do radio marcado, ou None se nenhum marcado
             radios = locator.locator("input[type='radio']")
-            count = radios.count()
+            count = await radios.count()
             for i in range(count):
                 text = None
                 radio = radios.nth(i)
-                if radio.is_checked():
-                    value = radio.get_attribute("value")
-                    radio_id = radio.get_attribute("id")
+                if await radio.is_checked():
+                    value = await radio.get_attribute("value")
+                    radio_id = await radio.get_attribute("id")
                     if radio_id:
                         # Busca o label associado ao id
                         label_elem = locator.page.locator(
                             f"label[for='{radio_id}']")
-                        if label_elem.count() > 0:
-                            text = label_elem.nth(0).inner_text().strip()
+                        if await label_elem.count() > 0:
+                            text = (await label_elem.nth(0).inner_text()).strip()
                     if not text:
-                        label_elem = radio.evaluate_handle(
+                        label_elem = await radio.evaluate_handle(
                             "node => node.closest('label')")
                         if label_elem and isinstance(label_elem, ElementHandle):
-                            text = label_elem.inner_text().strip()
+                            text = (await label_elem.inner_text()).strip()
                         else:
                             text = value
                     return (text, value)
             return ("", "")
         elif input_type in ("div", "span"):
-            text = locator.inner_text().strip()
+            text = (await locator.inner_text()).strip()
             return (text, text)
         else:
-            value = locator.input_value()  # Padrão
+            value = await locator.input_value()  # Padrão
             return (value, value)
 
     async def _select_option_with_retry(
@@ -621,15 +621,15 @@ class XPathConstructor:
         elapsed = 0
         while elapsed < timeout:
             options = obj_locator.locator("option")
-            count = options.count()
+            count = await options.count()
             found = False
             for i in range(count):
-                opt_value = options.nth(i).get_attribute("value")
+                opt_value = await options.nth(i).get_attribute("value")
                 if opt_value == value:
                     found = True
                     break
             if found:
-                obj_locator.select_option(value=value)
+                await obj_locator.select_option(value=value)
                 return
             time.sleep(interval)
             elapsed += interval
@@ -639,7 +639,7 @@ class XPathConstructor:
             "opção não encontrada após aguardar carregamento."
         )
 
-    def _select_radio_with_retry(
+    async def _select_radio_with_retry(
             self,
             obj_locator: "Locator",
             value: str,
@@ -674,19 +674,19 @@ class XPathConstructor:
         elapsed = 0
         while elapsed < timeout:
             radios = obj_locator.locator("input[type='radio']")
-            count = radios.count()
+            count = await radios.count()
             found = False
 
             for i in range(count):
                 radio = radios.nth(i)
-                radio_value = radio.get_attribute("value")
-                is_checked = radio.is_checked()
-                is_disabled = radio.get_attribute("disabled")
+                radio_value = await radio.get_attribute("value")
+                is_checked = await radio.is_checked()
+                is_disabled = await radio.get_attribute("disabled")
                 if radio_value == value:
                     found = True
                     if not is_checked and not is_disabled:
                         try:
-                            radio.check(force=True)
+                            await radio.check(force=True)
                             logger.debug(
                                 f"Radio value={value} selecionado com "
                                 f"sucesso.")
@@ -884,23 +884,23 @@ class XPathConstructor:
             valores = value if isinstance(value, list) else [value]
             # Usar CSS selector!
             checkboxes = locator.locator("input[type='checkbox']")
-            count = checkboxes.count()
+            count = await checkboxes.count()
             for i in range(count):
                 input_el = checkboxes.nth(i)
-                input_value = input_el.get_attribute("value")
-                is_checked = input_el.is_checked()
+                input_value = await input_el.get_attribute("value")
+                is_checked = await input_el.is_checked()
                 if input_value in valores and not is_checked:
                     logger.debug(f"Marcando checkbox value={input_value} "
                                  f"(checked={is_checked})")
-                    input_el.check(force=True)
+                    await input_el.check(force=True)
                 elif input_value not in valores and is_checked:
                     logger.debug(f"Desmarcando checkbox value={input_value} "
                                  f"(checked={is_checked})")
-                    input_el.uncheck(force=True)
+                    await input_el.uncheck(force=True)
         elif input_type == InputType.RADIO:
-            self._select_radio_with_retry(locator, value, timeout)
+            await self._select_radio_with_retry(locator, value, timeout)
         else:
-            locator.fill(value, force=True)
+            await locator.fill(value, force=True)
         if reset:
             self.reset()
         return self
@@ -1062,7 +1062,7 @@ class XPathConstructor:
                 if wait_for_selector:
                     logger.debug(f"Aguardando seletor após clique: "
                                  f"{wait_for_selector}")
-                    self.page.wait_for_selector(
+                    await self.page.wait_for_selector(
                         wait_for_selector, state="visible",
                         timeout=timeout * self.TIMEOUT_MS_FACTOR
                     )
@@ -1076,7 +1076,7 @@ class XPathConstructor:
                            f'{timeout * self.TIMEOUT_MS_FACTOR} '
                            f'milessegundos.')
 
-    def click_menu_action(self, menu_name: str, menu_action_text: str,
+    async def click_menu_action(self, menu_name: str, menu_action_text: str,
                           timeout: float = DEFAULT_TIMEOUT,
                           reset=True) -> 'XPathConstructor':
         """
@@ -1137,13 +1137,13 @@ class XPathConstructor:
         menu_label = page.locator(
             '.rich-ddmenu-label .rich-label-text-decor',
             has_text=menu_name)
-        if menu_label.count() == 0:
+        if await menu_label.count() == 0:
             raise SiscanMenuNotFoundError(self.context, menu_name=menu_name)
 
         logger.debug(f"Verifica se submenu: '{menu_action_text}' existe")
         submenu = page.locator('.rich-menu-item-label',
                                has_text=menu_action_text)
-        if submenu.count() == 0:
+        if await submenu.count() == 0:
             raise SiscanMenuNotFoundError(self.context,
                                           menu_name=menu_name,
                                           action=menu_action_text)
@@ -1154,14 +1154,14 @@ class XPathConstructor:
         interval = self.ELAPSED_INTERVAL
         elapsed = 0
         while elapsed < timeout:
-            menu_label.first.hover()
-            if submenu.is_visible():
+            await menu_label.first.hover()
+            if await submenu.is_visible():
                 break
             time.sleep(interval)
             elapsed += interval
 
         # Delay para submenu aparecer em 500 milissegundo
-        submenu.first.click(timeout=timeout*self.TIMEOUT_MS_FACTOR)
+        await submenu.first.click(timeout=timeout*self.TIMEOUT_MS_FACTOR)
         logger.debug(f"Menu '{menu_name}' > '{menu_action_text}' acionado.")
         if reset:
             self.reset()
@@ -1192,9 +1192,11 @@ class XPathConstructor:
         ```
         """
         locator = await self.wait_and_get(timeout)
-        logger.debug(f"Disparando evento 'blur' no elemento localizado por "
-                     f"XPath: {self._xpath}")
-        locator.dispatch_event('blur')
+        logger.debug(
+            f"Disparando evento 'blur' no elemento localizado por "
+            f"XPath: {self._xpath}"
+        )
+        await locator.dispatch_event('blur')
         return self  # Permite encadeamento, se necessário
 
     async def fill_form_fields(
@@ -1265,7 +1267,7 @@ class XPathConstructor:
             await self.find_form_input(label, type_input).handle_fill(
                 str(valor), type_input)
 
-    def get_select_options(
+    async def get_select_options(
             self, min_options: int = 2,
             timeout: float = DEFAULT_TIMEOUT,
             interval: float | None = None) -> dict[str, str]:
@@ -1308,12 +1310,12 @@ class XPathConstructor:
         TimeoutError
             Se o select não carregar o número mínimo de opções no tempo limite.
         """
-        locator = self.wait_and_get(timeout)
+        locator = await self.wait_and_get(timeout)
         interval = interval or self.ELAPSED_INTERVAL
         elapsed = 0
         # Aguarda o select carregar as opções mínimas
         while elapsed < timeout:
-            option_count = locator.locator("option").count()
+            option_count = await locator.locator("option").count()
             if option_count >= min_options:
                 break
             time.sleep(interval)
@@ -1326,15 +1328,15 @@ class XPathConstructor:
 
         options_dict = {}
         options = locator.locator("option")
-        count = options.count()
+        count = await options.count()
         for i in range(count):
             option = options.nth(i)
-            value = option.get_attribute("value")
-            label = option.inner_text().strip()
+            value = await option.get_attribute("value")
+            label = (await option.inner_text()).strip()
             options_dict[value] = label
         return options_dict
 
-    def wait_for_label_visible(self, label_text: str,
+    async def wait_for_label_visible(self, label_text: str,
                                timeout: float = DEFAULT_TIMEOUT,
                                interval: float = None) -> bool:
         """
@@ -1359,7 +1361,7 @@ class XPathConstructor:
         interval = interval or self.ELAPSED_INTERVAL
         selector = f"//label[normalize-space(text())='{label_text}']"
         while elapsed < timeout:
-            if self.page.locator(selector).count() > 0:
+            if await self.page.locator(selector).count() > 0:
                 return True
             time.sleep(interval)
             elapsed += interval

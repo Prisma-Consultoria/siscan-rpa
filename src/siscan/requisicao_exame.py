@@ -68,22 +68,22 @@ class RequisicaoExame(SiscanWebPage):
             **RequisicaoExame.MAP_DATA_LABEL,
         }
 
-    def acesar_menu_gerenciar_exame(self):
-        self.acessar_menu("EXAME", "GERENCIAR EXAME")
+    async def acesar_menu_gerenciar_exame(self):
+        await self.acessar_menu("EXAME", "GERENCIAR EXAME")
 
-    def _novo_exame(self, event_button: bool = False) -> XPathConstructor:
-        self.acesar_menu_gerenciar_exame()
+    async def _novo_exame(self, event_button: bool = False) -> XPathConstructor:
+        await self.acesar_menu_gerenciar_exame()
 
         if event_button:
 
             xpath = XPathConstructor(self.context)
-            xpath.find_form_anchor_button("Novo Exame").handle_click()
+            await (await xpath.find_form_anchor_button("Novo Exame")).handle_click()
 
-        xpath.wait_page_ready()
+        await xpath.wait_page_ready()
         return xpath
 
-    def buscar_cartao_sus(self, data: dict):
-        self._buscar_cartao_sus(data, menu_action=self._novo_exame)
+    async def buscar_cartao_sus(self, data: dict):
+        await self._buscar_cartao_sus(data, menu_action=self._novo_exame)
 
     def seleciona_unidade_requisitante(self, data: dict | None = None):
         """

@@ -111,12 +111,12 @@ class SiscanWebPage(WebPage):
         pass_input = await xpath.find_form_input("Senha:")
         await pass_input.handle_fill(self._password)
         await self.take_screenshot("screenshot_01_autenticar.png")
-        await xpath.find_form_button("Acessar").handle_click()
+        await (await xpath.find_form_button("Acessar")).handle_click()
         logger.debug("Botao acessar clicado")
 
         # Aguarda confirmação de login bem-sucedido
         try:
-            self.context.page.wait_for_selector(
+            await self.context.page.wait_for_selector(
                 'h1:text("SEJA BEM VINDO AO SISCAN")', timeout=10000
             )
         except Exception:
@@ -124,7 +124,7 @@ class SiscanWebPage(WebPage):
         logger.debug("Login realizado com sucesso")
         await self.take_screenshot("screenshot_02_tela_principal.png")
 
-    def acessar_menu(
+    async def acessar_menu(
         self,
         menu_name: str,
         menu_action_text: str,
@@ -160,7 +160,7 @@ class SiscanWebPage(WebPage):
         while elapsed < timeout:
             try:
                 xpath = XPathConstructor(self.context)
-                xpath.click_menu_action(menu_name, menu_action_text)
+                await xpath.click_menu_action(menu_name, menu_action_text)
                 logger.info(
                     f"Acesso ao menu '{menu_name} > {menu_action_text}' "
                     "realizado com sucesso."
@@ -192,20 +192,20 @@ class SiscanWebPage(WebPage):
             )
         )
 
-    def seleciona_um_paciente(self, timeout=10):
+    async def seleciona_um_paciente(self, timeout=10):
         """
         Verifica se existe apenas um paciente na tabela de resultados e, se
         sim, clica em 'Selecionar Paciente'. Se houver mais de um, lança
         PacienteDuplicadoException.
         """
         # Espera a tabela de resultados estar visível
-        self.context.page.wait_for_selector(
+        await self.context.page.wait_for_selector(
             "table#frm\\:listaPaciente", state="visible", timeout=timeout * 1000
         )
 
         # Localiza o corpo da tabela
         rows = self.context.page.locator("table#frm\\:listaPaciente > tbody > tr")
-        row_count = rows.count()
+        row_count = await rows.count()
         if row_count > 1:
             raise PacienteDuplicadoException(self.context)
         elif row_count == 0:
@@ -214,9 +214,9 @@ class SiscanWebPage(WebPage):
         # Se chegou aqui, só há um resultado: clicar no botão
         # 'Selecionar Paciente' (última coluna)
         botao_selecionar = rows.nth(0).locator("a[title='Selecionar Paciente']")
-        botao_selecionar.handle_click()
+        await botao_selecionar.click()
 
-    def _buscar_cartao_sus(self, data: dict, menu_action: Callable[[], Any]):
+    async def _buscar_cartao_sus(self, data: dict, menu_action: Callable[[], Any]):
         """
         Realiza a busca de um paciente pelo Cartão SUS no SIScan.
         Método para buscar um paciente pelo Cartão SUS, preenchendo os campos
@@ -229,21 +229,21 @@ class SiscanWebPage(WebPage):
         :return: None
         """
         xpath = menu_action()
-        xpath.find_search_link_after_input(self.get_field_label("cartao_sus")).handle_click()
-        xpath.wait_page_ready()
+        await (await xpath.find_search_link_after_input(self.get_field_label("cartao_sus"))).handle_click()
+        await xpath.wait_page_ready()
 
         # Preenche os campos de busca do Cartão SUS
         fields_map, data_final = self.mount_fields_map_and_data(
             data, self.MAP_DATA_FIND_CARTAO_SUS
         )
-        xpath.fill_form_fields(data_final, fields_map)
+        await xpath.fill_form_fields(data_final, fields_map)
 
         # Clica no botão de buscar
-        xpath.find_form_button("Pesquisar").handle_click(
+        await (await xpath.find_form_button("Pesquisar")).handle_click(
             wait_for_selector="table#frm\\:listaPaciente"
         )
 
-        self.seleciona_um_paciente()
+        await self.seleciona_um_paciente()
 
     async def preencher_cartao_sus(
         self,
@@ -275,37 +275,37 @@ class SiscanWebPage(WebPage):
             no tempo limite.
         """
         xpath = XPathConstructor(self.context)
-        xpath.wait_page_ready()
+        await xpath.wait_page_ready()
         elapsed = 0
 
         interval = interval or (XPathConstructor.ELAPSED_INTERVAL)
 
         while elapsed < timeout:
             xpath.reset()
-            cartao_sus_ele = xpath.find_form_input(
+            cartao_sus_ele = await (await xpath.find_form_input(
                 self.get_field_label("cartao_sus")
-            ).wait_until_enabled()
+            )).wait_until_enabled()
             await cartao_sus_ele.handle_fill(numero, reset=False)
-            cartao_sus_ele.on_blur()
+            await cartao_sus_ele.on_blur()
             cartao_sus_ele.reset()
-            xpath.wait_page_ready()
+            await xpath.wait_page_ready()
 
             # 1. Verifica se há mensagem de erro na página
-            message_erros = SiscanException.get_error_messages(self.context)
+            message_erros = await SiscanException.get_error_messages(self.context)
             if message_erros:
                 raise CartaoSusNotFoundError(self.context, cartao_sus=numero)
 
             # 2. Verifica se o campo "Nome" foi preenchido
             try:
                 xpath.reset()
-                nome_ele = xpath.find_form_input("Nome")
-                nome_ele.wait_until_filled(timeout=timeout)
-                nome, _ = nome_ele.get_value()
+                nome_ele = await xpath.find_form_input("Nome")
+                await nome_ele.wait_until_filled(timeout=timeout)
+                nome, _ = await nome_ele.get_value()
                 if nome:
                     return  # Sucesso!
             except Exception as err:
                 try:
-                    current_value = cartao_sus_ele.get().input_value()
+                    current_value = await (await cartao_sus_ele.get_locator()).input_value()
                     if current_value:
                         break
                 except Exception:

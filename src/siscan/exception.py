@@ -10,8 +10,13 @@ class SiscanException(Exception):
     def __init__(self, ctx, m: str | None = None):
         self.ctx = ctx
         self.msg = m or ""
-        if ctx is not None:
-            self.msg = f"{self.msg}. {self.get_error_messages(ctx)}"
+
+        # A coleta de mensagens de erro pode exigir chamadas assíncronas ao
+        # Playwright. Para evitar chamadas bloqueantes em contextos assíncronos
+        # (por exemplo, dentro de ``pytest.mark.asyncio``), a responsabilidade
+        # de buscar essas mensagens passa a ser do código chamador, que pode
+        # utilizar ``await SiscanException.get_error_messages(ctx)`` quando
+        # necessário.
 
         super().__init__(self.msg)
 
