@@ -1,11 +1,13 @@
-from playwright.sync_api import sync_playwright
+import asyncio
+from playwright.async_api import async_playwright
 from ..env import PRODUCTION, TAKE_SCREENSHOT
 
-def _run_rpa(form_type, data):
+async def run_rpa(form_type, data):
+    """Executa o fluxo do RPA utilizando Playwright assíncrono."""
     screenshots = []
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=not PRODUCTION)
-        page = browser.new_page()
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=not PRODUCTION)
+        page = await browser.new_page()
         # TODO: implementar login no SISCAN usando CPF/senha de users db
 
         # TODO: navegar até o formulário e preencher campos com 'data'
@@ -14,12 +16,13 @@ def _run_rpa(form_type, data):
         if not PRODUCTION and TAKE_SCREENSHOT:
             for i in range(1, 4):
                 path = f"static/tmp/{form_type}_step{i}.png"
-                page.screenshot(path=path)
+                await page.screenshot(path=path)
                 screenshots.append(path)
 
         if PRODUCTION:
-            page.click("button[type=submit]")
+            await page.click("button[type=submit]")
 
-        browser.close()
+        await browser.close()
 
     return {"success": True, "screenshots": screenshots}
+

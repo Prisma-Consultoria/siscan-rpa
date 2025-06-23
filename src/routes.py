@@ -4,7 +4,7 @@ from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 from .env import get_db
 from .models import User
-from .utils.helpers import _run_rpa
+from .utils.helpers import run_rpa
 from utils import messages as msg
 
 router = APIRouter()
@@ -56,9 +56,9 @@ def cadastrar_usuario(data: dict):
     summary="Preencher Solicitação de Mamografia",
     description="Executa o RPA para preencher a solicitação de mamografia no SIScan",
 )
-def preencher_solicitacao(data: dict):
+async def preencher_solicitacao(data: dict):
     """Preencher automaticamente a solicitação de mamografia no SIScan."""
-    result = _run_rpa("solicitacao", data)
+    result = await run_rpa("solicitacao", data)
     return result
 
 
@@ -67,7 +67,7 @@ def preencher_solicitacao(data: dict):
     summary="Preencher Laudo de Mamografia",
     description="Executa o RPA para preencher o laudo de mamografia no SIScan",
 )
-def preencher_laudo(data: dict):
+async def preencher_laudo(data: dict):
     """Preencher automaticamente o laudo de mamografia no SIScan."""
-    result = _run_rpa("laudo", data)
+    result = await run_rpa("laudo", data)
     return result

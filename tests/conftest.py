@@ -49,10 +49,10 @@ def client(test_db):
 
 @pytest.fixture(autouse=True)
 def mock_run_rpa(monkeypatch):
-    def fake_run_rpa(form_type, data):
+    async def fake_run_rpa(form_type, data):
         return {"success": True, "screenshots": []}
 
-    monkeypatch.setattr("src.routes._run_rpa", fake_run_rpa)
+    monkeypatch.setattr("src.routes.run_rpa", fake_run_rpa)
 
 @pytest.fixture(scope="session")
 def fake_json_file(tmp_path_factory):
