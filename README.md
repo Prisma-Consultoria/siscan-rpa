@@ -61,7 +61,14 @@ python -m src.scrapping # rodar o scrapping
 ```
 
 ## Rodando testes
+Instale os navegadores do Playwright uma vez antes de rodar os testes:
 
 ```bash
-pytest
+playwright install
+```
+
+Para visualizar as mensagens de `print` e `logger.debug` utilize a flag `-s`:
+
+```bash
+pytest -s
 ```
