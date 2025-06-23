@@ -10,7 +10,7 @@ from jsonschema import validate, Draft7Validator
 from jsonschema.exceptions import ValidationError, SchemaError
 from pydantic import BaseModel
 
-from utils import messages as msg
+from src.utils import messages as msg
 
 logger = logging.getLogger(__name__)
 

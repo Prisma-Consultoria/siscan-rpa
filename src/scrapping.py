@@ -1,4 +1,4 @@
-from src.siscan.utils.validator import Validator
+from src.utils.validator import Validator
 from pathlib import Path
 import asyncio
 from src.env import SISCAN_URL, SISCAN_USER, SISCAN_PASSWORD

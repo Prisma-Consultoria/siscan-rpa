@@ -8,9 +8,9 @@ import logging
 
 from src.siscan.exception import SiscanInvalidFieldValueError
 from src.siscan.siscan_webpage import SiscanWebPage
-from src.siscan.utils.SchemaMapExtractor import SchemaMapExtractor
-from src.siscan.webtools.xpath_constructor import XPathConstructor, InputType
-from src.siscan.webtools.webpage import RequirementLevel
+from src.utils.SchemaMapExtractor import SchemaMapExtractor
+from src.utils.xpath_constructor import XPathConstructor, InputType
+from src.utils.webpage import RequirementLevel
 
 logger = logging.getLogger(__name__)
 

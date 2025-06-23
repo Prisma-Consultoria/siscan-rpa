@@ -1,7 +1,7 @@
 import pytest
 from src.siscan.requisicao_exame_mamografia import RequisicaoExameMamografia
-from src.siscan.webtools.xpath_constructor import XPathConstructor, InputType
-from src.siscan.utils.validator import Validator
+from src.utils.xpath_constructor import XPathConstructor, InputType
+from src.utils.validator import Validator
 from src.env import SISCAN_URL, SISCAN_USER, SISCAN_PASSWORD
 
 

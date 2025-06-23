@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from typing import Tuple, Dict, Any, List, Optional, Union
+from typing import Tuple, Dict, List, Optional, Union
 
-from src.siscan.utils.validator import Validator
+from src.utils.validator import Validator
 
 
 class SchemaMapExtractor:

@@ -5,7 +5,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from .env import get_db
 from .models import User
 from .utils.helpers import run_rpa
-from utils import messages as msg
+from src.utils import messages as msg
 
 router = APIRouter()
 

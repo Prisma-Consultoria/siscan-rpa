@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from utils.schema import MamografiaRequest
-from src.siscan.utils.validator import Validator, SchemaValidationError
+from src.utils.schema import MamografiaRequest
+from src.utils.validator import Validator, SchemaValidationError
 
 
 def _load_data(json_path: Path) -> dict:

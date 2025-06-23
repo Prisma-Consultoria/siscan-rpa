@@ -1,6 +1,7 @@
 import logging
 import asyncio
 from typing import Optional, Any
+from  src.utils import messages as msg
 from playwright.async_api import async_playwright, Browser, Page
 
 
@@ -111,7 +112,7 @@ class SiscanBrowserContext:
             asyncio.run(self._playwright.stop())
             self._playwright = None
 
-    def goto(self, path: str, wait_until: str = "load", **kwargs) -> Page:
+    async def goto(self, path: str, **kwargs) -> Page:
         """
         Navega para o caminho informado, relativo à url_base, utilizando a página Playwright.
 
@@ -133,7 +134,10 @@ class SiscanBrowserContext:
             self.get_browser_and_page()
         url = self._url_base.rstrip('/') + '/' + path.lstrip('/')
         logger.debug(f"Navegando para: {url}")
-        self._page.goto(url, wait_until=wait_until, **kwargs)
+        if self._page:
+            await self._page.goto(url, **kwargs)
+        else:
+            raise Exception(msg.CONTEXT_NOT_INITIALIZED)
 
         return self._page
 

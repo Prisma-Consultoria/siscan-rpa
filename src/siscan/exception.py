@@ -1,5 +1,5 @@
 from typing import Iterable
-from utils import messages as msg
+from src.utils import messages as msg
 
 
 class SiscanException(Exception):

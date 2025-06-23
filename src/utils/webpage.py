@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Optional, Union
 
 from src.siscan.exception import FieldValueNotFoundError
-from src.siscan.webtools.xpath_constructor import XPathConstructor, InputType
+from src.utils.xpath_constructor import XPathConstructor, InputType
 from src.siscan.context import SiscanBrowserContext
 
 logger = logging.getLogger(__name__)

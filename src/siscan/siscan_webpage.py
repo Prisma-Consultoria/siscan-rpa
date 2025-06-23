@@ -14,12 +14,12 @@ from src.siscan.exception import (
     CartaoSusNotFoundError,
     SiscanInvalidFieldValueError,
 )
-from src.siscan.utils.SchemaMapExtractor import SchemaMapExtractor
-from src.siscan.utils.validator import Validator, SchemaValidationError
-from utils.schema import create_model_from_json_schema
-from src.siscan.webtools.webpage import WebPage
-from src.siscan.webtools.xpath_constructor import XPathConstructor
-from utils import messages as msg
+from src.utils.SchemaMapExtractor import SchemaMapExtractor
+from src.utils.validator import Validator, SchemaValidationError
+from src.utils.schema import create_model_from_json_schema
+from src.utils.webpage import WebPage
+from src.utils.xpath_constructor import XPathConstructor
+from src.utils import messages as msg
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ class SiscanWebPage(WebPage):
         except ValidationError as ve:
             logger.error(ve)
 
-    def authenticate(self):
+    async def authenticate(self):
         """
         Realiza login no SIScan utilizando um contexto.
 
@@ -96,7 +96,7 @@ class SiscanWebPage(WebPage):
         """
 
         logger.debug("Autenticando usuario %s", self._user)
-        self.context.goto("/login.jsf", wait_until="load")
+        await self.context.goto("/login.jsf")
         logger.debug("Pagina de login carregada")
 
         # Aguarda possível popup abrir e fecha se necessário
@@ -114,7 +114,7 @@ class SiscanWebPage(WebPage):
         # Aguarda confirmação de login bem-sucedido
         try:
             self.context.page.wait_for_selector(
-                'h1:text("SEJA BEM VINDO AO SISCAN")', timeout=10_000
+                'h1:text("SEJA BEM VINDO AO SISCAN")', timeout=10000
             )
         except Exception:
             raise SiscanLoginError(self.context)
