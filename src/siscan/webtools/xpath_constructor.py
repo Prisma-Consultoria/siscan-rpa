@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Optional
 import time
 import logging
-from playwright.sync_api import Page, Locator, TimeoutError, ElementHandle
+from playwright.async_api import Page, Locator, TimeoutError, ElementHandle
 from src.siscan.context import SiscanBrowserContext
 from src.siscan.exception import SiscanMenuNotFoundError, \
     XpathNotFoundError, SiscanException
