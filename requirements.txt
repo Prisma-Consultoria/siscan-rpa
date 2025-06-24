@@ -2,6 +2,7 @@ cryptography
 playwright
 pytest
 pytest-playwright
+pytest-asyncio
 python-dotenv==1.1.0
 pydantic==2.11.7
 Faker==37.4.0
