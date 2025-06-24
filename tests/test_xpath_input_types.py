@@ -61,10 +61,21 @@ async def test_fill_date_input(siscan_form, fake_json_file):
 async def test_fill_checkbox_input(siscan_form, fake_json_file):
     data = _load_data(fake_json_file)
     xpath = XPathConstructor(siscan_form.context)
-    label = siscan_form.get_field_label("tem_nodulo_ou_caroco_na_mama")
-    valores = data["tem_nodulo_ou_caroco_na_mama"]
+    label = siscan_form.get_field_label("sexo")
     await xpath.find_form_input(label, InputType.CHECKBOX)
-    await xpath.handle_fill(valores, reset=False)
+    await xpath.handle_fill(data["sexo"], reset=False)
     result = await xpath.get_value(InputType.CHECKBOX)
-    assert isinstance(result, list)
-    assert len(result) == len(valores)
+    if isinstance(result, tuple):
+        _, value = result
+        assert value == data["sexo"]
+    else:
+        assert False, "Expected tuple return for single checkbox"
+
+
+@pytest.mark.asyncio
+async def test_preencher_campos_metodo_playwright(siscan_form):
+    page = siscan_form.context.page
+    await page.get_by_label('Mamografia').check()
+    await page.get_by_label('Choose a color').select_option({
+        'label': '0274267 - CENTRAL DE TELEATENDIMENTO SAUDE JA CURITIBA'
+    })
