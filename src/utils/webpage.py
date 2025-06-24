@@ -63,12 +63,7 @@ class WebPage(ABC):
 
     @abstractmethod
     def get_map_label(self) -> dict[str, tuple[str, str, str]]:
-        """
-        Método abstrato que deve ser implementado por subclasses para retornar
-        o mapeamento de labels. Deve retornar um dicionário onde as chaves
-        são os nomes dos campos e os valores são tuplas contendo o label e o
-        tipo do campo.
-        """
+        """Método abstrato para retornar o mapeamento de labels dos campos."""
         raise NotImplementedError("Subclasses devem implementar este método.")
 
     @abstractmethod
@@ -82,46 +77,7 @@ class WebPage(ABC):
     def get_field_metadata(
         self, field_name: str, map_label: Optional[dict[str, tuple]] = None
     ) -> tuple[str, InputType, RequirementLevel]:
-        """
-        Retorna o label, o tipo e o indicador de obrigatoriedade de um campo,
-        baseado no mapeamento fornecido.
-
-        Este método consolida a busca das principais informações do campo de
-        formulário: o texto do label exibido ao usuário, o tipo do campo e se
-        o preenchimento é obrigatório.
-
-        Parâmetros
-        ----------
-        field_name : str
-            Nome lógico do campo para o qual se deseja obter as informações.
-        map_label : Optional[dict[str, tuple[str, str, str]]], opcional
-            Dicionário de mapeamento de campos. Caso não seja informado,
-            utiliza o mapeamento padrão retornado por `get_map_label()`.
-
-        Retorno
-        -------
-        tuple (label, tipo, required)
-            - label: str - Texto do label conforme definido no mapeamento.
-            - tipo: str - Tipo do campo (exemplo: 'text', 'select',
-                'checkbox').
-            - required: bool - True se o campo é obrigatório, False caso
-                contrário.
-
-        Exceções
-        --------
-        ValueError
-            Disparada se o campo não estiver presente no mapeamento fornecido
-            ou se não houver informação suficiente sobre obrigatoriedade.
-
-        Exemplo
-        -------
-        ```
-        label, tipo, required = self.get_field_metadata(
-        "ano_que_fez_a_ultima_mamografia")
-        print(label, tipo, required)
-        # "QUANDO FEZ A ÚLTIMA MAMOGRAFIA?", InputType.TEXT, True
-        ```
-        """
+        """Retorna o label, tipo e obrigatoriedade de um campo do mapeamento."""
         # Busca o valor no dicionário de mapeamento
         if map_label is None:
             value = self.get_map_label().get(field_name)
@@ -143,42 +99,7 @@ class WebPage(ABC):
         field_name: str,
         map_label: Optional[dict[str, tuple[str, str, str]]] = None,
     ) -> str:
-        """
-        Retorna o texto do label associado ao nome lógico do campo, com base no
-        mapeamento informado.
-
-        Este método busca a tupla (label, tipo) correspondente ao campo no
-        dicionário de mapeamento (`map_label` se fornecido, caso contrário o
-        mapeamento padrão retornado por `get_map_label()`). Em seguida,
-        retorna a posição 0 da tupla, correspondente ao texto do label
-        apresentado na tela.
-
-        Parâmetros
-        ----------
-        campo : str
-            Nome lógico do campo para o qual se deseja obter o label.
-        map_label : Optional[dict[str, tuple[str, str, str]]], opcional
-            Dicionário de mapeamento de campos. Caso não seja informado,
-            utiliza o mapeamento padrão retornado por `get_map_label()`.
-
-        Retorno
-        -------
-        str
-            Texto do label conforme definido no mapeamento.
-
-        Exceções
-        --------
-        ValueError
-            Disparada se o campo não estiver presente no mapeamento fornecido.
-
-        Exemplo
-        -------
-        ```
-        label = self.get_label("unidade_requisitante")
-        print(label)
-        # 'Unidade Requisitante'
-        ```
-        """
+        """Retorna o texto do label associado ao campo, conforme o mapeamento."""
         if map_label is None:
             value = self.get_map_label().get(field_name)
         else:
@@ -193,43 +114,7 @@ class WebPage(ABC):
         field_name: str,
         map_label: Optional[dict[str, tuple[str, str, str]]] = None,
     ) -> str:
-        """
-        Retorna o tipo de campo associado ao nome lógico do campo, com base no
-        mapeamento informado.
-
-        Este método recupera a tupla (label, tipo) correspondente ao campo no
-        dicionário de mapeamento (`map_label` se fornecido, caso contrário o
-        mapeamento padrão do objeto). Em seguida, retorna a posição 1 da tupla,
-        correspondente ao tipo do campo (por exemplo, 'text', 'select',
-        'checkbox').
-
-        Parâmetros
-        ----------
-        campo : str
-            Nome lógico do campo para o qual se deseja obter o tipo.
-        map_label : Optional[dict[str, tuple[str, str, str]]], opcional
-            Dicionário de mapeamento de campos. Caso não seja informado,
-            utiliza o mapeamento padrão retornado por `get_map_label()`.
-
-        Retorno
-        -------
-        str
-            Tipo do campo conforme definido no mapeamento (por exemplo, 'text',
-            'select', 'date', 'checkbox').
-
-        Exceções
-        --------
-        ValueError
-            Disparada se o campo não estiver presente no mapeamento fornecido.
-
-        Exemplo
-        -------
-        ```
-        tipo = self.get_label_type("unidade_requisitante")
-        print(tipo)
-        # 'select'
-        ```
-        """
+        """Retorna o tipo do campo conforme definido no mapeamento."""
         if map_label is None:
             value = self.get_map_label().get(field_name)
         else:
@@ -254,30 +139,7 @@ class WebPage(ABC):
         return value[2]
 
     def get_field_value(self, field_name: str, data: dict) -> Optional[str | list]:
-        """
-        Obtém o valor correspondente ao campo informado, realizando a conversão
-        conforme o mapeamento definido em `FIELDS_MAP`, caso aplicável.
-
-        Este método busca o valor do campo no dicionário de dados `data`. Se o
-        campo possuir um mapeamento definido em `FIELDS_MAP` e o valor não for
-        nulo, realiza a conversão para o valor esperado pela interface (por
-        exemplo, converter "Masculino" para "M", "Ensino Médio Completo" para
-        "4" etc.). Caso não haja mapeamento ou o valor seja nulo, retorna o
-        valor original obtido do dicionário.
-
-        Parâmetros
-        ----------
-        campo : str
-            Nome do campo cujo valor se deseja obter e converter.
-        data : dict
-            Dicionário contendo os dados de entrada do formulário.
-
-        Retorno
-        -------
-        Optional[str | list]
-            Valor convertido de acordo com o mapeamento definido, se aplicável.
-            Caso contrário, retorna o valor original do campo ou None.
-        """
+        """Retorna o valor do campo, convertendo via FIELDS_MAP se houver mapeamento; caso contrário, retorna o valor original."""
         value = data.get(field_name, None)
 
         if field_name in self.FIELDS_MAP.keys() and value is not None:
@@ -420,83 +282,11 @@ class WebPage(ABC):
         await xpath.find_form_input(field_label, field_type)
         self.update_field_map_from_select(field_name, xpath)
 
-    def select_value(
+    async def select_value(
         self, field_name: str, data: dict
     ) -> tuple[str, str] | list[tuple[str, str]]:
         """
-        Seleciona ou preenche um valor em um campo de formulário identificado
-        pelo nome lógico do campo e retorna uma tupla contendo o texto visível
-        e o valor efetivamente selecionado, ou uma lista de tuplas no caso de
-        múltipla seleção.
-
-        Este método localiza dinamicamente o elemento de formulário (input,
-        select, radio, checkbox etc.) associado ao campo especificado por
-        `field_name`, converte o valor informado conforme necessário (usando o
-        mapeamento definido em `FIELDS_MAP`, se existir) e realiza o
-        preenchimento/seleção no campo correspondente da página.
-
-        O valor selecionado é extraído do dicionário `data` e convertido
-        automaticamente para o valor esperado pela interface, caso exista
-        mapeamento definido para esse campo. Após o preenchimento/seleção, o
-        método retorna uma tupla (`texto`, `value`) correspondente ao que está
-        selecionado no campo de formulário (exatamente como será enviado ao
-        backend). Para campos do tipo múltipla escolha (checkbox múltiplo),
-        retorna uma lista de tuplas.
-
-        Parâmetros
-        ----------
-        field_name : str
-            Nome lógico do campo do formulário a ser preenchido ou selecionado.
-        data : dict
-            Dicionário de dados contendo os valores de preenchimento para os
-            campos do formulário.
-
-        Retorno
-        -------
-        tuple[str, str] ou list[tuple[str, str]]
-            Tupla contendo (texto visível, valor efetivamente selecionado) no
-            campo, ou lista de tuplas em caso de seleção múltipla (ex:
-            múltiplos checkboxes).
-            O valor retornado corresponde ao valor submetido à aplicação
-            (por exemplo, o atributo `value` do `<option>` selecionado em
-             um `<select>`).
-
-        Exceções
-        --------
-        SiscanFieldValueNotFoundError
-            Lançada quando o valor selecionado não é encontrado no mapeamento
-            `FIELDS_MAP`, indicando inconsistência ou valor inválido.
-
-        Notas
-        -----
-        - Este método é apropriado para campos dos tipos `select`, `radio`,
-          `checkbox` (único ou múltiplo) e também campos de texto, desde que a
-          implementação do método `fill` do `XPathConstructor` suporte o tipo
-          de campo.
-        - O valor preenchido é extraído de `data[field_name]` e, se existir um
-          mapeamento em `FIELDS_MAP`, será convertido automaticamente para o
-          valor correspondente esperado pela interface.
-        - É recomendável que o dicionário de dados (`data`) esteja sincronizado
-          com o mapeamento de campos esperado pelo formulário.
-        - O valor retornado corresponde ao valor efetivamente selecionado no
-          campo, conforme será submetido à aplicação (por exemplo, o atributo
-          `value` do `<option>` selecionado em um `<select>`).
-
-        Exemplo
-        -------
-        ```
-        data = {"sexo": "Masculino"}
-        texto, value = self.select_value("sexo", data)
-        print(texto, value)
-        # 'Feminino', 'F'
-        # O campo 'sexo' será preenchido com o valor mapeado ('F') no
-        #  formulário, e o método retorna ('Feminino', 'F') como tupla
-        #  correspondente.
-        lista = self.select_value("caracteristicas", data)
-        print(lista)
-        [('Característica 1', '1'), ('Característica 2', '2')]
-        # Para campos múltiplos, retorna uma lista de tuplas (texto, valor).
-        ```
+        Preenche um campo de formulário identificado por `field_name` usando os dados fornecidos e retorna o texto visível e o valor selecionado (ou lista de tuplas para seleção múltipla). Usa o mapeamento FIELDS_MAP se existir. Lança exceção se o valor não for encontrado.
         """
         xpath = XPathConstructor(self.context)
         field_label, field_type, _ = self.get_field_metadata(field_name)
@@ -523,24 +313,7 @@ class WebPage(ABC):
         full_page: bool = True,
         subdir: Optional[str] = None,
     ) -> Path:
-        """
-        Realiza um screenshot (print da tela) da página atual e salva em arquivo.
-
-        Parâmetros
-        ----------
-        filename : Optional[str], default=None
-            Nome do arquivo de imagem a ser salvo (ex: 'tela.png').
-            Se não informado, gera nome automático com timestamp.
-        full_page : bool, default=True
-            Se True, captura a página completa. Caso False, apenas o viewport visível.
-        subdir : Optional[str], default=None
-            Diretório para salvar o print. Se None, salva no diretório corrente.
-
-        Retorno
-        -------
-        Path
-            Caminho absoluto do arquivo de imagem salvo.
-        """
+        """Tira um screenshot da página atual e salva em arquivo."""
         page = self.context.page  # page Playwright ativo no contexto
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

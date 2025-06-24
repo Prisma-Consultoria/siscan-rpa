@@ -717,31 +717,16 @@ class XPathConstructor:
     async def find_search_link_after_input(
             self, label_name: str) -> 'XPathConstructor':
         """
-        Localiza o link (<a>) de busca (ex: ícone de lupa) imediatamente após
-        um campo input identificado pelo label.
-
-        Este método utiliza a lógica de find_form_input para identificar o
-        campo input relacionado ao label informado, em seguida monta o XPath
-        para selecionar o elemento <a> subsequente ao campo input.
-
-        Parâmetros
-        ----------
-        label_name : str
-            Texto do label associado ao campo input desejado.
+        Localiza o link (<a>) de busca imediatamente após um campo input identificado pelo label.
 
         Retorno
         -------
         self : XPathConstructor
-            Permite o encadeamento de métodos.
 
         Exemplo
         -------
-        ```python
         xpath.find_search_link_after_input("Cartão SUS").handle_click()
-        ```
         """
-        # Reaproveita a lógica de find_form_input para montar o XPath até o
-        # campo input
         await self.find_form_input(label_name, input_type=InputType.TEXT)
         # Adiciona o seletor para o <a> logo após o campo
         self._xpath += "/following-sibling::a[1]"
@@ -753,37 +738,20 @@ class XPathConstructor:
             self, label_name: str, input_type: str | InputType | None = None
     ) -> 'XPathConstructor':
         """
-        Localiza um campo de formulário (input, select, textarea, date,
-        checkbox ou radio) associado a um label específico, construindo
-        dinamicamente o XPath apropriado para o tipo de campo informado.
-
-        Exemplos
-        --------
-        ```
-        xpath.find_form_input("Unidade de Saúde", InputType.SELECT)
-        xpath.find_form_input("Data de Nascimento", InputType.DATE)
-        xpath.find_form_input("Sexo", InputType.CHECKBOX)
-        ```
-
-        Notas
-        -----
-        Este método é tolerante a diferentes estruturas de HTML frequentemente
-        encontradas em sistemas legados e sistemas web governamentais, lidando
-        com cenários onde o relacionamento label-campo não segue padrões W3C.
+        Localiza um campo de formulário pelo label e tipo, construindo o XPath adequado.
+        Suporta diferentes estruturas HTML e tipos de input (input, select, textarea, date, checkbox, radio).
         """
         input_type = self._get_input_type(input_type)
         label_xpath = f"//label[normalize-space(text())='{label_name}']"
 
         if input_type == InputType.DATE:
-            # Para campos de data, encontra o span após o label e dentro dele
-            # busca o input de texto do calendário
+            # Para campos de data, encontra o span após o label e dentro dele busca o input de texto do calendário
             self._xpath += (
                 f"{label_xpath}/following-sibling::span[1]//{input_type.html_element}"
                 f"[contains(@class, 'date') or contains(@class, 'calendar')]"
             )
         elif input_type == InputType.CHECKBOX:
-            # Para checkbox, busca todos os inputs do tipo checkbox após o
-            # label, dentro de qualquer estrutura (ex: tabela)
+            # Para checkbox, busca todos os inputs do tipo checkbox após o label, dentro de qualquer estrutura (ex: tabela)
             self._xpath += (
                 f"{label_xpath}/following-sibling::table[1]"
                 f"|//fieldset[legend[normalize-space(text())='{label_name}']]"
@@ -823,43 +791,21 @@ class XPathConstructor:
             )
         self._input_type = input_type
         logger.debug(f"XPath: {self}")
+
         return self
 
     async def handle_fill(self, value: str | list | None, input_type: str | InputType | None = None,
              timeout: float = DEFAULT_TIMEOUT,
              reset=True) -> 'XPathConstructor':
         """
-        Preenche campos de formulário de diferentes tipos (input, select,
-        checkbox, radio, lista), de acordo com o tipo especificado, utilizando
-        abordagens específicas para cada estrutura de campo.
+        Preenche campos de formulário de acordo com o tipo:
+        - 'select'/'lista': seleciona opção pelo value (com retry)
+        - 'checkbox': marca/desmarca conforme valores informados
+        - 'radio': seleciona o radio correspondente ao value
+        - outros: preenche via fill do Playwright
 
-        O método identifica o tipo do campo e executa o preenchimento conforme
-        o padrão do elemento:
-          - Para 'select' ou 'lista', seleciona a opção cujo value seja igual
-            ao valor fornecido, com mecanismo de retry.
-          - Para 'checkbox', marca ou desmarca os checkboxes necessários para
-            refletir os valores informados.
-          - Para 'radio', seleciona o botão de rádio do grupo correspondente ao
-            valor.
-          - Para outros tipos (ex: texto, textarea), preenche o campo via
-            método fill do Playwright.
-
-        Exemplos
-        --------
-        ```
-        xpath.find_form_input("Sexo", InputType.CHECKBOX).handle_fill("M")
-        xpath.find_form_input("Escolaridade", InputType.SELECT).handle_fill("4")
-        xpath.find_form_input("Tipo de Exame", InputType.RADIO).handle_fill("03")
-        ```
-
-        Notas
-        -----
-        O método é tolerante a campos dinâmicos ou carregamentos parciais,
-        realizando tentativas com retry para selects/listas. Campos do tipo
-        'checkbox' aceitam múltiplos valores (como lista).
+        Aceita múltiplos valores para checkbox.
         """
-        # if value is None:
-        #     raise ValueError("value não pode ser nulo.")
 
         input_type = self._get_input_type(input_type)
         
@@ -977,57 +923,19 @@ class XPathConstructor:
             wait_for_selector: str | None = None,
             reset=True) -> 'XPathConstructor':
         """
-        Realiza o clique forçado no elemento localizado pelo XPath corrente,
-        repetindo tentativas até sucesso ou atingir o tempo limite. Se
-        `wait_for_selector` for fornecido, o método também aguardará a
-        presença desse seletor após o clique.
+        Tenta clicar no elemento localizado pelo XPath corrente até sucesso ou timeout. Se `wait_for_selector` for informado, aguarda o seletor após o clique.
 
-        Este método é resiliente a delays ou instabilidades do front-end,
-        tentando clicar no elemento repetidas vezes até que o clique seja
-        bem-sucedido ou o tempo máximo seja atingido. O clique é realizado em
-        modo "force", o que permite interagir com elementos que possam estar
-        temporariamente cobertos ou sobrepostos por outros componentes da
-        interface.
+        Parâmetros:
+        - timeout: tempo máximo em segundos.
+        - interval: intervalo entre tentativas.
+        - reset: se True, reseta o XPath após o clique.
+        - wait_for_selector: seletor a aguardar após o clique.
 
-        Parâmetros
-        ----------
-        timeout : int, opcional (default=10)
-            Tempo máximo, em segundos, para tentar o clique até considerar
-            falha.
-        interval : float, opcional (default=self.RETRY_INTERVAL)
-            Intervalo, em segundos, entre cada tentativa de clique.
-        reset : bool, opcional (default=True)
-            Se True, reseta o XPath interno após o clique bem-sucedido.
-        wait_for_selector : str | None, opcional (default=None)
-            Se definido, após o clique o método aguardará até o seletor CSS ou
-            XPath informado estar presente e visível.
+        Retorno:
+        - self
 
-        Retorno
-        -------
-        self : XPathConstructor
-            Permite encadeamento de métodos.
-
-        Exceções
-        --------
-        TimeoutError
-            Disparada se o clique não puder ser realizado dentro do tempo
-            limite especificado, ou se o seletor esperado não aparecer.
-
-        Exemplos
-        --------
-        ```python
-        xpath.find_form_button("Pesquisar").handle_click(
-        ...     wait_for_selector="table#frm\\:listaPaciente"
-        ... )
-        xpath.find_form_input("Nome:").handle_click(timeout=5)
-        ```
-
-        Notas
-        -----
-        O clique é executado com 'force=True' do Playwright, permitindo ação
-        mesmo em elementos não interativos no momento. Recomenda-se utilizar
-        este método quando a interface apresentar delays frequentes ou overlays
-        transitórios.
+        Exceções:
+        - TimeoutError se não conseguir clicar ou aguardar o seletor no tempo limite.
         """
         interval = interval or self.ELAPSED_INTERVAL
 
@@ -1059,55 +967,22 @@ class XPathConstructor:
                           timeout: float = DEFAULT_TIMEOUT,
                           reset=True) -> 'XPathConstructor':
         """
-        Realiza a navegação e o clique em uma ação específica de menu no
-        SIScan, simulando a interação de usuário com menus suspensos
-        (dropdown).
+        Clica em uma ação de submenu dentro de um menu suspenso do SIScan.
 
-        O método localiza o menu principal pelo texto exibido, faz o hover para
-        exibir o submenu e, em seguida, busca e clica no item do submenu
-        correspondente ao texto da ação desejada. É utilizada tolerância para
-        delays de interface, e exceções são disparadas caso o menu principal
-        ou a ação não sejam encontrados.
+        Localiza o menu principal pelo texto, faz hover para exibir o submenu e clica na ação desejada.
+        Lança SiscanMenuNotFoundError se o menu ou ação não forem encontrados.
 
-        Parâmetros
-        ----------
-        menu_name : str
-            Texto do menu principal (label) a ser localizado e acionado.
-        menu_action_text : str
-            Texto do item de submenu (ação) a ser localizado e clicado.
-        timeout : int, opcional (default=5)
-            Tempo máximo, em segundos, para aguardar a visibilidade do submenu
-            antes de falhar.
-        reset : bool, opcional (default=True)
-            Se True, reseta o estado interno do XPathConstructor após a
-            operação.
+        Parâmetros:
+        - menu_name: texto do menu principal.
+        - menu_action_text: texto da ação do submenu.
+        - timeout: tempo máximo de espera (segundos).
+        - reset: se True, reseta o estado após a operação.
 
-        Retorno
-        -------
-        self : XPathConstructor
-            Permite encadeamento de métodos.
+        Retorna:
+        - self
 
-        Exceções
-        --------
-        SiscanMenuNotFoundError
-            Disparada caso o menu principal ou a ação de menu não sejam
-            localizados na página.
-
-        Exemplos
-        --------
-        ```python
-        xpath = XPathConstructor(page)
+        Exemplo:
         xpath.click_menu_action("Paciente", "Pesquisar Paciente")
-        ```
-
-        Notas
-        -----
-        O método depende de seletores de classe CSS específicos
-        (exemplo: `.rich-ddmenu-label`, `.rich-menu-item-label`), típicos da
-        interface SIScan baseada em RichFaces.
-        Em cenários com múltiplos menus ou menus dinâmicos, recomenda-se
-        garantir a unicidade dos textos informados.
-
         """
         page = self.page
 

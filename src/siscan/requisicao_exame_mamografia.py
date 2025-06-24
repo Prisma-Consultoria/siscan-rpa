@@ -96,12 +96,6 @@ class RequisicaoExameMamografia(RequisicaoExame):
         """
         Retorna o mapeamento de campos do formulário com seus respectivos
         labels e tipos, específico para o exame de Mamografia.
-
-        Retorna
-        -------
-        dict[str, tuple[str, str, str]]
-            Dicionário onde a chave é o nome do campo e o valor é uma tupla
-            contendo o label, o tipo do campo e o nível de obrigatoriedade.
         """
         map_label = {
             **RequisicaoExameMamografia.MAP_DATA_LABEL,
@@ -166,11 +160,11 @@ class RequisicaoExameMamografia(RequisicaoExame):
                 erro_dependente_msg=msg.ANO_RADIOTERAPIA_REQUIRED
             )
 
-    def preenche_fez_cirurgia_cirurgica(self, data: dict):
+    async def preenche_fez_cirurgia_cirurgica(self, data: dict):
         # Para "FEZ CIRURGIA DE MAMA?"
         _, value = self.select_value("fez_cirurgia_de_mama", data)
         if value == "S":
-            self.preencher_ano_cirurgia(data)
+            await self.preencher_ano_cirurgia(data)
     def preenche_tipo_mamografia(self, data: dict):
         text, _ = self.select_value("tipo_de_mamografia", data)
         if text == "Rastreamento":
@@ -193,7 +187,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
                 self.context,
                 msg.CARTAO_SUS_NAO_INFORMADO,
             )
-        super().preencher(data)
+        await super().preencher(data)
 
         xpath = XPathConstructor(self.context)
         await xpath.find_form_button("Avançar").handle_click()
@@ -211,11 +205,11 @@ class RequisicaoExameMamografia(RequisicaoExame):
             RequisicaoExameMamografia.MAP_DATA_LABEL,
             suffix="",
         )
-        xpath.fill_form_fields(data_final, fields_map)
+        await xpath.fill_form_fields(data_final, fields_map)
 
-        self.take_screenshot("screenshot_04_requisicao_exame_mamografia.png")
+        await self.take_screenshot("screenshot_04_requisicao_exame_mamografia.png")
 
-    def preencher_ano_cirurgia(self, data: dict):
+    async def preencher_ano_cirurgia(self, data: dict):
         anos_procedimentos = [
             "ano_biopsia_cirurgica_incisional_direita",
             "ano_biopsia_cirurgica_incisional_esquerda",
@@ -267,6 +261,6 @@ class RequisicaoExameMamografia(RequisicaoExame):
                 raise ValueError("O parâmetro 'lado' deve ser "
                                  "'direita' ou 'esquerda'.")
             xpath = XPathConstructor(self.context, xpath=base_xpath)
-            xpath.handle_fill(self.get_field_value(campo_nome, data),
+            await xpath.handle_fill(self.get_field_value(campo_nome, data),
                        self.get_field_type(campo_nome))
             data.pop(campo_nome)

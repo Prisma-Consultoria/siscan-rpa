@@ -72,6 +72,7 @@ class RequisicaoExame(SiscanWebPage):
         await self.acessar_menu("EXAME", "GERENCIAR EXAME")
 
     async def _novo_exame(self, event_button: bool = False) -> XPathConstructor:
+        # TOFIX Não deveria ter um comando genérico para botões em vez de algo específico?
         await self.acesar_menu_gerenciar_exame()
 
         if event_button:
@@ -85,7 +86,7 @@ class RequisicaoExame(SiscanWebPage):
     async def buscar_cartao_sus(self, data: dict):
         await self._buscar_cartao_sus(data, menu_action=self._novo_exame)
 
-    def seleciona_unidade_requisitante(self, data: dict | None = None):
+    async def seleciona_unidade_requisitante(self, data: dict | None = None):
         """
         Seleciona e valida a unidade requisitante a partir dos dados
         fornecidos.
@@ -133,7 +134,7 @@ class RequisicaoExame(SiscanWebPage):
           valor, respectivamente.
         """
         nome_campo = "unidade_requisitante"
-        self.load_select_options(nome_campo)
+        await self.load_select_options(nome_campo)
 
         # Atualiza o mapeamento de campos com os valores do select para obter
         # o código CNES do campo Unidade Requisitante.
@@ -160,7 +161,7 @@ class RequisicaoExame(SiscanWebPage):
                 options_values=self.FIELDS_MAP[nome_campo].keys()
             )
 
-    def selecionar_prestador(self, data: dict = None):
+    async def selecionar_prestador(self, data: dict | None = None):
         """
         Seleciona e valida o campo 'prestador' a partir dos dados fornecidos.
 
@@ -202,7 +203,7 @@ class RequisicaoExame(SiscanWebPage):
           formulários web.
         """
         nome_campo = "prestador"
-        self.load_select_options(nome_campo)
+        await self.load_select_options(nome_campo)
         text, value = self.select_value(nome_campo, data)
         if value == "0":
             raise SiscanInvalidFieldValueError(
@@ -212,7 +213,7 @@ class RequisicaoExame(SiscanWebPage):
                 options_values=self.FIELDS_MAP[nome_campo].keys()
             )
 
-    def preencher(self, data: dict):
+    async def preencher(self, data: dict):
         """
         Preenche o formulário de novo exame de acordo com os campos informados.
 
@@ -228,7 +229,7 @@ class RequisicaoExame(SiscanWebPage):
 
         # 1o passo: Preenche o campo Cartão SUS e chama o
         # evento onblur do campo
-        self.preencher_cartao_sus(
+        await self.preencher_cartao_sus(
             numero=self.get_field_value("cartao_sus", data))
 
         # 2o passo: Define o tipo de exame para então poder habilitar
@@ -237,11 +238,11 @@ class RequisicaoExame(SiscanWebPage):
 
         # 3o passo: Obtem os valores do campo select Unidade Requisitante,
         # atualiza o mapeamento de campos e preenche o campo
-        self.seleciona_unidade_requisitante(data)
+        await self.seleciona_unidade_requisitante(data)
 
         # 4o passo: Obtem os valores do campo select Prestador,
         # atualiza o mapeamento de campos e preenche o campo
-        self.selecionar_prestador(data)
+        await self.selecionar_prestador(data)
 
         # 5o passo: Preenche os campos adicionais do formulário
         # Antes, monta o mapeamento de campos e os dados finais
@@ -255,5 +256,5 @@ class RequisicaoExame(SiscanWebPage):
         fields_map.pop('unidade_requisitante')
         fields_map.pop('prestador')
 
-        xpath.fill_form_fields(data_final, fields_map)
-        self.take_screenshot("screenshot_03_requisicao_exame.png")
+        await xpath.fill_form_fields(data_final, fields_map)
+        await self.take_screenshot("screenshot_03_requisicao_exame.png")
