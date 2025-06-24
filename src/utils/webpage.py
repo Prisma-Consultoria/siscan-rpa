@@ -55,7 +55,8 @@ class WebPage(ABC):
             headless=False,  # Para depuração, use False
             timeout=15000,
         )
-        self.authenticate()
+        # A autenticação requer chamadas assíncronas, por isso é responsabilidade
+        # de quem utilizar esta classe chamar ``authenticate`` explicitamente.
 
     @abstractmethod
     def authenticate(self):

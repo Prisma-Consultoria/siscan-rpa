@@ -75,9 +75,11 @@ class RequisicaoExame(SiscanWebPage):
         # TOFIX Não deveria ter um comando genérico para botões em vez de algo específico?
         await self.acesar_menu_gerenciar_exame()
 
+        xpath = XPathConstructor(self.context)
         if event_button:
-
-            xpath = XPathConstructor(self.context)
+            # ``find_form_anchor_button`` é síncrono e apenas configura o XPath
+            # interno. O clique propriamente dito é assíncrono, portanto
+            # chamamos ``handle_click`` e aguardamos sua conclusão.
             await xpath.find_form_anchor_button("Novo Exame").handle_click()
 
         await xpath.wait_page_ready()
