@@ -419,6 +419,7 @@ class XPathConstructor:
                 timeout=timeout * self.TIMEOUT_MS_FACTOR
             )
             logger.info("Página pronta e jQuery disponível.")
+
             return self
 
         except TimeoutError as e:
@@ -440,7 +441,7 @@ class XPathConstructor:
             )
 
     async def get_value(
-            self, input_type: str | InputType = None,
+            self, input_type: str | InputType | None = None,
             timeout: float = DEFAULT_TIMEOUT
     ) -> tuple[str, str] | list[tuple[str, str]]:
         """

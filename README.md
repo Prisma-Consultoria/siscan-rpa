@@ -64,3 +64,7 @@ Para visualizar as mensagens de `print` e `logger.debug` utilize a flag `-s`:
 ```bash
 pytest -s
 ```
+
+## Documentação
+
+Acesse [http://localhost:5001/docs](http://localhost:5001/docs) para visualizar a documentação da API e testar seus endpoints

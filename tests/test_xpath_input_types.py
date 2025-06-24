@@ -4,7 +4,10 @@ from src.siscan.requisicao_exame_mamografia import RequisicaoExameMamografia
 from src.utils.xpath_constructor import XPathConstructor, InputType
 from src.utils.validator import Validator
 from src.env import SISCAN_URL, SISCAN_USER, SISCAN_PASSWORD
+from playwright.async_api import Page
 
+import logging
+logger = logging.getLogger(__name__)
 
 @pytest_asyncio.fixture(scope="session")
 async def siscan_form():
@@ -23,6 +26,17 @@ async def siscan_form():
 def _load_data(path):
     return Validator.load_json(path)
 
+@pytest.mark.asyncio
+async def test_preencher_campos_metodo_playwright(siscan_form):
+    page: Page = siscan_form.context.page
+
+    await page.get_by_label('Mamografia').check()
+    select = page.get_by_label('Unidade Requisitante')
+    logger.debug(select)
+
+    await select.wait_for(state='attached', timeout=5000)
+
+    await select.select_option(label='0274267 - CENTRAL DE TELEATENDIMENTO SAUDE JA CURITIBA')
 
 @pytest.mark.asyncio
 async def test_fill_text_input(siscan_form, fake_json_file):
@@ -71,11 +85,3 @@ async def test_fill_checkbox_input(siscan_form, fake_json_file):
     else:
         assert False, "Expected tuple return for single checkbox"
 
-
-@pytest.mark.asyncio
-async def test_preencher_campos_metodo_playwright(siscan_form):
-    page = siscan_form.context.page
-    await page.get_by_label('Mamografia').check()
-    await page.get_by_label('Choose a color').select_option({
-        'label': '0274267 - CENTRAL DE TELEATENDIMENTO SAUDE JA CURITIBA'
-    })

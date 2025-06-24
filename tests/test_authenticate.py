@@ -8,7 +8,6 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.asyncio
 async def test_authenticate():
-
     requisicao = RequisicaoExameMamografia(
         base_url=SISCAN_URL,
         user=SISCAN_USER,
@@ -26,3 +25,6 @@ async def test_authenticate():
     assert await requisicao.context.page.locator(
         'h1:text("SEJA BEM VINDO AO SISCAN")'
     ).is_visible()
+
+    # Fechar navegador após o teste
+    await requisicao.context.browser.close()
