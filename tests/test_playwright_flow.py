@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 async def playwright_page():
     """Cria contexto Playwright manualmente e autentica no SIScan."""
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
+        browser = await p.chromium.launch(headless=False)
         context = await browser.new_context(base_url=SISCAN_URL)
         page = await context.new_page()
 
@@ -42,9 +42,12 @@ async def playwright_page():
 @pytest.mark.asyncio
 async def test_preencher_campos_metodo_playwright(playwright_page: Page, fake_json_file):
     page = playwright_page
+    logger.debug("Carregando json...")
     data = Validator.load_json(fake_json_file)
+    logger.debug(data["cartao_sus"])
 
     await page.get_by_label("Cartão SUS").fill(data["cartao_sus"])
+    await page.get_by_label("Escolaridade").select_option(label="Ensino Fundamental Completo")
     await page.get_by_label('Mamografia').check()
     select = page.get_by_label('Unidade Requisitante')
     logger.debug(select)
