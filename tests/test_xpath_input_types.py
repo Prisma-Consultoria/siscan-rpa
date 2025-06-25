@@ -1,10 +1,10 @@
 import pytest
 import pytest_asyncio
+from playwright.async_api import async_playwright, Page
 from src.siscan.requisicao_exame_mamografia import RequisicaoExameMamografia
 from src.utils.xpath_constructor import XPathConstructor, InputType
 from src.utils.validator import Validator
 from src.env import SISCAN_URL, SISCAN_USER, SISCAN_PASSWORD
-from playwright.async_api import Page
 
 import logging
 logger = logging.getLogger(__name__)
@@ -23,12 +23,42 @@ async def siscan_form():
     req.context.close()
 
 
+@pytest_asyncio.fixture(scope="session")
+async def playwright_page():
+    """Cria contexto Playwright manualmente e autentica no SIScan."""
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        context = await browser.new_context(base_url=SISCAN_URL)
+        page = await context.new_page()
+
+        await page.goto("/login.jsf")
+        await page.get_by_label("E-mail").fill(SISCAN_USER)
+        await page.get_by_label("Senha").fill(SISCAN_PASSWORD)
+        await page.get_by_role("button", name="Acessar").click()
+        await page.wait_for_selector("text=SEJA BEM VINDO AO SISCAN")
+
+        # Navega pelo menu ate a opcao Novo Exame
+        await page.locator(
+            ".rich-ddmenu-label .rich-label-text-decor",
+            has_text="EXAME",
+        ).first.hover()
+        await page.locator(
+            ".rich-menu-item-label",
+            has_text="GERENCIAR EXAME",
+        ).click()
+        await page.locator("a.form-button", has_text="Novo Exame").click()
+        await page.wait_for_selector("label:has-text('Unidade Requisitante')")
+
+        yield page
+        await browser.close()
+
+
 def _load_data(path):
     return Validator.load_json(path)
 
 @pytest.mark.asyncio
-async def test_preencher_campos_metodo_playwright(siscan_form):
-    page: Page = siscan_form.context.page
+async def test_preencher_campos_metodo_playwright(playwright_page: Page):
+    page = playwright_page
 
     await page.get_by_label('Mamografia').check()
     select = page.get_by_label('Unidade Requisitante')
