@@ -128,6 +128,7 @@ class SiscanBrowserContext:
         """
         if not self._page:
             await self.startup()
+            
         context = self._page.context
         popup = None
         start = asyncio.get_event_loop().time()
