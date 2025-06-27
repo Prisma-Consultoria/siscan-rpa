@@ -63,6 +63,9 @@ Para visualizar as mensagens de `print` e `logger.debug` utilize a flag `-s`:
 
 ```bash
 pytest -s
+DEBUG=pw:api pytest -s tests/test_playwright_flow.py
+PWDEBUG=1 DEBUG=pw:api pytest -s tests/test_playwright_flow.py --headed --browser chromium
+
 ```
 
 ## Documentação

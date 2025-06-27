@@ -1,20 +1,13 @@
 from fastapi import APIRouter, HTTPException
 from sqlalchemy.exc import IntegrityError
-from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
-from .env import get_db
+from .env import get_db, public_key
 from .models import User
 from .utils.helpers import run_rpa
 from src.utils import messages as msg
 
 router = APIRouter()
-
-# Carrega chaves RSA
-with open("rsa_private_key.pem", "rb") as f:
-    private_key = serialization.load_pem_private_key(f.read(), password=None)
-with open("rsa_public_key.pem", "rb") as f:
-    public_key = serialization.load_pem_public_key(f.read())
-
 
 @router.post(
     "/cadastrar-usuario",

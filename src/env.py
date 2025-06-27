@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
+from cryptography.hazmat.primitives import serialization
 
 load_dotenv(override=True)
 
@@ -14,6 +15,12 @@ SISCAN_URL = os.getenv("SISCAN_URL", "https://siscan.saude.gov.br/")
 
 SISCAN_USER = os.getenv("SISCAN_USER", "")
 SISCAN_PASSWORD = os.getenv("SISCAN_PASSWORD", "")
+
+# Carrega chaves RSA
+with open("rsa_private_key.pem", "rb") as f:
+    private_key = serialization.load_pem_private_key(f.read(), password=None)
+with open("rsa_public_key.pem", "rb") as f:
+    public_key = serialization.load_pem_public_key(f.read())
 
 Base = declarative_base()
 engine = None

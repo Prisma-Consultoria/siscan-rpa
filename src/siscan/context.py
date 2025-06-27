@@ -67,13 +67,13 @@ class SiscanBrowserContext:
             self._browser, self._page = self.startup()
         return self._page
 
-    def close(self):
+    async def close(self):
         if self._browser:
-            self._browser.close()
+            await self._browser.close()
             self._browser = None
             self._page = None
         if getattr(self, "_playwright", None):
-            asyncio.run(self._playwright.stop())
+            await self._playwright.stop()
             self._playwright = None
 
     async def handle_goto(self, path: str, **kwargs) -> Page:

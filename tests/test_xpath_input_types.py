@@ -26,6 +26,7 @@ async def siscan_form():
     await req.authenticate()
     await req._novo_exame(event_button=True)
     yield req
+    
     req.context.close()
 
 
@@ -33,49 +34,49 @@ def _load_data(path):
     return Validator.load_json(path)
 
     
-# @pytest.mark.asyncio
-# async def test_fill_text_input(siscan_form, fake_json_file):
-#     data = _load_data(fake_json_file)
-#     xpath = XPathConstructor(siscan_form.context)
-#     label = siscan_form.get_field_label("nome")
-#     await xpath.find_form_input(label, InputType.TEXT)
-#     await xpath.handle_fill(data["nome"], reset=False)
-#     text, value = await xpath.get_value(InputType.TEXT)
-#     assert value == data["nome"]
+@pytest.mark.asyncio(loop_scope="session")
+async def test_fill_text_input(siscan_form, fake_json_file):
+    data = _load_data(fake_json_file)
+    xpath = XPathConstructor(siscan_form.context)
+    label = siscan_form.get_field_label("nome")
+    await xpath.find_form_input(label, InputType.TEXT)
+    await xpath.handle_fill(data["nome"], reset=False)
+    text, value = await xpath.get_value(InputType.TEXT)
+    assert value == data["nome"]
 
 
-# @pytest.mark.asyncio
-# async def test_fill_select_input(siscan_form, fake_json_file):
-#     data = _load_data(fake_json_file)
-#     xpath = XPathConstructor(siscan_form.context)
-#     label = siscan_form.get_field_label("nacionalidade")
-#     await xpath.find_form_input(label, InputType.SELECT)
-#     await xpath.handle_fill(data["nacionalidade"], reset=False)
-#     text, value = await xpath.get_value(InputType.SELECT)
-#     assert value is not None
+@pytest.mark.asyncio(loop_scope="session")
+async def test_fill_select_input(siscan_form, fake_json_file):
+    data = _load_data(fake_json_file)
+    xpath = XPathConstructor(siscan_form.context)
+    label = siscan_form.get_field_label("nacionalidade")
+    await xpath.find_form_input(label, InputType.SELECT)
+    await xpath.handle_fill(data["nacionalidade"], reset=False)
+    text, value = await xpath.get_value(InputType.SELECT)
+    assert value is not None
 
 
-# @pytest.mark.asyncio
-# async def test_fill_date_input(siscan_form, fake_json_file):
-#     data = _load_data(fake_json_file)
-#     xpath = XPathConstructor(siscan_form.context)
-#     label = siscan_form.get_field_label("data_de_nascimento")
-#     await xpath.find_form_input(label, InputType.DATE)
-#     await xpath.handle_fill(data["data_de_nascimento"], reset=False)
-#     text, value = await xpath.get_value(InputType.DATE)
-#     assert value == data["data_de_nascimento"]
+@pytest.mark.asyncio(loop_scope="session")
+async def test_fill_date_input(siscan_form, fake_json_file):
+    data = _load_data(fake_json_file)
+    xpath = XPathConstructor(siscan_form.context)
+    label = siscan_form.get_field_label("data_de_nascimento")
+    await xpath.find_form_input(label, InputType.DATE)
+    await xpath.handle_fill(data["data_de_nascimento"], reset=False)
+    text, value = await xpath.get_value(InputType.DATE)
+    assert value == data["data_de_nascimento"]
 
 
-# @pytest.mark.asyncio
-# async def test_fill_checkbox_input(siscan_form, fake_json_file):
-#     data = _load_data(fake_json_file)
-#     xpath = XPathConstructor(siscan_form.context)
-#     label = siscan_form.get_field_label("sexo")
-#     await xpath.find_form_input(label, InputType.CHECKBOX)
-#     await xpath.handle_fill(data["sexo"], reset=False)
-#     result = await xpath.get_value(InputType.CHECKBOX)
-#     if isinstance(result, tuple):
-#         _, value = result
-#         assert value == data["sexo"]
-#     else:
-#         assert False, "Expected tuple return for single checkbox"
+@pytest.mark.asyncio(loop_scope="session")
+async def test_fill_checkbox_input(siscan_form, fake_json_file):
+    data = _load_data(fake_json_file)
+    xpath = XPathConstructor(siscan_form.context)
+    label = siscan_form.get_field_label("sexo")
+    await xpath.find_form_input(label, InputType.CHECKBOX)
+    await xpath.handle_fill(data["sexo"], reset=False)
+    result = await xpath.get_value(InputType.CHECKBOX)
+    if isinstance(result, tuple):
+        _, value = result
+        assert value == data["sexo"]
+    else:
+        assert False, "Expected tuple return for single checkbox"

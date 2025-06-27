@@ -1,7 +1,7 @@
 cryptography
-playwright
+playwright==1.51.0
 pytest
-pytest-playwright
+pytest-playwright-asyncio
 pytest-asyncio
 python-dotenv==1.1.0
 pydantic==2.11.7
