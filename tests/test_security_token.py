@@ -1,6 +1,9 @@
 import pytest
 from fastapi.testclient import TestClient
+import secrets
 from src.main import app
+from src.env import get_db
+from src.models import ApiKey
 
 
 @pytest.fixture
@@ -12,13 +15,23 @@ def client(tmp_path):
     from src import models  # noqa: F401
 
     env.Base.metadata.create_all(bind=env.engine)
+    key_value = secrets.token_hex(8)
+    db = get_db()
+    db.add(ApiKey(key=key_value))
+    db.commit()
+    db.close()
     with TestClient(app) as client:
-        yield client
+        yield client, key_value
 
 
 def test_generate_token(client):
-    client.post("/user", json={"username": "alice", "password": "secret"})
-    res = client.post(
+    client_obj, key = client
+    client_obj.post(
+        "/user",
+        json={"username": "alice", "password": "secret"},
+        headers={"Api-Key": key},
+    )
+    res = client_obj.post(
         "/security/token",
         data={"username": "alice", "password": "secret"},
     )
@@ -29,7 +42,8 @@ def test_generate_token(client):
 
 
 def test_invalid_credentials(client):
-    res = client.post(
+    client_obj, _ = client
+    res = client_obj.post(
         "/security/token",
         data={"username": "bob", "password": "wrong"},
     )

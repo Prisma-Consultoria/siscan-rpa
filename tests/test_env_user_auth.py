@@ -1,9 +1,10 @@
 import pytest
 from fastapi.testclient import TestClient
+import secrets
 
 from src.main import app
 from src.env import SISCAN_USER, SISCAN_PASSWORD, SISCAN_URL, get_db
-from src.models import User
+from src.models import User, ApiKey
 from src.siscan.requisicao_exame_mamografia import RequisicaoExameMamografia
 from src.siscan.context import SiscanBrowserContext
 
@@ -17,14 +18,21 @@ def client(tmp_path_factory):
     from src import models  # noqa: F401
 
     env.Base.metadata.create_all(bind=env.engine)
+    key_value = secrets.token_hex(8)
+    db = get_db()
+    db.add(ApiKey(key=key_value))
+    db.commit()
+    db.close()
     with TestClient(app) as client:
-        yield client
+        yield client, key_value
 
 
 def test_create_user_env(client):
-    res = client.post(
+    client_obj, key = client
+    res = client_obj.post(
         "/user",
         json={"username": SISCAN_USER, "password": SISCAN_PASSWORD},
+        headers={"Api-Key": key},
     )
     assert res.status_code == 201
     assert res.json()["message"] == "user created"

@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from src.env import get_db
 from src.models import User
 from src.utils.helpers import encrypt_password, decode_access_token, oauth2_scheme
-from src.utils.dependencies import jwt_required
+from src.utils.dependencies import jwt_required, api_key_required
 from src.utils import messages as msg
 from src.utils.schema import CadastrarInput
 
@@ -12,7 +12,11 @@ router = APIRouter(prefix="/user", tags=["user"])
 
 
 @router.post(
-    "", status_code=201, summary="Criar Usuário", description="Registra um novo usuário"
+    "",
+    status_code=201,
+    summary="Criar Usuário",
+    description="Registra um novo usuário",
+    dependencies=[Depends(api_key_required)],
 )
 def create_user(data: CadastrarInput):
     """Cadastrar novo usuário e armazenar a senha criptografada."""

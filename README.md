@@ -8,7 +8,7 @@ Este projeto implementa uma automação (RPA) para interação com o sistema SIS
 - **src/main.py** – inicializa a aplicação FastAPI e registra as rotas.
 - **src/routes/** – módulos de rotas da API:
   - `user.py` com `/user` (criação) e `/user/me` para obter o usuário autenticado.
-    O endpoint `/user/me` exige autenticação JWT.
+    O endpoint `/user` exige o cabeçalho `Api-Key` válido e `/user/me` exige autenticação JWT.
   - `preencher_formulario_siscan.py` com `/preencher-formulario-siscan/solicitacao-mamografia` e `/preencher-formulario-siscan/laudo-mamografia`.
     Esses endpoints podem ser acessados com JWT ou com `Api-Key` registrada no banco de dados (e não expirada).
   Utiliza Playwright para abrir o navegador e ainda possui *TODOs* de implementação.
