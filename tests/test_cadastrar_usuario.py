@@ -19,7 +19,7 @@ def client(tmp_path):
 
 def test_register_success(client):
     res = client.post(
-        "/cadastrar-usuario", json={"username": "alice", "password": "secret"}
+        "/user", json={"username": "alice", "password": "secret"}
     )
     assert res.status_code == 201
     data = res.json()
@@ -27,13 +27,13 @@ def test_register_success(client):
 
 
 def test_register_missing_fields(client):
-    res = client.post("/cadastrar-usuario", json={"username": "bob"})
+    res = client.post("/user", json={"username": "bob"})
     assert res.status_code == 422
 
 
 def test_register_duplicate(client):
-    client.post("/cadastrar-usuario", json={"username": "eve", "password": "pwd"})
+    client.post("/user", json={"username": "eve", "password": "pwd"})
     res = client.post(
-        "/cadastrar-usuario", json={"username": "eve", "password": "pwd2"}
+        "/user", json={"username": "eve", "password": "pwd2"}
     )
     assert res.status_code == 409

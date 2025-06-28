@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 import logging
 from .env import Base, engine
-from .routes import router
+from .routes.user import router as user_router
+from .routes.preencher_formulario_siscan import (
+    router as formulario_router,
+)
 from . import models
 
 logging.basicConfig(
@@ -18,7 +21,8 @@ app = FastAPI(
 # Cria tabelas a partir dos models
 Base.metadata.create_all(bind=engine)
 
-app.include_router(router)
+app.include_router(user_router)
+app.include_router(formulario_router)
 
 if __name__ == "__main__":
     import uvicorn
