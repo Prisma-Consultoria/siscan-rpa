@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.exc import IntegrityError
 from .env import get_db
 from .models import User
@@ -6,7 +6,7 @@ from .utils.helpers import (
     run_rpa,
     encrypt_password,
 )
-from .utils.decorators import jwt_required
+from .utils.dependencies import jwt_required
 from src.utils import messages as msg
 from src.utils.schema import CadastrarInput, PreencherSolicitacaoInput
 
@@ -40,8 +40,8 @@ def cadastrar_usuario(data: CadastrarInput):
     "/preencher-solicitacao-mamografia",
     summary="Preencher Solicitação de Mamografia",
     description="Executa o RPA para preencher a solicitação de mamografia no SIScan",
+    dependencies=[Depends(jwt_required)],
 )
-@jwt_required
 async def preencher_solicitacao(data: PreencherSolicitacaoInput):
     """Preencher automaticamente a solicitação de mamografia no SIScan."""
     result = await run_rpa("solicitacao", data.__dict__)
