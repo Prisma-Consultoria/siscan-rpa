@@ -59,14 +59,16 @@ class RequisicaoExame(SiscanWebPage):
             contendo o label, o tipo do campo e o nível de
             obrigatoriedade.
         """
-        return {
-            "cartao_sus": (
-                "Cartão SUS",
-                InputType.TEXT,
-                RequirementLevel.REQUIRED,
-            ),
+        map_label = {
+            **SiscanWebPage.MAP_DATA_LABEL,
             **RequisicaoExame.MAP_DATA_LABEL,
         }
+        map_label["cartao_sus"] = (
+            "Cartão SUS",
+            InputType.TEXT,
+            RequirementLevel.REQUIRED,
+        )
+        return map_label
 
     async def acesar_menu_gerenciar_exame(self):
         await self.acessar_menu("EXAME", "GERENCIAR EXAME")
