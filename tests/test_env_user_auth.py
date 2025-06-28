@@ -12,8 +12,10 @@ from src.siscan.context import SiscanBrowserContext
 def client(tmp_path_factory):
     db_file = tmp_path_factory.mktemp("data") / "env_user.db"
     import src.env as env
+
     env.init_engine(str(db_file))
     from src import models  # noqa: F401
+
     env.Base.metadata.create_all(bind=env.engine)
     with TestClient(app) as client:
         yield client
@@ -35,7 +37,7 @@ async def test_authenticate_env_user():
     user = db.query(User).filter_by(username=SISCAN_USER).first()
     db.close()
     assert user is not None, "User not found in the database"
-    
+
     # Descriptografa a senha usando a mesma tecnologia de criptografia (RSA)
     from cryptography.hazmat.primitives.asymmetric import padding
     from cryptography.hazmat.primitives import hashes
@@ -72,7 +74,7 @@ async def test_authenticate_env_user():
     assert await req.context.page.locator(
         'h1:text("SEJA BEM VINDO AO SISCAN")'
     ).is_visible()
-    
+
     req.context.close()
 
 

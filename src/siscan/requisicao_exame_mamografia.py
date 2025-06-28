@@ -12,6 +12,7 @@ from src.utils import messages as msg
 
 logger = logging.getLogger(__name__)
 
+
 class RequisicaoExameMamografia(RequisicaoExame):
     # manual https://www.inca.gov.br/sites/ufu.sti.inca.local/files/media/document/manual_siscan_modulo2_2021_1.pdf
     # Campos específicos deste formulário
@@ -54,7 +55,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
         "ano_inclusao_implantes_direita",
         "ano_inclusao_implantes_esquerda",
         "tipo_de_mamografia",
-        "mamografia_de_rastreamento"
+        "mamografia_de_rastreamento",
     ]
 
     FIELDS_MAP = {
@@ -65,21 +66,27 @@ class RequisicaoExameMamografia(RequisicaoExame):
         "fez_cirurgia_de_mama": {
             "01": "S",
             "02": "N",
-        }
+        },
     }
+
     def __init__(self, base_url: str, user: str, password: str):
-        schema_path = Path(
-            __file__).parent / "schemas" / "requisicao_exame_mamografia_rastreamento.schema.json"
-        
+        schema_path = (
+            Path(__file__).parent
+            / "schemas"
+            / "requisicao_exame_mamografia_rastreamento.schema.json"
+        )
+
         # Verifica se o arquivo de schema existe
         if not schema_path.is_file():
             raise FileNotFoundError(
-                f"Arquivo de schema '{schema_path}' nao encontrado.")
+                f"Arquivo de schema '{schema_path}' nao encontrado."
+            )
 
         super().__init__(base_url, user, password, schema_path)
 
         map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
-            schema_path, fields=RequisicaoExameMamografia.MAP_SCHEMA_FIELDS)
+            schema_path, fields=RequisicaoExameMamografia.MAP_SCHEMA_FIELDS
+        )
         RequisicaoExameMamografia.MAP_DATA_LABEL = map_data_label
         fields_map.update(self.FIELDS_MAP)
         self.FIELDS_MAP = fields_map
@@ -103,13 +110,13 @@ class RequisicaoExameMamografia(RequisicaoExame):
         map_label.update(super().get_map_label())
         return map_label
 
-    def selecionar_tipo_exame(self, data: dict):
+    async def selecionar_tipo_exame(self, data: dict):
         """
         Seleciona o tipo de exame como Mamografia.
         """
-        self.select_value("tipo_exame_mama", data)
+        await self.select_value("tipo_exame_mama", data)
 
-    def preecher_tem_nodulo_ou_caroco_na_mama(self, data: dict):
+    async def preecher_tem_nodulo_ou_caroco_na_mama(self, data: dict):
         """
         Preenche o campo de nódulo ou caroço na mama com base nos dados
         fornecidos.
@@ -121,54 +128,56 @@ class RequisicaoExameMamografia(RequisicaoExame):
         """
         nome_campo = "tem_nodulo_ou_caroco_na_mama"
         option_values = self.get_field_value(nome_campo, data)
-        self.select_value(nome_campo, {nome_campo: option_values})
+        await self.select_value(nome_campo, {nome_campo: option_values})
 
-    def preecher_fez_mamografia_alguma_vez(self, data: dict):
-        self.preencher_campo_dependente_multiplo(
+    async def preecher_fez_mamografia_alguma_vez(self, data: dict):
+        await self.preencher_campo_dependente_multiplo(
             data,
-            campo_chave='fez_mamografia_alguma_vez',
+            campo_chave="fez_mamografia_alguma_vez",
             condicoes_dependentes={
                 "01": ["ano_que_fez_a_ultima_mamografia"],
             },
             label_dependentes={
                 "ano_que_fez_a_ultima_mamografia": "Ano:",
             },
-            erro_dependente_msg=msg.ANO_MAMOGRAFIA_REQUIRED
+            erro_dependente_msg=msg.ANO_MAMOGRAFIA_REQUIRED,
         )
 
-    def preenche_fez_radioterapia_na_mama_ou_no_plastao(self, data: dict):
+    async def preenche_fez_radioterapia_na_mama_ou_no_plastao(self, data: dict):
         # Para "FEZ RADIOTERAPIA NA MAMA OU NO PLASTRÃO?"
-        _, value = self.select_value(
-            "fez_radioterapia_na_mama_ou_no_plastrao", data)
+        _, value = await self.select_value(
+            "fez_radioterapia_na_mama_ou_no_plastrao", data
+        )
         if value == "01":
             # Para "RADIOTERAPIA - LOCALIZAÇÃO"
-            self.preencher_campo_dependente_multiplo(
+            await self.preencher_campo_dependente_multiplo(
                 data,
-                campo_chave='radioterapia_localizacao',
+                campo_chave="radioterapia_localizacao",
                 condicoes_dependentes={
                     "01": ["ano_da_radioterapia_esquerda"],
                     "02": ["ano_da_radioterapia_direita"],
-                    "03": ["ano_da_radioterapia_direita",
-                           "ano_da_radioterapia_esquerda"],
+                    "03": [
+                        "ano_da_radioterapia_direita",
+                        "ano_da_radioterapia_esquerda",
+                    ],
                 },
                 label_dependentes={
-                    "ano_da_radioterapia_direita":
-                        "Ano da Radioterapia - Direita:",
-                    "ano_da_radioterapia_esquerda":
-                        "Ano da Radioterapia - Esquerda:",
+                    "ano_da_radioterapia_direita": "Ano da Radioterapia - Direita:",
+                    "ano_da_radioterapia_esquerda": "Ano da Radioterapia - Esquerda:",
                 },
-                erro_dependente_msg=msg.ANO_RADIOTERAPIA_REQUIRED
+                erro_dependente_msg=msg.ANO_RADIOTERAPIA_REQUIRED,
             )
 
     async def preenche_fez_cirurgia_cirurgica(self, data: dict):
         # Para "FEZ CIRURGIA DE MAMA?"
-        _, value = self.select_value("fez_cirurgia_de_mama", data)
+        _, value = await self.select_value("fez_cirurgia_de_mama", data)
         if value == "S":
             await self.preencher_ano_cirurgia(data)
-    def preenche_tipo_mamografia(self, data: dict):
-        text, _ = self.select_value("tipo_de_mamografia", data)
+
+    async def preenche_tipo_mamografia(self, data: dict):
+        text, _ = await self.select_value("tipo_de_mamografia", data)
         if text == "Rastreamento":
-            self.select_value("mamografia_de_rastreamento", data)
+            await self.select_value("mamografia_de_rastreamento", data)
 
     async def preencher(self, data: dict):
         """
@@ -187,17 +196,18 @@ class RequisicaoExameMamografia(RequisicaoExame):
                 self.context,
                 msg.CARTAO_SUS_NAO_INFORMADO,
             )
+
         await super().preencher(data)
 
         xpath = XPathConstructor(self.context)
-        await xpath.find_form_button("Avançar").handle_click()
+        await (await xpath.find_form_button("Avançar")).handle_click()
 
-        self.preecher_fez_mamografia_alguma_vez(data)
-        self.preenche_fez_radioterapia_na_mama_ou_no_plastao(data)
-        self.preenche_fez_cirurgia_cirurgica(data)
-        self.preenche_tipo_mamografia(data)
+        await self.preecher_fez_mamografia_alguma_vez(data)
+        await self.preenche_fez_radioterapia_na_mama_ou_no_plastao(data)
+        await self.preenche_fez_cirurgia_cirurgica(data)
+        await self.preenche_tipo_mamografia(data)
 
-        self.select_value("tem_nodulo_ou_caroco_na_mama", data)
+        await self.select_value("tem_nodulo_ou_caroco_na_mama", data)
         data.pop("tem_nodulo_ou_caroco_na_mama")
 
         fields_map, data_final = self.mount_fields_map_and_data(
@@ -258,9 +268,9 @@ class RequisicaoExameMamografia(RequisicaoExame):
                     f"{base_xpath}/following-sibling::div[1]//input[@type='text']"
                 )
             else:
-                raise ValueError("O parâmetro 'lado' deve ser "
-                                 "'direita' ou 'esquerda'.")
+                raise ValueError("O parâmetro 'lado' deve ser 'direita' ou 'esquerda'.")
             xpath = XPathConstructor(self.context, xpath=base_xpath)
-            await xpath.handle_fill(self.get_field_value(campo_nome, data),
-                       self.get_field_type(campo_nome))
+            await xpath.handle_fill(
+                self.get_field_value(campo_nome, data), self.get_field_type(campo_nome)
+            )
             data.pop(campo_nome)

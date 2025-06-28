@@ -12,7 +12,7 @@ logging.basicConfig(
 app = FastAPI(
     title="API RPA SISCAN",
     description="API para interação com o sistema SISCAN RPA",
-    version="0.1.0"
+    version="0.1.0",
 )
 
 # Cria tabelas a partir dos models
@@ -22,4 +22,5 @@ app.include_router(router)
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=5001)

@@ -13,3 +13,5 @@ uvicorn
 httpx
 jsonschema==4.24.0
 SQLAlchemy==2.0.41
+
+ruff==0.12.1

@@ -50,7 +50,9 @@ class SiscanWebPage(WebPage):
         self, base_url: str, user: str, password: str, schema_path: Union[str, Path]
     ):
         super().__init__(base_url, user, password, schema_path)
-        self.schema_model = create_model_from_json_schema("SchemaModel", Path(schema_path))
+        self.schema_model = create_model_from_json_schema(
+            "SchemaModel", Path(schema_path)
+        )
         map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
             schema_path, fields=SiscanWebPage.MAP_SCHEMA_FIELDS
         )
@@ -146,11 +148,6 @@ class SiscanWebPage(WebPage):
             Tempo máximo, em segundos, para tentar acessar o menu.
         interval : float, opcional (default=)
             Intervalo (em segundos) entre tentativas.
-
-        Exceções
-        --------
-        SiscanMenuNotFoundError
-            Se o menu ou ação não for encontrado após todas as tentativas.
         """
         interval = (
             interval if interval is not None else XPathConstructor.ELAPSED_INTERVAL
@@ -222,6 +219,7 @@ class SiscanWebPage(WebPage):
         Realiza a busca de um paciente pelo Cartão SUS no SIScan.
         Método para buscar um paciente pelo Cartão SUS, preenchendo os campos
         de busca e selecionando o paciente.
+
         Parâmetros
         ----------
         :param data: Dicionário com os dados do paciente a serem buscados.
@@ -230,7 +228,9 @@ class SiscanWebPage(WebPage):
         :return: None
         """
         xpath = menu_action()
-        await (await xpath.find_search_link_after_input(self.get_field_label("cartao_sus"))).handle_click()
+        await (
+            await xpath.find_search_link_after_input(self.get_field_label("cartao_sus"))
+        ).handle_click()
         await xpath.wait_page_ready()
 
         # Preenche os campos de busca do Cartão SUS
@@ -266,14 +266,6 @@ class SiscanWebPage(WebPage):
             Tempo máximo, em segundos, para tentar a validação.
         interval : float, opcional (default=0.2)
             Intervalo, em segundos, entre tentativas.
-
-        Exceções
-        --------
-        CartaoSusNotFoundError
-            Disparada se for exibida mensagem de erro na página.
-        TimeoutError
-            Disparada se não for possível validar/preencher o Cartão SUS
-            no tempo limite.
         """
         xpath = XPathConstructor(self.context)
         await xpath.wait_page_ready()
@@ -283,9 +275,9 @@ class SiscanWebPage(WebPage):
 
         while elapsed < timeout:
             xpath.reset()
-            cartao_sus_ele = await (await xpath.find_form_input(
-                self.get_field_label("cartao_sus")
-            )).wait_until_enabled()
+            cartao_sus_ele = await (
+                await xpath.find_form_input(self.get_field_label("cartao_sus"))
+            ).wait_until_enabled()
             await cartao_sus_ele.handle_fill(numero, reset=False)
             await cartao_sus_ele.on_blur()
             cartao_sus_ele.reset()
@@ -306,7 +298,9 @@ class SiscanWebPage(WebPage):
                     return  # Sucesso!
             except Exception as err:
                 try:
-                    current_value = await (await cartao_sus_ele.get_locator()).input_value()
+                    current_value = await (
+                        await cartao_sus_ele.get_locator()
+                    ).input_value()
                     if current_value:
                         break
                 except Exception:
@@ -327,12 +321,12 @@ class SiscanWebPage(WebPage):
         xpath_obj = XPathConstructor(
             self.context,
             xpath=f"//fieldset[legend[normalize-space(text())='{card_name}']]"
-            f"//input[@type='text']"
+            f"//input[@type='text']",
         )
 
         await xpath_obj.handle_fill(value)
 
-    def preencher_campo_dependente_multiplo(
+    async def preencher_campo_dependente_multiplo(
         self,
         data: dict,
         campo_chave: str,
@@ -341,7 +335,7 @@ class SiscanWebPage(WebPage):
         erro_dependente_msg: str | None = None,
     ):
         logger.debug(f"Selecionar campo {campo_chave}")
-        text, value = self.select_value(campo_chave, data)
+        text, value = await self.select_value(campo_chave, data)
 
         dependentes = condicoes_dependentes.get(value, [])
         labels = label_dependentes or {}
@@ -359,7 +353,7 @@ class SiscanWebPage(WebPage):
                 )
 
             # Preencher o campo dependente
-            self.fill_field_in_card(
+            await self.fill_field_in_card(
                 card_name=self.get_field_label(dep),
                 field_name=labels.get(dep),
                 value=valor_dep,

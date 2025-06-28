@@ -40,24 +40,27 @@ async def playwright_page():
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_preencher_campos_metodo_playwright(playwright_page: Page, fake_json_file):
+async def test_preencher_campos_metodo_playwright(
+    playwright_page: Page, fake_json_file
+):
     page = playwright_page
     data = Validator.load_json(fake_json_file)
 
-    await page.get_by_label('Ponto de Referência').fill(data["ponto_de_referencia"])
-    await page.get_by_label('Apelido').fill(data["apelido"])
-    await page.get_by_label('Mamografia').check()
+    await page.get_by_label("Ponto de Referência").fill(data["ponto_de_referencia"])
+    await page.get_by_label("Apelido").fill(data["apelido"])
+    await page.get_by_label("Mamografia").check()
 
     element = await page.query_selector("select#frm\\:escolaridade")
-    await element.select_option(
-        label="Ensino Fundamental Completo"
-    )
-    
-    option_locator = page.locator('select#frm\\:unidadeSaudeCoordenacaoMunicipal option[value="1"]')
-    await option_locator.wait_for(state='attached', timeout=5000)
+    await element.select_option(label="Ensino Fundamental Completo")
 
-    select = page.get_by_label('Unidade Requisitante')
-    await select.select_option(label='0274267 - CENTRAL DE TELEATENDIMENTO SAUDE JA CURITIBA')
+    option_locator = page.locator(
+        'select#frm\\:unidadeSaudeCoordenacaoMunicipal option[value="1"]'
+    )
+    await option_locator.wait_for(state="attached", timeout=5000)
+
+    select = page.get_by_label("Unidade Requisitante")
+    await select.select_option(
+        label="0274267 - CENTRAL DE TELEATENDIMENTO SAUDE JA CURITIBA"
+    )
 
     await page.screenshot(path="screenshot.png")
-

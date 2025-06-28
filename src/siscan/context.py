@@ -1,7 +1,7 @@
 import logging
 import asyncio
 from typing import Optional, Any
-from  src.utils import messages as msg
+from src.utils import messages as msg
 from playwright.async_api import async_playwright, Browser, Page
 
 
@@ -17,7 +17,7 @@ class SiscanBrowserContext:
         self,
         base_url: str = "https://siscan.saude.gov.br/",
         headless: bool = True,
-        timeout: int = 10000
+        timeout: int = 10000,
     ):
         self._base_url = base_url
         self._timeout = timeout
@@ -25,7 +25,7 @@ class SiscanBrowserContext:
 
         self._browser: Optional[Browser] = None
         self._page: Optional[Page] = None
-        
+
         self._information_messages: dict[str, list[str]] = {}
 
     @property
@@ -35,7 +35,7 @@ class SiscanBrowserContext:
         """
         return self._base_url
 
-    #@property
+    # @property
     def timeout(self) -> int:
         """
         Retorna o timeout padrão para operações de navegação.
@@ -79,7 +79,7 @@ class SiscanBrowserContext:
     async def handle_goto(self, path: str, **kwargs) -> Page:
         if not self._page:
             await self.startup()
-        url = self._base_url.rstrip('/') + '/' + path.lstrip('/')
+        url = self._base_url.rstrip("/") + "/" + path.lstrip("/")
         logger.debug(f"Navegando para: {url}")
         if self._page:
             await self._page.goto(url, **kwargs)
@@ -87,7 +87,7 @@ class SiscanBrowserContext:
             raise Exception(msg.CONTEXT_NOT_INITIALIZED)
 
         return self._page
-    
+
     async def startup(self) -> tuple[Browser, Page]:
         if self._browser and self._page:
             return self._browser, self._page
@@ -117,7 +117,9 @@ class SiscanBrowserContext:
         self._page = page
         return self._browser, self._page
 
-    async def collect_information_popup(self, timeout: int = 3000) -> dict[str, list[str]]:
+    async def collect_information_popup(
+        self, timeout: int = 3000
+    ) -> dict[str, list[str]]:
         """
         Coleta todos os informes da popup, estruturando como {data: [linhas de texto, ...]}, e fecha a popup.
 
@@ -128,7 +130,7 @@ class SiscanBrowserContext:
         """
         if not self._page:
             await self.startup()
-            
+
         context = self._page.context
         popup = None
         start = asyncio.get_event_loop().time()
@@ -151,7 +153,7 @@ class SiscanBrowserContext:
 
         await popup.wait_for_load_state("domcontentloaded")
 
-        trs = popup.locator('table#listaMensagens tr.rich-table-row')
+        trs = popup.locator("table#listaMensagens tr.rich-table-row")
         count = await trs.count()
 
         for i in range(count):
@@ -165,7 +167,7 @@ class SiscanBrowserContext:
             notice_subject = (await subject_elem.inner_text()).strip()
 
             lines = []
-            ps = tr.locator('div#divDesc p')
+            ps = tr.locator("div#divDesc p")
             ps_count = await ps.count()
             for j in range(ps_count):
                 texto = (await ps.nth(j).inner_text()).strip()
@@ -176,4 +178,3 @@ class SiscanBrowserContext:
         await popup.close()
 
         return self._information_messages
-

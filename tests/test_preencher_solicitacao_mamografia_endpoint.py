@@ -9,9 +9,9 @@ def client():
         yield client
 
 
-def test_laudo_endpoint(client):
-    payload = {"campoA": "valorA", "campoB": "valorB"}
-    res = client.post("/preencher-laudo-mamografia", json=payload)
+def test_solicitacao_endpoint(client):
+    payload = {"campo1": "valor1", "campo2": "valor2"}
+    res = client.post("/preencher-solicitacao-mamografia", json=payload)
     assert res.status_code == 200
     data = res.json()
     assert data["success"] is True

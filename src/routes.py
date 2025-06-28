@@ -9,6 +9,7 @@ from src.utils import messages as msg
 
 router = APIRouter()
 
+
 @router.post(
     "/cadastrar-usuario",
     status_code=201,

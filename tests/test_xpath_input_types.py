@@ -19,21 +19,19 @@ async def siscan_form():
         user=SISCAN_USER,
         password=SISCAN_PASSWORD,
     )
-    req._context = SiscanBrowserContext(
-        headless=True
-    )
+    req._context = SiscanBrowserContext(headless=True)
 
     await req.authenticate()
     await req._novo_exame(event_button=True)
     yield req
 
-    req.context.close()
+    await req.context.close()
 
 
 def _load_data(path):
     return Validator.load_json(path)
 
-    
+
 @pytest.mark.asyncio(loop_scope="session")
 async def test_fill_text_input(siscan_form, fake_json_file):
     data = _load_data(fake_json_file)

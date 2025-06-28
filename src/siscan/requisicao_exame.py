@@ -24,14 +24,16 @@ class RequisicaoExame(SiscanWebPage):
         # "tipo_exame_colo",
         "tipo_exame_mama",
         "unidade_requisitante",
-        "prestador"
+        "prestador",
     ]
 
-    def __init__(self, base_url: str, user: str, password: str,
-                 schema_path: Union[str, Path]):
+    def __init__(
+        self, base_url: str, user: str, password: str, schema_path: Union[str, Path]
+    ):
         super().__init__(base_url, user, password, schema_path)
         map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
-            schema_path, fields=RequisicaoExame.MAP_SCHEMA_FIELDS)
+            schema_path, fields=RequisicaoExame.MAP_SCHEMA_FIELDS
+        )
         RequisicaoExame.MAP_DATA_LABEL = map_data_label
         self.FIELDS_MAP.update(fields_map)
 
@@ -44,8 +46,9 @@ class RequisicaoExame(SiscanWebPage):
         Método abstrato para selecionar o tipo de exame.
         Deve ser implementado nas subclasses.
         """
-        raise NotImplementedError("O método select_type_exam deve ser "
-                                  "implementado na subclasse.")
+        raise NotImplementedError(
+            "O método select_type_exam deve ser implementado na subclasse."
+        )
 
     def get_map_label(self) -> dict[str, tuple[str, str, str]]:
         """
@@ -162,7 +165,7 @@ class RequisicaoExame(SiscanWebPage):
                 self.context,
                 field_name=nome_campo,
                 data=data,
-                options_values=self.FIELDS_MAP[nome_campo].keys()
+                options_values=self.FIELDS_MAP[nome_campo].keys(),
             )
 
     async def selecionar_prestador(self, data: dict | None = None):
@@ -208,13 +211,13 @@ class RequisicaoExame(SiscanWebPage):
         """
         nome_campo = "prestador"
         await self.load_select_options(nome_campo)
-        text, value = self.select_value(nome_campo, data)
+        text, value = await self.select_value(nome_campo, data)
         if value == "0":
             raise SiscanInvalidFieldValueError(
                 self.context,
                 field_name=nome_campo,
                 data=data,
-                options_values=self.FIELDS_MAP[nome_campo].keys()
+                options_values=self.FIELDS_MAP[nome_campo].keys(),
             )
 
     async def preencher(self, data: dict):
@@ -229,16 +232,15 @@ class RequisicaoExame(SiscanWebPage):
         """
         self.validation(data)
 
-        xpath = self._novo_exame(event_button=True)
+        xpath = await self._novo_exame(event_button=True)
 
         # 1o passo: Preenche o campo Cartão SUS e chama o
         # evento onblur do campo
-        await self.preencher_cartao_sus(
-            numero=self.get_field_value("cartao_sus", data))
+        await self.preencher_cartao_sus(numero=self.get_field_value("cartao_sus", data))
 
         # 2o passo: Define o tipo de exame para então poder habilitar
         # os campos de Prestador e Unidade Requisitante
-        self.selecionar_tipo_exame(data)
+        await self.selecionar_tipo_exame(data)
 
         # 3o passo: Obtem os valores do campo select Unidade Requisitante,
         # atualiza o mapeamento de campos e preenche o campo
@@ -257,8 +259,8 @@ class RequisicaoExame(SiscanWebPage):
         )
 
         # Remove os campos que já foram preenchidos
-        fields_map.pop('unidade_requisitante')
-        fields_map.pop('prestador')
+        fields_map.pop("unidade_requisitante")
+        fields_map.pop("prestador")
 
         await xpath.fill_form_fields(data_final, fields_map)
         await self.take_screenshot("screenshot_03_requisicao_exame.png")

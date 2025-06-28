@@ -22,7 +22,9 @@ class SchemaValidationError(ValidationError):
         required_errors: Optional[List[ValidationError]] = None,
         pattern_errors: Optional[List[ValidationError]] = None,
         enum_errors: Optional[List[ValidationError]] = None,
-        conditional_failure: Optional[List[Tuple[str, Optional[str], Optional[Union[str, list]]]]] = None,
+        conditional_failure: Optional[
+            List[Tuple[str, Optional[str], Optional[Union[str, list]]]]
+        ] = None,
         conditional_errors: Optional[List[ValidationError]] = None,
         outros_erros: Optional[List[ValidationError]] = None,
         message: Optional[str] = None,
@@ -54,7 +56,11 @@ class SchemaValidationError(ValidationError):
                         msg.E_ENUM(err.path[-1], err.instance, err.validator_value)
                     )
             if self.conditional_failure:
-                for field_required, field_trigger, trigger_value in self.conditional_failure:
+                for (
+                    field_required,
+                    field_trigger,
+                    trigger_value,
+                ) in self.conditional_failure:
                     msgs.append(
                         msg.E_CONDITIONAL(field_required, field_trigger, trigger_value)
                     )
@@ -62,9 +68,7 @@ class SchemaValidationError(ValidationError):
                 for err in self.outros_erros:
                     if err.validator == "maxItems":
                         value = err.schema["items"]["const"]
-                        msgs.append(
-                            msg.E_MAX_ITEMS(err.path[-1], value, err.instance)
-                        )
+                        msgs.append(msg.E_MAX_ITEMS(err.path[-1], value, err.instance))
                     else:
                         msgs.append(err.message)
             message = "; ".join(msgs)
@@ -200,4 +204,3 @@ class Validator:
             )
 
         return model.model_validate(data)
-

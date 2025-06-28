@@ -32,20 +32,25 @@ if not priv.exists() or not pub.exists():
 
 from src.main import app
 
+
 @pytest.fixture
 def test_db(tmp_path_factory):
     db_path = tmp_path_factory.mktemp("data") / "test.db"
     os.environ["DATABASE_URL"] = str(db_path)
     import src.env as env
+
     env.init_engine(str(db_path))
     from src import models  # noqa: F401
+
     env.Base.metadata.create_all(bind=env.engine)
     return db_path
+
 
 @pytest.fixture
 def client(test_db):
     with TestClient(app) as client:
         yield client
+
 
 @pytest.fixture(scope="session")
 def fake_json_file(tmp_path_factory):
@@ -74,7 +79,9 @@ def fake_json_file(tmp_path_factory):
         "cartao_sus": cns.generate(),
         "nome": fake.name().upper(),
         "apelido": fake.first_name().upper(),
-        "data_de_nascimento": fake.date_of_birth(minimum_age=30, maximum_age=80).strftime("%d/%m/%Y"),
+        "data_de_nascimento": fake.date_of_birth(
+            minimum_age=30, maximum_age=80
+        ).strftime("%d/%m/%Y"),
         "nacionalidade": "BRASILEIRO",
         "sexo": fake.random_element(elements=("F", "M")),
         "nome_da_mae": fake.name_female().upper(),
@@ -102,9 +109,13 @@ def fake_json_file(tmp_path_factory):
         "ano_da_radioterapia_esquerda": str(base_year),
         "fez_cirurgia_de_mama": "01",
         **{f"ano_{c}_direita": str(base_year + i) for i, c in enumerate(cirurgias)},
-        **{f"ano_{c}_esquerda": str(base_year + i + 1) for i, c in enumerate(cirurgias)},
+        **{
+            f"ano_{c}_esquerda": str(base_year + i + 1) for i, c in enumerate(cirurgias)
+        },
         "mamografia_de_rastreamento": "01",
-        "data_da_solicitacao": fake.date_between(start_date="-30d", end_date="today").strftime("%d/%m/%Y"),
+        "data_da_solicitacao": fake.date_between(
+            start_date="-30d", end_date="today"
+        ).strftime("%d/%m/%Y"),
     }
 
     output_path = Path("./fake_data.json")

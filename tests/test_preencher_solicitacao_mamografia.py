@@ -1,16 +1,36 @@
 import pytest
-from fastapi.testclient import TestClient
-from src.main import app
+import logging
+from pathlib import Path
 
-@pytest.fixture
-def client():
-    with TestClient(app) as client:
-        yield client
+from src.siscan.requisicao_exame_mamografia import RequisicaoExameMamografia
+from src.env import SISCAN_URL, SISCAN_USER, SISCAN_PASSWORD
+from src.utils.validator import Validator
+from src.siscan.context import SiscanBrowserContext
 
-def test_solicitacao_endpoint(client):
-    payload = {"campo1": "valor1", "campo2": "valor2"}
-    res = client.post("/preencher-solicitacao-mamografia", json=payload)
-    assert res.status_code == 200
-    data = res.json()
-    assert data["success"] is True
-    assert isinstance(data["screenshots"], list)
+logger = logging.getLogger(__name__)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_preencher_mamografia():
+    dados_path = Path("real_data.json")
+    # Verifica se o arquivo existe
+    if not dados_path.exists():
+        raise FileNotFoundError(f"Arquivo {dados_path} não encontrado.")
+
+    json_data = Validator.load_json(dados_path)
+
+    req = RequisicaoExameMamografia(
+        base_url=SISCAN_URL, user=SISCAN_USER, password=SISCAN_PASSWORD
+    )
+
+    req._context = SiscanBrowserContext(headless=False, timeout=15000)
+
+    await req.preencher(json_data)
+
+    informations = req.context.information_messages
+
+    logger.info("Informações coletadas:")
+    for key, messages in informations.items():
+        logger.info(f"{key}: {', '.join(messages)}")
+
+    await req.context.close()

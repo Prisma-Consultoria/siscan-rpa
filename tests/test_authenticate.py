@@ -6,6 +6,7 @@ import pytest
 
 logger = logging.getLogger(__name__)
 
+
 @pytest.mark.asyncio
 async def test_authenticate():
     r = RequisicaoExameMamografia(

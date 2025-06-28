@@ -8,8 +8,7 @@ from src.utils.validator import Validator
 class SchemaMapExtractor:
     @staticmethod
     def schema_to_maps(
-        schema_path: Union[str, Path],
-        fields: Optional[List[str]] = None
+        schema_path: Union[str, Path], fields: Optional[List[str]] = None
     ) -> Tuple[Dict[str, tuple], Dict[str, dict]]:
         """
         Dado um JSON Schema, retorna duas tuplas:
@@ -30,11 +29,11 @@ class SchemaMapExtractor:
             properties = {k: v for k, v in properties.items() if k in fields}
 
         for field, field_schema in properties.items():
-            label = field_schema.get(
-                "title", field.replace("_", " ").capitalize())
+            label = field_schema.get("title", field.replace("_", " ").capitalize())
             input_type = SchemaMapExtractor._infer_input_type(field_schema)
             requirement = SchemaMapExtractor._infer_requirement_level(
-                field, required_fields)
+                field, required_fields
+            )
             map_data_label[field] = (label, input_type, requirement)
             fm = SchemaMapExtractor._extract_fields_map(field_schema)
             if fm:
@@ -66,9 +65,11 @@ class SchemaMapExtractor:
 
     @staticmethod
     def _extract_fields_map(field_schema: dict) -> dict:
-        if (field_schema.get("type") == "array"
-                and "items" in field_schema
-                and "enum" in field_schema["items"]):
+        if (
+            field_schema.get("type") == "array"
+            and "items" in field_schema
+            and "enum" in field_schema["items"]
+        ):
             return {v: v for v in field_schema["items"]["enum"] if v is not None}
         elif "enum" in field_schema:
             return {v: v for v in field_schema["enum"] if v is not None}

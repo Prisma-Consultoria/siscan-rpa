@@ -1,6 +1,7 @@
 from playwright.async_api import async_playwright
 from ..env import PRODUCTION, TAKE_SCREENSHOT
 
+
 async def run_rpa(form_type, data):
     """Executa o fluxo do RPA utilizando Playwright assíncrono."""
     screenshots = []
@@ -24,4 +25,3 @@ async def run_rpa(form_type, data):
         await browser.close()
 
     return {"success": True, "screenshots": screenshots}
-
