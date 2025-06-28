@@ -72,6 +72,7 @@ async def test_authenticate_env_user():
     assert await req.context.page.locator(
         'h1:text("SEJA BEM VINDO AO SISCAN")'
     ).is_visible()
+    
     req.context.close()
 
 

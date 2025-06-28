@@ -766,12 +766,12 @@ class XPathConstructor:
         elif input_type == InputType.SELECT:
             # Busca primeiro por 'for'
             label_elem = self.page.locator(label_xpath)
-            if label_elem.count() == 0:
+            if await label_elem.count() == 0:
                 logger.debug(
                     f"Label '{label_name}' não encontrado com "
                     f"XPath {label_xpath}")
                 raise XpathNotFoundError(self._context, xpath=label_xpath)
-            select_id = label_elem.first.get_attribute("for")
+            select_id = await label_elem.first.get_attribute("for")
             if select_id:
                 # Caminho padrão: label->for->select#id
                 self._xpath = f"//select[@id='{select_id}']"
@@ -780,7 +780,7 @@ class XPathConstructor:
                 self._xpath = f"{label_xpath}/following-sibling::select[1]"
                 # Opcional: checar se existe, caso contrário, tente por
                 # ancestral comum
-                if self.page.locator(self._xpath).count() == 0:
+                if await self.page.locator(self._xpath).count() == 0:
                     # Busca por select descendente do mesmo div ancestral
                     self._xpath = (
                         f"{label_xpath}/ancestor::div[1]//select[1]"
