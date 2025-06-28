@@ -1,10 +1,12 @@
 from fastapi import APIRouter, HTTPException
 from sqlalchemy.exc import IntegrityError
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import padding
-from .env import get_db, public_key
+from .env import get_db
 from .models import User
-from .utils.helpers import run_rpa
+from .utils.helpers import (
+    run_rpa,
+    encrypt_password,
+)
+from .utils.decorators import jwt_required
 from src.utils import messages as msg
 from src.utils.schema import CadastrarInput, PreencherSolicitacaoInput
 
@@ -20,19 +22,7 @@ router = APIRouter()
 def cadastrar_usuario(data: CadastrarInput):
     """Cadastrar novo usuário e armazenar a senha criptografada."""
     username = data.username
-    password = data.password
-
-    if not username or not password:
-        raise HTTPException(status_code=400, detail=msg.ERR_USERNAME_PASSWORD_REQUIRED)
-
-    encrypted = public_key.encrypt(
-        password.encode(),
-        padding.OAEP(
-            mgf=padding.MGF1(algorithm=hashes.SHA256()),
-            algorithm=hashes.SHA256(),
-            label=None,
-        ),
-    )
+    encrypted = encrypt_password(data.password)
     db = get_db()
     try:
         db.add(User(username=username, password=encrypted))
@@ -51,6 +41,7 @@ def cadastrar_usuario(data: CadastrarInput):
     summary="Preencher Solicitação de Mamografia",
     description="Executa o RPA para preencher a solicitação de mamografia no SIScan",
 )
+@jwt_required
 async def preencher_solicitacao(data: PreencherSolicitacaoInput):
     """Preencher automaticamente a solicitação de mamografia no SIScan."""
     result = await run_rpa("solicitacao", data.__dict__)
