@@ -23,7 +23,7 @@ def client(tmp_path_factory):
 
 def test_create_user_env(client):
     res = client.post(
-        "/cadastrar-usuario",
+        "/user",
         json={"username": SISCAN_USER, "password": SISCAN_PASSWORD},
     )
     assert res.status_code == 201

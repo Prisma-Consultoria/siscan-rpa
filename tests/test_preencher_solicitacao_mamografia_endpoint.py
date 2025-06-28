@@ -15,7 +15,9 @@ def _load_data(path):
 
 def test_solicitacao_endpoint_requires_auth(client, fake_json_file):
     payload = _load_data(Path(fake_json_file))
-    res = client.post("/preencher-solicitacao-mamografia", json=payload)
+    res = client.post(
+        "/preencher-formulario-siscan/solicitacao-mamografia", json=payload
+    )
     assert res.status_code == 401
 
 
@@ -24,7 +26,7 @@ def test_solicitacao_endpoint(client, fake_json_file):
     token = create_access_token({"sub": "tester"})
     headers = {"Authorization": f"Bearer {token}"}
     res = client.post(
-        "/preencher-solicitacao-mamografia",
+        "/preencher-formulario-siscan/solicitacao-mamografia",
         json=payload,
         headers=headers,
     )
