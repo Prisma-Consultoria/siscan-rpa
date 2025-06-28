@@ -5,6 +5,7 @@ from .routes.user import router as user_router
 from .routes.preencher_formulario_siscan import (
     router as formulario_router,
 )
+from .routes.security import router as security_router
 
 logging.basicConfig(
     level=logging.DEBUG,  # Troque para logging.INFO caso deseje menos verbosidade
@@ -22,6 +23,7 @@ Base.metadata.create_all(bind=engine)
 
 app.include_router(user_router)
 app.include_router(formulario_router)
+app.include_router(security_router)
 
 if __name__ == "__main__":
     import uvicorn

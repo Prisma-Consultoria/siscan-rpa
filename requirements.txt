@@ -17,3 +17,4 @@ PyJWT==2.10.1
 typer==0.16.0
 
 ruff==0.12.1
+python-multipart
