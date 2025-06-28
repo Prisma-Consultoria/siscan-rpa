@@ -10,7 +10,7 @@ PRODUCTION = os.getenv("PRODUCTION", "false").lower() == "true"
 
 TAKE_SCREENSHOT = os.getenv("TAKE_SCREENSHOT", "false").lower() == "true"
 
-DATABASE = os.getenv("DATABASE_URL", "users.db")
+DATABASE = os.getenv("DATABASE_URL", "database.db")
 
 SISCAN_URL = os.getenv("SISCAN_URL", "https://siscan.saude.gov.br/")
 

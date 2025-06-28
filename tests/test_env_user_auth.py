@@ -10,7 +10,7 @@ from src.siscan.context import SiscanBrowserContext
 
 @pytest.fixture(scope="module")
 def client(tmp_path_factory):
-    db_file = tmp_path_factory.mktemp("data") / "env_user.db"
+    db_file = tmp_path_factory.mktemp("data") / "test.db"
     import src.env as env
 
     env.init_engine(str(db_file))
@@ -72,8 +72,7 @@ async def test_authenticate_env_user():
 
     print("Autenticação bem-sucedida!")
     assert (
-        (await req.context.page)
-        .locator('h1:text("SEJA BEM VINDO AO SISCAN")')
+        (await req.context.page).locator('h1:text("SEJA BEM VINDO AO SISCAN")')
     ).is_visible()
 
     await req.context.close()

@@ -63,7 +63,9 @@ class CadastrarInput(BaseModel):
     username: str = Field(..., description="Nome de usuário para cadastro")
     password: str = Field(..., description="Senha do usuário, deve ser criptografada")
 
-    model_config = {"json_schema_extra": {"example": {"username": "alice", "password": "secret"}}}
+    model_config = {
+        "json_schema_extra": {"example": {"username": "alice", "password": "secret"}}
+    }
 
 
 class PreencherSolicitacaoInput(BaseModel):

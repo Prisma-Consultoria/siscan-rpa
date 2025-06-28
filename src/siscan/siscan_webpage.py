@@ -149,9 +149,7 @@ class SiscanWebPage(WebPage):
         interval : float, opcional (default=)
             Intervalo (em segundos) entre tentativas.
         """
-        interval = (
-            interval if interval is not None else XPE.ELAPSED_INTERVAL
-        )
+        interval = interval if interval is not None else XPE.ELAPSED_INTERVAL
 
         elapsed = 0
         last_exception = None

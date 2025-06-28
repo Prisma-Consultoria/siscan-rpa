@@ -40,7 +40,6 @@ class XPathConstructor:
         browser = await context.browser
         return cls(page, browser, context, xpath)
 
-
     def __str__(self):
         return (
             f"await XPE.create(xpath='{self._xpath}', input_type='{self._input_type}')"

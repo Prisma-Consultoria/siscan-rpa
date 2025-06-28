@@ -4,9 +4,12 @@ from typing import Any, Dict, Optional
 import jwt
 from playwright.async_api import async_playwright
 
-from ..env import PRODUCTION, TAKE_SCREENSHOT, private_key, public_key
+from src.env import PRODUCTION, TAKE_SCREENSHOT, private_key, public_key
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
+from fastapi.security import OAuth2PasswordBearer
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 def encrypt_password(password: str) -> bytes:
@@ -23,17 +26,14 @@ def encrypt_password(password: str) -> bytes:
 
 def decrypt_password(encrypted_password: bytes) -> str:
     """Decrypt a password previously encrypted with :func:`encrypt_password`."""
-    return (
-        private_key.decrypt(
-            encrypted_password,
-            padding.OAEP(
-                mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                algorithm=hashes.SHA256(),
-                label=None,
-            ),
-        )
-        .decode()
-    )
+    return private_key.decrypt(
+        encrypted_password,
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None,
+        ),
+    ).decode()
 
 
 def verify_password(password: str, encrypted_password: bytes) -> bool:

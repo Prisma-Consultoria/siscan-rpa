@@ -5,7 +5,6 @@ from .routes.user import router as user_router
 from .routes.preencher_formulario_siscan import (
     router as formulario_router,
 )
-from . import models
 
 logging.basicConfig(
     level=logging.DEBUG,  # Troque para logging.INFO caso deseje menos verbosidade

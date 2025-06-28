@@ -1,17 +1,19 @@
 from fastapi import APIRouter, HTTPException, Depends, Header
 from sqlalchemy.exc import IntegrityError
 
-from ..env import get_db
-from ..models import User
-from ..utils.helpers import encrypt_password, decode_access_token
-from ..utils.dependencies import jwt_required
-from ..utils import messages as msg
-from ..utils.schema import CadastrarInput
+from src.env import get_db
+from src.models import User
+from src.utils.helpers import encrypt_password, decode_access_token, oauth2_scheme
+from src.utils.dependencies import jwt_required
+from src.utils import messages as msg
+from src.utils.schema import CadastrarInput
 
 router = APIRouter(prefix="/user", tags=["user"])
 
 
-@router.post("", status_code=201, summary="Criar Usuário", description="Registra um novo usuário")
+@router.post(
+    "", status_code=201, summary="Criar Usuário", description="Registra um novo usuário"
+)
 def create_user(data: CadastrarInput):
     """Cadastrar novo usuário e armazenar a senha criptografada."""
     encrypted = encrypt_password(data.password)
@@ -27,7 +29,12 @@ def create_user(data: CadastrarInput):
     return {"message": msg.USER_CREATED}
 
 
-@router.get("/me", summary="Usuário Autenticado", description="Retorna informações do usuário autenticado", dependencies=[Depends(jwt_required)])
+@router.get(
+    "/me",
+    summary="Usuário Autenticado",
+    description="Retorna informações do usuário autenticado",
+    dependencies=[Depends(jwt_required), Depends(oauth2_scheme)],
+)
 def read_me(authorization: str = Header(...)):
     token = authorization.split(" ", 1)[1]
     payload = decode_access_token(token)

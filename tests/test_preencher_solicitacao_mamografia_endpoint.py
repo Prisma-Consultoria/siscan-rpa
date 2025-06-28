@@ -5,13 +5,16 @@ from pathlib import Path
 from src.utils.validator import Validator
 from src.utils.helpers import create_access_token
 
+
 @pytest.fixture
 def client():
     with TestClient(app) as client:
         yield client
 
+
 def _load_data(path):
     return Validator.load_json(path)
+
 
 def test_solicitacao_endpoint_requires_auth(client, fake_json_file):
     payload = _load_data(Path(fake_json_file))
