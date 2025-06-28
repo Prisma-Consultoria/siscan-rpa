@@ -23,21 +23,27 @@ class XPathConstructor:
     ELAPSED_INTERVAL = 0.2  # segundos
 
     """
-    Construtor de XPaths reutilizáveis para localizar elementos na página.
-    Compatível com Playwright (não usa Selenium).
+    Construtor de XPaths reutilizáveis para localizar elementos na página. Compatível com Playwright.
     """
 
-    def __init__(self, context: SiscanBrowserContext, xpath=""):
-        self._page = context.page
-        self._browser = context.browser
+    def __init__(self, page, browser, context, xpath=""):
+        self._page = page
+        self._browser = browser
         self._context = context
         self._xpath = xpath
 
         self._input_type: Optional[str] = None
 
+    @classmethod
+    async def create(cls, context, xpath=""):
+        page = await context.page
+        browser = await context.browser
+        return cls(page, browser, context, xpath)
+
+
     def __str__(self):
         return (
-            f"XPathConstructor(xpath='{self._xpath}', input_type='{self._input_type}')"
+            f"await XPE.create(xpath='{self._xpath}', input_type='{self._input_type}')"
         )
 
     def _get_input_type(
@@ -118,7 +124,7 @@ class XPathConstructor:
         Exemplos
         --------
         ```python
-        xpath = XPathConstructor(page)
+        xpath = await XPE.create(page)
         locator = xpath.find_form_input("Nome:").get()
         locator.handle_fill("Maria")
         ```
@@ -283,7 +289,7 @@ class XPathConstructor:
         Exemplos
         --------
         ```python
-        xpath = XPathConstructor(page)
+        xpath = await XPE.create(page)
         xpath.find_form_input("Nome:").wait_until_filled(timeout=15)
         nome = xpath.get_value()
         ```
@@ -851,7 +857,7 @@ class XPathConstructor:
         Exemplo
         -------
         ```python
-        xpath = XPathConstructor(page)
+        xpath = await XPE.create(page)
         xpath.find_form_button("Pesquisar").handle_click()
         ```
 
@@ -894,7 +900,7 @@ class XPathConstructor:
         Exemplo
         -------
         ```python
-        xpath = XPathConstructor(page)
+        xpath = await XPE.create(page)
         xpath.find_form_anchor_button("Pesquisar").handle_click()
         ```
         """
@@ -986,7 +992,7 @@ class XPathConstructor:
         """
         page = self.page
 
-        logger.debug(f"Verfica menu: '{menu_name}' existe.")
+        logger.debug(f"Verifica se menu '{menu_name}' existe.")
         # Localiza o menu principal pelo texto
         menu_label = page.locator(
             ".rich-ddmenu-label .rich-label-text-decor", has_text=menu_name

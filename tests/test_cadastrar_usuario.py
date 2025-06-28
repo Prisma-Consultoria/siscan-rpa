@@ -28,7 +28,7 @@ def test_register_success(client):
 
 def test_register_missing_fields(client):
     res = client.post("/cadastrar-usuario", json={"username": "bob"})
-    assert res.status_code == 400
+    assert res.status_code == 422
 
 
 def test_register_duplicate(client):

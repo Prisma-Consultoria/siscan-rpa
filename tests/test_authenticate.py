@@ -9,23 +9,25 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.asyncio
 async def test_authenticate():
-    r = RequisicaoExameMamografia(
+    req = RequisicaoExameMamografia(
         base_url=SISCAN_URL,
         user=SISCAN_USER,
         password=SISCAN_PASSWORD,
     )
     # Use contexto headless para nao abrir janela durante testes
-    r._context = SiscanBrowserContext(
+    req._context = SiscanBrowserContext(
         base_url=SISCAN_URL,
         headless=False,
         timeout=15000,
     )
 
-    await r.authenticate()
+    await req.authenticate()
 
-    assert await r.context.page.locator(
-        'h1:text("SEJA BEM VINDO AO SISCAN")'
-    ).is_visible()
+    assert (
+        (await req.context.page)
+        .locator('h1:text("SEJA BEM VINDO AO SISCAN")')
+        .is_visible()
+    )
 
     # Fechar navegador após o teste
-    await r.context.browser.close()
+    await (await req.context.browser).close()

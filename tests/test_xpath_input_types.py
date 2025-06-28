@@ -1,7 +1,7 @@
 import pytest
 import pytest_asyncio
 from src.siscan.requisicao_exame_mamografia import RequisicaoExameMamografia
-from src.utils.xpath_constructor import XPathConstructor, InputType
+from src.utils.xpath_constructor import XPathConstructor as XPE, InputType
 from src.utils.validator import Validator
 from src.siscan.context import SiscanBrowserContext
 from src.env import SISCAN_URL, SISCAN_USER, SISCAN_PASSWORD
@@ -35,7 +35,7 @@ def _load_data(path):
 @pytest.mark.asyncio(loop_scope="session")
 async def test_fill_text_input(siscan_form, fake_json_file):
     data = _load_data(fake_json_file)
-    xpath = XPathConstructor(siscan_form.context)
+    xpath = await XPE.create(siscan_form.context)
     label = siscan_form.get_field_label("ponto_de_referencia")
     await xpath.find_form_input(label, InputType.TEXT)
     await xpath.handle_fill(data["ponto_de_referencia"], reset=False)
@@ -46,7 +46,7 @@ async def test_fill_text_input(siscan_form, fake_json_file):
 @pytest.mark.asyncio(loop_scope="session")
 async def test_fill_select_input(siscan_form, fake_json_file):
     data = _load_data(fake_json_file)
-    xpath = XPathConstructor(siscan_form.context)
+    xpath = await XPE.create(siscan_form.context)
     label = siscan_form.get_field_label("escolaridade")
     await xpath.find_form_input(label, InputType.SELECT)
     await xpath.handle_fill(data["escolaridade"], reset=False)

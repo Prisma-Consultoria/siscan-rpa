@@ -71,11 +71,12 @@ async def test_authenticate_env_user():
     await req.authenticate()
 
     print("Autenticação bem-sucedida!")
-    assert await req.context.page.locator(
-        'h1:text("SEJA BEM VINDO AO SISCAN")'
+    assert (
+        (await req.context.page)
+        .locator('h1:text("SEJA BEM VINDO AO SISCAN")')
     ).is_visible()
 
-    req.context.close()
+    await req.context.close()
 
 
 def test_delete_user_env():

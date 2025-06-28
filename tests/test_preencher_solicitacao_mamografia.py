@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.asyncio(loop_scope="session")
 async def test_preencher_mamografia():
     dados_path = Path("real_data.json")
-    
+
     # Verifica se o arquivo existe
     if not dados_path.exists():
         raise FileNotFoundError(f"Arquivo {dados_path} não encontrado.")
@@ -23,8 +23,6 @@ async def test_preencher_mamografia():
     req = RequisicaoExameMamografia(
         base_url=SISCAN_URL, user=SISCAN_USER, password=SISCAN_PASSWORD
     )
-
-    req._context = SiscanBrowserContext(headless=False, timeout=15000)
 
     await req.preencher(json_data)
 

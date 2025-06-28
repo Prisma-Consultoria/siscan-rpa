@@ -18,7 +18,7 @@ from src.utils.SchemaMapExtractor import SchemaMapExtractor
 from src.utils.validator import Validator, SchemaValidationError
 from src.utils.schema import create_model_from_json_schema
 from src.utils.webpage import WebPage
-from src.utils.xpath_constructor import XPathConstructor
+from src.utils.xpath_constructor import XPathConstructor as XPE
 from src.utils import messages as msg
 
 logger = logging.getLogger(__name__)
@@ -105,7 +105,7 @@ class SiscanWebPage(WebPage):
         await self.context.collect_information_popup()
         logger.debug("Popup de informacao tratada")
 
-        xpath = XPathConstructor(self.context)
+        xpath = await XPE.create(self.context)
 
         logger.debug("Preenchendo formulario de login")
         user_input = await xpath.find_form_input("E-mail:")
@@ -119,7 +119,7 @@ class SiscanWebPage(WebPage):
 
         # Aguarda confirmação de login bem-sucedido
         try:
-            await self.context.page.wait_for_selector(
+            await (await self.context.page).wait_for_selector(
                 'h1:text("SEJA BEM VINDO AO SISCAN")', timeout=10000
             )
         except Exception:
@@ -144,20 +144,20 @@ class SiscanWebPage(WebPage):
             Nome do menu a ser acessado.
         menu_action_text : str
             Texto da ação do menu a ser executada.
-        timeout : int, opcional (default=XPathConstructor.RETRY_INTERVAL)
+        timeout : int, opcional (default=XPE.RETRY_INTERVAL)
             Tempo máximo, em segundos, para tentar acessar o menu.
         interval : float, opcional (default=)
             Intervalo (em segundos) entre tentativas.
         """
         interval = (
-            interval if interval is not None else XPathConstructor.ELAPSED_INTERVAL
+            interval if interval is not None else XPE.ELAPSED_INTERVAL
         )
 
         elapsed = 0
         last_exception = None
         while elapsed < timeout:
             try:
-                xpath = XPathConstructor(self.context)
+                xpath = await XPE.create(self.context)
                 await xpath.click_menu_action(menu_name, menu_action_text)
                 logger.info(
                     f"Acesso ao menu '{menu_name} > {menu_action_text}' "
@@ -197,12 +197,14 @@ class SiscanWebPage(WebPage):
         PacienteDuplicadoException.
         """
         # Espera a tabela de resultados estar visível
-        await self.context.page.wait_for_selector(
+        await (await self.context.page).wait_for_selector(
             "table#frm\\:listaPaciente", state="visible", timeout=timeout * 1000
         )
 
         # Localiza o corpo da tabela
-        rows = self.context.page.locator("table#frm\\:listaPaciente > tbody > tr")
+        rows = (await self.context.page).locator(
+            "table#frm\\:listaPaciente > tbody > tr"
+        )
         row_count = await rows.count()
         if row_count > 1:
             raise PacienteDuplicadoException(self.context)
@@ -249,7 +251,7 @@ class SiscanWebPage(WebPage):
     async def preencher_cartao_sus(
         self,
         numero: str,
-        timeout: int = XPathConstructor.DEFAULT_TIMEOUT,
+        timeout: int = XPE.DEFAULT_TIMEOUT,
         interval: float | None = None,
     ):
         """
@@ -267,11 +269,11 @@ class SiscanWebPage(WebPage):
         interval : float, opcional (default=0.2)
             Intervalo, em segundos, entre tentativas.
         """
-        xpath = XPathConstructor(self.context)
+        xpath = await XPE.create(self.context)
         await xpath.wait_page_ready()
         elapsed = 0
 
-        interval = interval or (XPathConstructor.ELAPSED_INTERVAL)
+        interval = interval or (XPE.ELAPSED_INTERVAL)
 
         while elapsed < timeout:
             xpath.reset()
@@ -318,7 +320,7 @@ class SiscanWebPage(WebPage):
         logger.debug(
             f"Preenchendo campo '{field_name}' de '{card_name}' com o valor '{value}'"
         )
-        xpath_obj = XPathConstructor(
+        xpath_obj = await XPE.create(
             self.context,
             xpath=f"//fieldset[legend[normalize-space(text())='{card_name}']]"
             f"//input[@type='text']",

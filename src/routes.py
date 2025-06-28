@@ -10,6 +10,7 @@ from src.utils.schema import CadastrarInput, PreencherSolicitacaoInput
 
 router = APIRouter()
 
+
 @router.post(
     "/cadastrar-usuario",
     status_code=201,

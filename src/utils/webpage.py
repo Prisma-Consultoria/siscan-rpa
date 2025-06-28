@@ -5,7 +5,7 @@ from abc import abstractmethod, ABC
 from typing import Optional, Union
 
 from src.siscan.exception import FieldValueNotFoundError
-from src.utils.xpath_constructor import XPathConstructor, InputType
+from src.utils.xpath_constructor import XPathConstructor as XPE, InputType
 from src.siscan.context import SiscanBrowserContext
 from src.env import PRODUCTION
 from src.utils.schema import RequirementLevel
@@ -149,7 +149,7 @@ class WebPage(ABC):
     def update_field_map_from_select(
         self,
         field_name: str,
-        xpath: XPathConstructor,
+        xpath: XPE,
         label_as_key: bool = True,
         timeout: int = 10,
     ) -> None:
@@ -267,7 +267,7 @@ class WebPage(ABC):
         preenchimento dinâmico dos campos de formulário conforme as opções
         realmente disponíveis na página no momento da execução.
         """
-        xpath = XPathConstructor(self.context)
+        xpath = await XPE.create(self.context)
         field_label, field_type, _ = self.get_field_metadata(field_name)
         await xpath.find_form_input(field_label, field_type)
         self.update_field_map_from_select(field_name, xpath)
@@ -278,7 +278,7 @@ class WebPage(ABC):
         """
         Preenche um campo de formulário identificado por `field_name` usando os dados fornecidos e retorna o texto visível e o valor selecionado (ou lista de tuplas para seleção múltipla). Usa o mapeamento FIELDS_MAP se existir. Lança exceção se o valor não for encontrado.
         """
-        xpath = XPathConstructor(self.context)
+        xpath = await XPE.create(self.context)
         field_label, field_type, _ = self.get_field_metadata(field_name)
 
         type_exam_elem = await xpath.find_form_input(field_label, field_type)
@@ -295,7 +295,7 @@ class WebPage(ABC):
                 and _value not in self.FIELDS_MAP[field_name].values()
             ):
                 raise FieldValueNotFoundError(self.context, field_name, _value)
-            
+
         return value
 
     async def take_screenshot(
@@ -305,7 +305,7 @@ class WebPage(ABC):
         subdir: Optional[str] = None,
     ) -> Path:
         """Tira um screenshot da página atual e salva em arquivo."""
-        page = self.context.page  # page Playwright ativo no contexto
+        page = await self.context.page  # page Playwright ativo no contexto
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"screenshot_{timestamp}.png"

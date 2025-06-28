@@ -9,7 +9,7 @@ import logging
 from src.siscan.exception import SiscanInvalidFieldValueError
 from src.siscan.siscan_webpage import SiscanWebPage
 from src.utils.SchemaMapExtractor import SchemaMapExtractor
-from src.utils.xpath_constructor import XPathConstructor, InputType
+from src.utils.xpath_constructor import XPathConstructor as XPE, InputType
 from src.utils.webpage import RequirementLevel
 
 logger = logging.getLogger(__name__)
@@ -75,11 +75,11 @@ class RequisicaoExame(SiscanWebPage):
     async def acessar_menu_gerenciar_exame(self):
         await self.acessar_menu("EXAME", "GERENCIAR EXAME")
 
-    async def _novo_exame(self, event_button: bool = False) -> XPathConstructor:
+    async def _novo_exame(self, event_button: bool = False) -> XPE:
         # TOFIX Não deveria ter um comando genérico para botões em vez de algo específico?
         await self.acessar_menu_gerenciar_exame()
 
-        xpath = XPathConstructor(self.context)
+        xpath = await XPE.create(self.context)
         if event_button:
             # ``find_form_anchor_button`` é síncrono e apenas configura o XPath
             # interno. O clique propriamente dito é assíncrono, portanto
@@ -222,39 +222,28 @@ class RequisicaoExame(SiscanWebPage):
     async def preencher(self, data: dict):
         """
         Preenche o formulário de novo exame de acordo com os campos informados.
-
-        Parâmetros
-        ----------
-        campos : dict
-            Dicionário onde a chave é o nome amigável do campo
-            (ex: "Cartão SUS") e o valor é o dado a ser inserido.
         """
+
         self.validation(data)
 
-        # Verifica se está na página de novo exame, senão, deve autenticar
-        if not self.context.page:
-            await self.authenticate()
-
+        # verifica qual a página atual do browser
+        logger.debug("Verificando a página atual do browser")
+        logger.debug("Página atual: %s", (await self.context.page).url)
         xpath = await self._novo_exame(event_button=True)
 
-        # 1o passo: Preenche o campo Cartão SUS e chama o
-        # evento onblur do campo
+        # 1o passo: Preenche o campo Cartão SUS e chama o evento onblur do campo
         await self.preencher_cartao_sus(numero=self.get_field_value("cartao_sus", data))
 
-        # 2o passo: Define o tipo de exame para então poder habilitar
-        # os campos de Prestador e Unidade Requisitante
+        # 2o passo: Define o tipo de exame para então poder habilitar os campos de Prestador e Unidade Requisitante
         await self.selecionar_tipo_exame(data)
 
-        # 3o passo: Obtem os valores do campo select Unidade Requisitante,
-        # atualiza o mapeamento de campos e preenche o campo
+        # 3o passo: Obtem os valores do campo select Unidade Requisitante, atualiza o mapeamento de campos e preenche o campo
         await self.seleciona_unidade_requisitante(data)
 
-        # 4o passo: Obtem os valores do campo select Prestador,
-        # atualiza o mapeamento de campos e preenche o campo
+        # 4o passo: Obtem os valores do campo select Prestador, atualiza o mapeamento de campos e preenche o campo
         await self.selecionar_prestador(data)
 
-        # 5o passo: Preenche os campos adicionais do formulário
-        # Antes, monta o mapeamento de campos e os dados finais
+        # 5o passo: Preenche os campos adicionais do formulário Antes, monta o mapeamento de campos e os dados finais
         fields_map, data_final = self.mount_fields_map_and_data(
             data,
             RequisicaoExame.MAP_DATA_LABEL,

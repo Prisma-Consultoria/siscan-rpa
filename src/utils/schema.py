@@ -4,6 +4,7 @@ from typing import Any, Optional, List, Literal, Annotated
 from pydantic import BaseModel, Field, create_model
 from enum import Enum
 
+
 class InputType(Enum):
     """
     # Exemplo de uso
@@ -40,6 +41,7 @@ class InputType(Enum):
         else:
             raise ValueError(f"Tipo de input não suportado: {self.value}")
 
+
 class RequirementLevel(Enum):
     REQUIRED = "required"
     OPTIONAL = "optional"
@@ -54,21 +56,19 @@ class RequirementLevel(Enum):
 
 from pydantic import BaseModel, Field
 
+
 class CadastrarInput(BaseModel):
     """Modelo de entrada para cadastrar usuário."""
+
     username: str = Field(..., description="Nome de usuário para cadastro")
     password: str = Field(..., description="Senha do usuário, deve ser criptografada")
-    
-    class Config:
-        schema_extra = {
-            "example": {
-                "username": "alice",
-                "password": "secret"
-            }
-        }
+
+    model_config = {"json_schema_extra": {"example": {"username": "alice", "password": "secret"}}}
+
 
 class PreencherSolicitacaoInput(BaseModel):
     """Modelo de entrada para preencher solicitação de mamografia."""
+
     cartao_sus: str
     nome: str
     apelido: str
@@ -128,8 +128,8 @@ class PreencherSolicitacaoInput(BaseModel):
     mamografia_de_rastreamento: str
     data_da_solicitacao: str
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "cartao_sus": "768075541110002",
                 "nome": "FRANSCISCA CHICA MARIA BUNITA",
@@ -151,10 +151,7 @@ class PreencherSolicitacaoInput(BaseModel):
                 "unidade_requisitante": "0274267",
                 "prestador": "HOSPITAL ERASTO GAERTNER",
                 "num_prontuario": "123456789",
-                "tem_nodulo_ou_caroco_na_mama": [
-                    "01",
-                    "02"
-                ],
+                "tem_nodulo_ou_caroco_na_mama": ["01", "02"],
                 "apresenta_risco_elevado_para_cancer_mama": "01",
                 "fez_mamografia_alguma_vez": "01",
                 "ano_que_fez_a_ultima_mamografia": "2025",
@@ -191,9 +188,12 @@ class PreencherSolicitacaoInput(BaseModel):
                 "ano_inclusao_implantes_direita": "2024",
                 "ano_inclusao_implantes_esquerda": "2025",
                 "mamografia_de_rastreamento": "01",
-                "data_da_solicitacao": "18/06/2025"
+                "data_da_solicitacao": "18/06/2025",
             }
         }
+    }
+
+
 def _parse_field(fs: dict, required: bool):
     t = fs.get("type")
     optional = False

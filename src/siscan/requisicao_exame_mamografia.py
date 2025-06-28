@@ -7,7 +7,7 @@ import logging
 from src.siscan.exception import CartaoSusNotFoundError
 from src.siscan.requisicao_exame import RequisicaoExame
 from src.utils.SchemaMapExtractor import SchemaMapExtractor
-from src.utils.xpath_constructor import XPathConstructor
+from src.utils.xpath_constructor import XPathConstructor as XPE # XPathElement
 from src.utils import messages as msg
 
 logger = logging.getLogger(__name__)
@@ -199,7 +199,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
 
         await super().preencher(data)
 
-        xpath = XPathConstructor(self.context)
+        xpath = await XPE.create(self.context)
         await (await xpath.find_form_button("Avançar")).handle_click()
 
         await self.preecher_fez_mamografia_alguma_vez(data)
@@ -269,7 +269,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
                 )
             else:
                 raise ValueError("O parâmetro 'lado' deve ser 'direita' ou 'esquerda'.")
-            xpath = XPathConstructor(self.context, xpath=base_xpath)
+            xpath = await XPE.create(self.context, xpath=base_xpath)
             await xpath.handle_fill(
                 self.get_field_value(campo_nome, data), self.get_field_type(campo_nome)
             )
