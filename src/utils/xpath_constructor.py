@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Optional
 import time
 import logging
@@ -10,47 +9,10 @@ from src.siscan.exception import (
     SiscanException,
 )
 
+from src.env import DEFAULT_TIMEOUT
+from src.utils.schema import InputType
+
 logger = logging.getLogger(__name__)
-
-
-class InputType(Enum):
-    """
-    # Exemplo de uso
-    tipo = LogicalInputType.CHECKBOX
-    print(tipo.html_element)  # 'input'
-    """
-
-    TEXT = "text"
-    DATE = "date"
-    VALUE = "value"
-    NUMBER = "number"
-    CHECKBOX = "checkbox"
-    TEXTAREA = "textarea"
-    LIST = "list"
-    SELECT = "select"
-    RADIO = "radio"
-
-    @property
-    def html_element(self) -> str:
-        if self in {
-            InputType.TEXT,
-            InputType.DATE,
-            InputType.VALUE,
-            InputType.NUMBER,
-            InputType.CHECKBOX,
-        }:
-            return "input"
-        elif self == InputType.TEXTAREA:
-            return "textarea"
-        elif self in {InputType.LIST, InputType.SELECT}:
-            return "select"
-        elif self == InputType.RADIO:
-            return "radio"
-        else:
-            raise ValueError(f"Tipo de input não suportado: {self.value}")
-
-
-DEFAULT_TIMEOUT = 5
 
 
 class XPathConstructor:
@@ -766,8 +728,7 @@ class XPathConstructor:
         self, label_name: str, input_type: str | InputType | None = None
     ) -> "XPathConstructor":
         """
-        Localiza um campo de formulário pelo label e tipo, construindo o XPath adequado.
-        Suporta diferentes estruturas HTML e tipos de input (input, select, textarea, date, checkbox, radio).
+        Localiza um campo de formulário pelo label e tipo, construindo o XPath adequado. Suporta diferentes estruturas HTML e tipos de input (input, select, textarea, date, checkbox, radio).
         """
         input_type = self._get_input_type(input_type)
         label_xpath = f"//label[normalize-space(text())='{label_name}']"
@@ -805,8 +766,7 @@ class XPathConstructor:
             else:
                 # Caminho alternativo: select irmão
                 self._xpath = f"{label_xpath}/following-sibling::select[1]"
-                # Opcional: checar se existe, caso contrário, tente por
-                # ancestral comum
+                # Opcional: checar se existe, caso contrário, tente por ancestral comum
                 if await self.page.locator(self._xpath).count() == 0:
                     # Busca por select descendente do mesmo div ancestral
                     self._xpath = f"{label_xpath}/ancestor::div[1]//select[1]"
@@ -1161,7 +1121,7 @@ class XPathConstructor:
                 )
 
             label, type_input, _ = campo_info
-            await self.find_form_input(label, type_input).handle_fill(
+            await (await self.find_form_input(label, type_input)).handle_fill(
                 str(valor), type_input
             )
 

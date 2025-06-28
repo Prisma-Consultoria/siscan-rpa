@@ -7,6 +7,7 @@ from cryptography.hazmat.primitives import serialization
 load_dotenv(override=True)
 
 PRODUCTION = os.getenv("PRODUCTION", "false").lower() == "true"
+
 TAKE_SCREENSHOT = os.getenv("TAKE_SCREENSHOT", "false").lower() == "true"
 
 DATABASE = os.getenv("DATABASE_URL", "users.db")
@@ -15,6 +16,8 @@ SISCAN_URL = os.getenv("SISCAN_URL", "https://siscan.saude.gov.br/")
 
 SISCAN_USER = os.getenv("SISCAN_USER", "")
 SISCAN_PASSWORD = os.getenv("SISCAN_PASSWORD", "")
+
+DEFAULT_TIMEOUT = 5
 
 # Carrega chaves RSA
 with open("rsa_private_key.pem", "rb") as f:

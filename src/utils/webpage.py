@@ -2,26 +2,15 @@ from pathlib import Path
 from datetime import datetime
 import logging
 from abc import abstractmethod, ABC
-from enum import Enum
 from typing import Optional, Union
 
 from src.siscan.exception import FieldValueNotFoundError
 from src.utils.xpath_constructor import XPathConstructor, InputType
 from src.siscan.context import SiscanBrowserContext
+from src.env import PRODUCTION
+from src.utils.schema import RequirementLevel
 
 logger = logging.getLogger(__name__)
-
-
-class RequirementLevel(Enum):
-    REQUIRED = "required"
-    OPTIONAL = "optional"
-
-    # Ou, para uso de instância:
-    def is_required(self) -> bool:
-        """
-        Verifica se a instância representa o nível 'required'.
-        """
-        return self is RequirementLevel.REQUIRED
 
 
 class WebPage(ABC):
@@ -52,7 +41,7 @@ class WebPage(ABC):
     def _initialize_context(self):
         self._context = SiscanBrowserContext(
             base_url=self._base_url,
-            headless=False,  # Para depuração, use False
+            headless=not PRODUCTION,  # Para depuração, use False
             timeout=15000,
         )
         # A autenticação requer chamadas assíncronas, por isso é responsabilidade
@@ -292,8 +281,8 @@ class WebPage(ABC):
         xpath = XPathConstructor(self.context)
         field_label, field_type, _ = self.get_field_metadata(field_name)
 
-        type_exam_elem = xpath.find_form_input(field_label, field_type)
-        xpath_obj = type_exam_elem.handle_fill(
+        type_exam_elem = await xpath.find_form_input(field_label, field_type)
+        xpath_obj = await type_exam_elem.handle_fill(
             self.get_field_value(field_name, data), field_type, reset=False
         )
         value = xpath_obj.get_value(field_type)
@@ -306,6 +295,7 @@ class WebPage(ABC):
                 and _value not in self.FIELDS_MAP[field_name].values()
             ):
                 raise FieldValueNotFoundError(self.context, field_name, _value)
+            
         return value
 
     async def take_screenshot(

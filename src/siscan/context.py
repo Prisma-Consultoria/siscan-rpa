@@ -50,21 +50,21 @@ class SiscanBrowserContext:
         return self._information_messages
 
     @property
-    def browser(self) -> Browser:
+    async def browser(self) -> Browser:
         """
         Retorna o navegador Playwright atual. Se não estiver inicializado, chama startup.
         """
         if self._browser is None:
-            self._browser, self._page = self.startup()
+            self._browser, self._page = await self.startup()
         return self._browser
 
     @property
-    def page(self) -> Page:
+    async def page(self) -> Page:
         """
         Retorna a página Playwright atual. Se não estiver inicializada, chama startup.
         """
         if self._page is None:
-            self._browser, self._page = self.startup()
+            self._browser, self._page = await self.startup()
         return self._page
 
     async def close(self):

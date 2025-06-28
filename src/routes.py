@@ -6,9 +6,9 @@ from .env import get_db, public_key
 from .models import User
 from .utils.helpers import run_rpa
 from src.utils import messages as msg
+from src.utils.schema import CadastrarInput, PreencherSolicitacaoInput
 
 router = APIRouter()
-
 
 @router.post(
     "/cadastrar-usuario",
@@ -16,10 +16,10 @@ router = APIRouter()
     summary="Cadastrar Usuário",
     description="Registra um novo usuário no banco de dados",
 )
-def cadastrar_usuario(data: dict):
+def cadastrar_usuario(data: CadastrarInput):
     """Cadastrar novo usuário e armazenar a senha criptografada."""
-    username = data.get("username")
-    password = data.get("password")
+    username = data.username
+    password = data.password
 
     if not username or not password:
         raise HTTPException(status_code=400, detail=msg.ERR_USERNAME_PASSWORD_REQUIRED)
@@ -50,9 +50,9 @@ def cadastrar_usuario(data: dict):
     summary="Preencher Solicitação de Mamografia",
     description="Executa o RPA para preencher a solicitação de mamografia no SIScan",
 )
-async def preencher_solicitacao(data: dict):
+async def preencher_solicitacao(data: PreencherSolicitacaoInput):
     """Preencher automaticamente a solicitação de mamografia no SIScan."""
-    result = await run_rpa("solicitacao", data)
+    result = await run_rpa("solicitacao", data.__dict__)
     return result
 
 

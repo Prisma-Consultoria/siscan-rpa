@@ -21,7 +21,6 @@ class RequisicaoExame(SiscanWebPage):
         "apelido",
         "escolaridade",
         "ponto_de_referencia",
-        # "tipo_exame_colo",
         "tipo_exame_mama",
         "unidade_requisitante",
         "prestador",
@@ -73,12 +72,12 @@ class RequisicaoExame(SiscanWebPage):
         )
         return map_label
 
-    async def acesar_menu_gerenciar_exame(self):
+    async def acessar_menu_gerenciar_exame(self):
         await self.acessar_menu("EXAME", "GERENCIAR EXAME")
 
     async def _novo_exame(self, event_button: bool = False) -> XPathConstructor:
         # TOFIX Não deveria ter um comando genérico para botões em vez de algo específico?
-        await self.acesar_menu_gerenciar_exame()
+        await self.acessar_menu_gerenciar_exame()
 
         xpath = XPathConstructor(self.context)
         if event_button:
@@ -159,7 +158,7 @@ class RequisicaoExame(SiscanWebPage):
             if v != "0":
                 del self.FIELDS_MAP[nome_campo][k]
 
-        text, value = self.select_value(nome_campo, data)
+        text, value = await self.select_value(nome_campo, data)
         if value == "0":
             raise SiscanInvalidFieldValueError(
                 self.context,
@@ -231,6 +230,10 @@ class RequisicaoExame(SiscanWebPage):
             (ex: "Cartão SUS") e o valor é o dado a ser inserido.
         """
         self.validation(data)
+
+        # Verifica se está na página de novo exame, senão, deve autenticar
+        if not self.context.page:
+            await self.authenticate()
 
         xpath = await self._novo_exame(event_button=True)
 
