@@ -1,24 +1,27 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Security
+from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
 
 from ..env import get_db
 from ..models import ApiKey
 from ..utils.helpers import run_rpa, decode_access_token
 from ..utils.schema import PreencherSolicitacaoInput
 
+# Security schemes
+api_key_scheme = APIKeyHeader(name="Api-Key", auto_error=False)
+oauth2_optional = OAuth2PasswordBearer(tokenUrl="security/token", auto_error=False)
+
 router = APIRouter(prefix="/preencher-formulario-siscan", tags=["siscan"])
 
 
 def _get_user_uuid(
     user_uuid: str | None = None,
-    api_key: str | None = Header(None, alias="Api-Key"),
-    authorization: str | None = Header(None),
+    token: str | None = Security(oauth2_optional),
+    api_key: str | None = Security(api_key_scheme),
 ) -> str:
-    if authorization:
-        if not authorization.startswith("Bearer "):
-            raise HTTPException(status_code=401, detail="invalid token")
-        token = authorization.split(" ", 1)[1]
+    """Return the user UUID from a valid JWT or API key."""
+    if token:
         payload = decode_access_token(token)
         return payload.get("sub")
     if api_key:
