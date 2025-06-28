@@ -199,8 +199,9 @@ class RequisicaoExameMamografia(RequisicaoExame):
 
         await super().preencher(data)
 
-        xpath = await XPE.create(self.context)
-        await (await xpath.find_form_button("Avançar")).handle_click()
+        xpath_ctx = await XPE.create(self.context) # TOFIX Não faz setido criar um xpath apenas com o contexto
+
+        await (await xpath_ctx.find_form_button("Avançar")).handle_click()
 
         await self.preecher_fez_mamografia_alguma_vez(data)
         await self.preenche_fez_radioterapia_na_mama_ou_no_plastao(data)
@@ -215,7 +216,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
             RequisicaoExameMamografia.MAP_DATA_LABEL,
             suffix="",
         )
-        await xpath.fill_form_fields(data_final, fields_map)
+        await xpath_ctx.fill_form_fields(data_final, fields_map)
 
         await self.take_screenshot("screenshot_04_requisicao_exame_mamografia.png")
 

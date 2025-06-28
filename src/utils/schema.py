@@ -57,8 +57,8 @@ class RequirementLevel(Enum):
 from pydantic import BaseModel, Field
 
 
-class CadastrarInput(BaseModel):
-    """Modelo de entrada para cadastrar usuário."""
+class LoginInput(BaseModel):
+    """Modelo de entrada para login/cadastro de usuário."""
 
     username: str = Field(..., description="Nome de usuário para cadastro")
     password: str = Field(..., description="Senha do usuário, deve ser criptografada")

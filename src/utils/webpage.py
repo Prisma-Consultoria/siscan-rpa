@@ -146,7 +146,7 @@ class WebPage(ABC):
                 value = self.FIELDS_MAP[field_name].get(value, None)
         return value
 
-    def update_field_map_from_select(
+    async def update_field_map_from_select(
         self,
         field_name: str,
         xpath: XPE,
@@ -188,12 +188,13 @@ class WebPage(ABC):
         {'0015466 - CENTRO DE ...': '4', ...}
         ```
         """
-        options = xpath.get_select_options(timeout=timeout)
+        options = await xpath.get_select_options(timeout=timeout)
         if label_as_key:
             mapping = {label: value for value, label in options.items()}
         else:
             mapping = {value: label for value, label in options.items()}
         self.FIELDS_MAP[field_name] = mapping
+        
         xpath.reset()
 
     def mount_fields_map_and_data(
@@ -285,7 +286,7 @@ class WebPage(ABC):
         xpath_obj = await type_exam_elem.handle_fill(
             self.get_field_value(field_name, data), field_type, reset=False
         )
-        value = xpath_obj.get_value(field_type)
+        value = await xpath_obj.get_value(field_type)
         # Para campos que retornam tupla (texto, valor)
         if isinstance(value, tuple):
             _, _value = value

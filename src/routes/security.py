@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, HTTPException, status
+
+from src.utils.schema import LoginInput
 
 from ..env import get_db
 from ..models import User
@@ -13,13 +14,11 @@ router = APIRouter(prefix="/security", tags=["security"])
     summary="Gerar token JWT",
     description="Gera um token de acesso para autenticação nos endpoints",
 )
-def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-):
+def login_for_access_token(data: LoginInput):
     db = get_db()
-    user = db.query(User).filter_by(username=form_data.username).first()
+    user = db.query(User).filter_by(username=data.username).first()
     db.close()
-    if not user or not verify_password(form_data.password, user.password):
+    if not user or not verify_password(data.password, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="incorrect username or password",

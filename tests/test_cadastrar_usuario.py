@@ -68,4 +68,4 @@ def test_register_requires_apikey(client):
         "/user",
         json={"username": "bob", "password": "x"},
     )
-    assert res.status_code == 401
+    assert res.status_code == 403

@@ -226,9 +226,6 @@ class RequisicaoExame(SiscanWebPage):
 
         self.validation(data)
 
-        # verifica qual a página atual do browser
-        logger.debug("Verificando a página atual do browser")
-        logger.debug("Página atual: %s", (await self.context.page).url)
         xpath = await self._novo_exame(event_button=True)
 
         # 1o passo: Preenche o campo Cartão SUS e chama o evento onblur do campo

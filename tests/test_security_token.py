@@ -33,7 +33,7 @@ def test_generate_token(client):
     )
     res = client_obj.post(
         "/security/token",
-        data={"username": "alice", "password": "secret"},
+        json={"username": "alice", "password": "secret"},  # <-- troque data por json
     )
     assert res.status_code == 200
     data = res.json()
@@ -45,6 +45,6 @@ def test_invalid_credentials(client):
     client_obj, _ = client
     res = client_obj.post(
         "/security/token",
-        data={"username": "bob", "password": "wrong"},
+        json={"username": "bob", "password": "wrong"},  # <-- troque data por json
     )
     assert res.status_code == 401

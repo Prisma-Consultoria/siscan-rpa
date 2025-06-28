@@ -4,9 +4,9 @@ from sqlalchemy.exc import IntegrityError
 from src.env import get_db
 from src.models import User
 from src.utils.helpers import encrypt_password, decode_access_token, oauth2_scheme
-from src.utils.dependencies import jwt_required, api_key_required
 from src.utils import messages as msg
-from src.utils.schema import CadastrarInput
+from src.utils.schema import LoginInput
+from src.utils.dependencies import api_key_required
 
 router = APIRouter(prefix="/user", tags=["user"])
 
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/user", tags=["user"])
     description="Registra um novo usuário",
     dependencies=[Depends(api_key_required)],
 )
-def create_user(data: CadastrarInput):
+def create_user(data: LoginInput):
     """Cadastrar novo usuário e armazenar a senha criptografada."""
     encrypted = encrypt_password(data.password)
     db = get_db()
@@ -37,7 +37,7 @@ def create_user(data: CadastrarInput):
     "/me",
     summary="Usuário Autenticado",
     description="Retorna informações do usuário autenticado",
-    dependencies=[Depends(jwt_required), Depends(oauth2_scheme)],
+    dependencies=[Depends(oauth2_scheme)],
 )
 def read_me(authorization: str = Header(...)):
     token = authorization.split(" ", 1)[1]
