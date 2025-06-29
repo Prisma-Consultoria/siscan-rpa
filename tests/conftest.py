@@ -119,9 +119,8 @@ def fake_json_file(tmp_path_factory):
     }
 
     output_path = Path("./fake_data.json")
-
-    if not output_path.exists():
-        with open(output_path, "w", encoding="utf-8") as fp:
-            json.dump(data, fp, ensure_ascii=False, indent=2)
+    # Always rewrite the fake data file to avoid stale content between test runs
+    with open(output_path, "w", encoding="utf-8") as fp:
+        json.dump(data, fp, ensure_ascii=False, indent=2)
 
     return output_path
