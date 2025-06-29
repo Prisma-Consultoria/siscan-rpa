@@ -17,7 +17,10 @@ async def test_preencher_requisicao_mamografia_diagnostica():
     dados_path = Path("real_data_diagnostica.json")
 
     if not dados_path.exists():
-        raise FileNotFoundError(f"Arquivo {dados_path} não encontrado.")
+        pytest.skip(f"Arquivo {dados_path} não encontrado.")
+
+    if not SISCAN_USER or not SISCAN_PASSWORD:
+        pytest.skip("Credenciais do SISCAN não configuradas")
 
     json_data = Validator.load_json(dados_path)
 

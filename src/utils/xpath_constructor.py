@@ -832,13 +832,29 @@ class XPathConstructor:
                     logger.debug(
                         f"Marcando checkbox value={input_value} (checked={is_checked})"
                     )
-                    await input_el.check(force=True)
+                    try:
+                        await input_el.check(force=True)
+                    except Exception as e:
+                        logger.warning(
+                            f"Falha ao marcar checkbox value={input_value}: {e}. Tentando via script."
+                        )
+                        await input_el.evaluate(
+                            "el => { el.checked = true; el.dispatchEvent(new Event('input', {bubbles: true})); el.dispatchEvent(new Event('change', {bubbles: true})); }"
+                        )
                 elif input_value not in valores and is_checked:
                     logger.debug(
                         f"Desmarcando checkbox value={input_value} "
                         f"(checked={is_checked})"
                     )
-                    await input_el.uncheck(force=True)
+                    try:
+                        await input_el.uncheck(force=True)
+                    except Exception as e:
+                        logger.warning(
+                            f"Falha ao desmarcar checkbox value={input_value}: {e}. Tentando via script."
+                        )
+                        await input_el.evaluate(
+                            "el => { el.checked = false; el.dispatchEvent(new Event('input', {bubbles: true})); el.dispatchEvent(new Event('change', {bubbles: true})); }"
+                        )
         elif input_type == InputType.RADIO:
             await self._select_radio_with_retry(locator, value, timeout)
         else:
