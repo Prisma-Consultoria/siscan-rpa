@@ -1,6 +1,4 @@
 import time
-
-from jsonschema.exceptions import ValidationError
 from pathlib import Path
 
 import logging
@@ -64,29 +62,11 @@ class SiscanWebPage(WebPage):
             Validator.validate_data(data, self.schema_model)
             logger.debug("Dados válidos")
         except SchemaValidationError as ve:
-            # Exemplo: acesso aos detalhes
-            for campo in ve.required_missing:
-                logger.error("Campo obrigatório ausente: %s", campo)
-            for err in ve.pattern_errors:
-                logger.error("Erro de padrão: %s", err.message)
-            for err in ve.enum_errors:
-                logger.error("Erro de enum: %s", err.message)
-            for field_required, field_trigger, trigger_value in ve.conditional_failure:
-                logger.error(
-                    "Campo condicional: '%s' (devido a '%s' == '%s')",
-                    field_required,
-                    field_trigger,
-                    trigger_value,
-                )
-            for err in ve.outros_erros:
-                logger.error("Outro erro: %s", err.message)
-
+            for err in ve.errors:
+                logger.error(err)
             raise SiscanInvalidFieldValueError(
-                context=None, data=data, message=ve.message
+                context=None, data=data, message=str(ve)
             )
-
-        except ValidationError as ve:
-            logger.error(ve)
 
     async def authenticate(self):
         """
