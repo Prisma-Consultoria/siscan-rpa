@@ -6,11 +6,9 @@ from pydantic import ValidationError
 
 from src.siscan.schema.RequisicaoMamografiaRastreamentoSchema import (
     RequisicaoMamografiaRastreamentoSchema,
-    YNIDK,
-    Lateralidade,
-    TipoDeMamografia,
     TipoMamografiaRastreamento,
 )
+from src.siscan.schema import YNIDK, Lateralidade, TipoDeMamografia
 
 
 def _load_data(json_path: Path) -> dict:

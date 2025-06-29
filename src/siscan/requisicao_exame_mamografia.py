@@ -7,6 +7,9 @@ from src.siscan.requisicao_exame import RequisicaoExame
 from src.siscan.schema.RequisicaoMamografiaRastreamentoSchema import (
     RequisicaoMamografiaRastreamentoSchema,
 )
+from src.siscan.schema.RequisicaoMamografiaDiagnosticaSchema import (
+    RequisicaoMamografiaDiagnosticaSchema,
+)
 from src.utils.SchemaMapExtractor import SchemaMapExtractor
 from src.utils.xpath_constructor import XPathConstructor as XPE  # XPathElement
 from src.utils import messages as msg
@@ -268,6 +271,39 @@ class RequisicaoExameMamografia(RequisicaoExame):
                 raise ValueError("O parâmetro 'lado' deve ser 'direita' ou 'esquerda'.")
             xpath = await XPE.create(self.context, xpath=base_xpath)
             await xpath.handle_fill(
-                self.get_field_value(campo_nome, data), self.get_field_type(campo_nome)
+                self.get_field_value(campo_nome, data),
+                self.get_field_type(campo_nome),
             )
             data.pop(campo_nome)
+
+
+class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
+    """Preenche a solicitação de mamografia do tipo diagnóstica."""
+
+    MAP_SCHEMA_FIELDS = None
+
+    def __init__(self, base_url: str, user: str, password: str):
+        # Inicializa com o schema específico para mamografia diagnóstica
+        RequisicaoExame.__init__(
+            self,
+            base_url,
+            user,
+            password,
+            RequisicaoMamografiaDiagnosticaSchema,
+        )
+
+        map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
+            self.schema_model, fields=self.MAP_SCHEMA_FIELDS
+        )
+        RequisicaoExameMamografiaDiagnostica.MAP_DATA_LABEL = map_data_label
+        fields_map.update(self.FIELDS_MAP)
+        self.FIELDS_MAP = fields_map
+
+    def validation(self, data: dict):
+        # Define o tipo de exame como Mamografia Diagnóstica
+        data["tipo_exame_mama"] = "01"
+        data["tipo_de_mamografia"] = "Diagnóstica"
+
+        # Chama validação da classe base "RequisicaoExame"
+        RequisicaoExame.validation(self, data)
+
