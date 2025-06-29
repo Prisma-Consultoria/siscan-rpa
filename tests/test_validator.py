@@ -6,7 +6,6 @@ from pydantic import ValidationError
 
 from src.siscan.schema.RequisicaoMamografiaRastreamentoSchema import (
     RequisicaoMamografiaRastreamentoSchema,
-    TemNoduloOuCarocoNaMama,
     YNIDK,
     FezRadioterapiaNaMamaOuNoPlastrao,
     RadioterapiaLocalizacao,

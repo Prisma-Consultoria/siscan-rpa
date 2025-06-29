@@ -60,10 +60,6 @@ async def test_authenticate_env_user():
         ),
     ).decode()
 
-    print("++++++++++++++++++")
-    print(f"User: {SISCAN_USER}, Password: {password}")
-    print("++++++++++++++++++")
-
     req = RequisicaoExameMamografia(
         base_url=SISCAN_URL,
         user=SISCAN_USER,
@@ -75,10 +71,8 @@ async def test_authenticate_env_user():
         timeout=15000,
     )
 
-    print("Iniciando autenticação no SISCAN...")
     await req.authenticate()
 
-    print("Autenticação bem-sucedida!")
     assert (
         (await req.context.page).locator('h1:text("SEJA BEM VINDO AO SISCAN")')
     ).is_visible()
