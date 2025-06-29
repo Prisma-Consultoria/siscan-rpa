@@ -85,7 +85,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
         super().__init__(base_url, user, password, schema_path)
 
         map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
-            schema_path, fields=RequisicaoExameMamografia.MAP_SCHEMA_FIELDS
+            self.schema_model, fields=RequisicaoExameMamografia.MAP_SCHEMA_FIELDS
         )
         RequisicaoExameMamografia.MAP_DATA_LABEL = map_data_label
         fields_map.update(self.FIELDS_MAP)

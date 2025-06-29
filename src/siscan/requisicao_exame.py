@@ -31,7 +31,7 @@ class RequisicaoExame(SiscanWebPage):
     ):
         super().__init__(base_url, user, password, schema_path)
         map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
-            schema_path, fields=RequisicaoExame.MAP_SCHEMA_FIELDS
+            self.schema_model, fields=RequisicaoExame.MAP_SCHEMA_FIELDS
         )
         RequisicaoExame.MAP_DATA_LABEL = map_data_label
         self.FIELDS_MAP.update(fields_map)
