@@ -3,7 +3,8 @@ from __future__ import annotations
 from enum import Enum
 from typing import Annotated, List, Optional
 
-from pydantic import Field, root_validator
+from pydantic import Field
+from pydantic.functional_validators import model_validator
 from src.siscan.schema.RequisicaoNovoExameSchema import RequisicaoNovoExameSchema
 
 class TemNoduloOuCarocoNaMama(Enum):
@@ -398,10 +399,10 @@ class RequisicaoMamografiaRastreamentoSchema(RequisicaoNovoExameSchema):
         ),
     ] = None
 
-    @root_validator
+    @model_validator(mode="after")
     def valida_regras_condicionais(cls, values):
         # 1) Se existe '04' em tem_nodulo_ou_caroco_na_mama, então só pode haver esse item
-        nodulos = values.get("tem_nodulo_ou_caroco_na_mama") or []
+        nodulos = values.tem_nodulo_ou_caroco_na_mama or []
         if any(n.value == "04" for n in nodulos):
             if len(nodulos) != 1 or nodulos[0].value != "04":
                 raise ValueError(
@@ -410,8 +411,8 @@ class RequisicaoMamografiaRastreamentoSchema(RequisicaoNovoExameSchema):
                 )
 
         # 2) Se fez_mamografia_alguma_vez == '01', ano_que_fez_a_ultima_mamografia é obrigatório
-        fez = values.get("fez_mamografia_alguma_vez")
-        ano_ultima = values.get("ano_que_fez_a_ultima_mamografia")
+        fez = values.fez_mamografia_alguma_vez
+        ano_ultima = values.ano_que_fez_a_ultima_mamografia
         if fez == YNIDK.SIM and not ano_ultima:
             raise ValueError(
                 "Se fez mamografia (01), precisa informar 'ano_que_fez_a_ultima_mamografia'."
@@ -423,8 +424,8 @@ class RequisicaoMamografiaRastreamentoSchema(RequisicaoNovoExameSchema):
             )
 
         # 3) Se fez_radioterapia_na_mama_ou_no_plastrao == '01', radioterapia_localizacao é obrigatório
-        fez_radio = values.get("fez_radioterapia_na_mama_ou_no_plastrao")
-        loc = values.get("radioterapia_localizacao")
+        fez_radio = values.fez_radioterapia_na_mama_ou_no_plastrao
+        loc = values.radioterapia_localizacao
         if fez_radio == FezRadioterapiaNaMamaOuNoPlastrao.field_01 and not loc:
             raise ValueError(
                 "Se fez radioterapia (01), precisa informar 'radioterapia_localizacao'."
@@ -435,20 +436,20 @@ class RequisicaoMamografiaRastreamentoSchema(RequisicaoNovoExameSchema):
             )
 
         # 4) Dependências dentro de radioterapia_localizacao
-        if loc == RadioterapiaLocalizacao.field_02 and not values.get("ano_da_radioterapia_direita"):
+        if loc == RadioterapiaLocalizacao.field_02 and not values.ano_da_radioterapia_direita:
             raise ValueError("Se 'radioterapia_localizacao' = 02, precisa 'ano_da_radioterapia_direita'.")
-        if loc == RadioterapiaLocalizacao.field_01 and not values.get("ano_da_radioterapia_esquerda"):
+        if loc == RadioterapiaLocalizacao.field_01 and not values.ano_da_radioterapia_esquerda:
             raise ValueError("Se 'radioterapia_localizacao' = 01, precisa 'ano_da_radioterapia_esquerda'.")
         if loc == RadioterapiaLocalizacao.field_03:
-            if not values.get("ano_da_radioterapia_direita") or not values.get("ano_da_radioterapia_esquerda"):
+            if not values.ano_da_radioterapia_direita or not values.ano_da_radioterapia_esquerda:
                 raise ValueError(
                     "Se 'radioterapia_localizacao' = 03, precisa informar ambos "
                     "'ano_da_radioterapia_direita' e 'ano_da_radioterapia_esquerda'."
                 )
 
         # 5) Se tipo_de_mamografia == 'Rastreamento', mamografia_de_rastreamento é obrigatório
-        tipo = values.get("tipo_de_mamografia")
-        mamo = values.get("mamografia_de_rastreamento")
+        tipo = values.tipo_de_mamografia
+        mamo = values.mamografia_de_rastreamento
         if tipo == TipoDeMamografia.RASTREAMENTO and not mamo:
             raise ValueError(
                 "Se tipo_de_mamografia = Rastreamento, precisa informar 'mamografia_de_rastreamento'."
