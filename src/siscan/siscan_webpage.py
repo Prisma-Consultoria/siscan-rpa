@@ -61,9 +61,7 @@ class SiscanWebPage(WebPage):
         except SchemaValidationError as ve:
             for err in ve.errors:
                 logger.error(err)
-            raise SiscanInvalidFieldValueError(
-                context=None, data=data, message=str(ve)
-            )
+            raise SiscanInvalidFieldValueError(context=None, data=data, message=str(ve))
 
     async def authenticate(self):
         """

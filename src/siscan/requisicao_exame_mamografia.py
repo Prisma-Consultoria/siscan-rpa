@@ -56,7 +56,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
         "ano_inclusao_implantes_direita",
         "ano_inclusao_implantes_esquerda",
         "tipo_de_mamografia",
-        "mamografia_de_rastreamento",
+        "tipo_mamografia_de_rastreamento",
     ]
 
     FIELDS_MAP = {
@@ -171,7 +171,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
     async def preenche_tipo_mamografia(self, data: dict):
         text, _ = await self.select_value("tipo_de_mamografia", data)
         if text == "Rastreamento":
-            await self.select_value("mamografia_de_rastreamento", data)
+            await self.select_value("tipo_mamografia_de_rastreamento", data)
 
     async def preencher(self, data: dict):
         """

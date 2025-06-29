@@ -52,8 +52,6 @@ class RequirementLevel(Enum):
         return self is RequirementLevel.REQUIRED
 
 
-
-
 class LoginInput(BaseModel):
     """Modelo de entrada para login/cadastro de usuário."""
 
@@ -191,5 +189,3 @@ class PreencherSolicitacaoInput(BaseModel):
             }
         }
     }
-
-

@@ -112,7 +112,7 @@ def fake_json_file(tmp_path_factory):
         **{
             f"ano_{c}_esquerda": str(base_year + i + 1) for i, c in enumerate(cirurgias)
         },
-        "mamografia_de_rastreamento": "01",
+        "tipo_mamografia_de_rastreamento": "01",
         "data_da_solicitacao": fake.date_between(
             start_date="-30d", end_date="today"
         ).strftime("%d/%m/%Y"),

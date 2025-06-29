@@ -22,7 +22,9 @@ class WebPage(ABC):
 
     FIELDS_MAP: dict[str, dict[str, str]] = {}
 
-    def __init__(self, base_url: str, user: str, password: str, schema_model: Type[BaseModel]):
+    def __init__(
+        self, base_url: str, user: str, password: str, schema_model: Type[BaseModel]
+    ):
         self._base_url = base_url
         self._user = user
         self._password = password
