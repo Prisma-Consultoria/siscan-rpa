@@ -53,7 +53,7 @@ def client(test_db):
 
 
 @pytest.fixture(scope="session")
-def fake_json_file(tmp_path_factory):
+def fake_json_rastreio_file(tmp_path_factory):
     fake = Faker("pt_BR")
     cns = CNS()
 
@@ -118,7 +118,82 @@ def fake_json_file(tmp_path_factory):
         ).strftime("%d/%m/%Y"),
     }
 
-    output_path = Path("./fake_data.json")
+    output_path = Path("./fake_data_rastreio.json")
+
+    if not output_path.exists():
+        with open(output_path, "w", encoding="utf-8") as fp:
+            json.dump(data, fp, ensure_ascii=False, indent=2)
+
+    return output_path
+
+
+@pytest.fixture(scope="session")
+def fake_json_diagnostica_file(tmp_path_factory):
+    fake = Faker("pt_BR")
+    cns = CNS()
+
+    base_year = fake.random_int(min=2000, max=2025)
+
+    cirurgias = [
+        "biopsia_cirurgica_incisional",
+        "biopsia_cirurgica_excisional",
+        "segmentectomia",
+        "centralectomia",
+        "dutectomia",
+        "mastectomia",
+        "mastectomia_poupadora_pele",
+        "mastectomia_poupadora_pele_complexo_papilar",
+        "linfadenectomia_axilar",
+        "biopsia_linfonodo_sentinela",
+        "reconstrucao_mamaria",
+        "mastoplastia_redutora",
+        "inclusao_implantes",
+    ]
+
+    data = {
+        "cartao_sus": cns.generate(),
+        "nome": fake.name().upper(),
+        "apelido": fake.first_name().upper(),
+        "data_de_nascimento": fake.date_of_birth(
+            minimum_age=30, maximum_age=80
+        ).strftime("%d/%m/%Y"),
+        "nacionalidade": "BRASILEIRO",
+        "sexo": fake.random_element(elements=("F", "M")),
+        "nome_da_mae": fake.name_female().upper(),
+        "raca_cor": "BRANCA",
+        "escolaridade": "4",
+        "uf": fake.estado_sigla(),
+        "municipio": fake.city().upper(),
+        "tipo_logradouro": "RUA",
+        "nome_logradouro": fake.street_name().upper(),
+        "numero": str(fake.random_int(min=1, max=9999)),
+        "bairro": fake.bairro().upper(),
+        "cep": bc._format_cep(fake.postcode()),
+        "ponto_de_referencia": "PONTO DE REFERÊNCIA",
+        "unidade_requisitante": fake.numerify("#######"),
+        "prestador": fake.company().upper(),
+        "num_prontuario": fake.numerify("#########"),
+        "tem_nodulo_ou_caroco_na_mama": ["01", "02"],
+        "apresenta_risco_elevado_para_cancer_mama": "01",
+        "fez_mamografia_alguma_vez": "01",
+        "ano_que_fez_a_ultima_mamografia": str(base_year),
+        "antes_desta_consulta_teve_as_mamas_examinadas_por_um_profissional": "03",
+        "fez_radioterapia_na_mama_ou_no_plastrao": "01",
+        "radioterapia_localizacao": "03",
+        "ano_da_radioterapia_direita": str(base_year),
+        "ano_da_radioterapia_esquerda": str(base_year),
+        "fez_cirurgia_de_mama": "01",
+        **{f"ano_{c}_direita": str(base_year + i) for i, c in enumerate(cirurgias)},
+        **{
+            f"ano_{c}_esquerda": str(base_year + i + 1) for i, c in enumerate(cirurgias)
+        },
+        "tipo_de_mamografia": "Diagnóstica",
+        "data_da_solicitacao": fake.date_between(
+            start_date="-30d", end_date="today"
+        ).strftime("%d/%m/%Y"),
+    }
+
+    output_path = Path("./fake_data_diagnostica.json")
 
     if not output_path.exists():
         with open(output_path, "w", encoding="utf-8") as fp:

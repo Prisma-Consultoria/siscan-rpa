@@ -4,11 +4,9 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from src.siscan.schema import YNIDK, Lateralidade, TipoDeMamografia
 from src.siscan.schema.RequisicaoMamografiaRastreamentoSchema import (
     RequisicaoMamografiaRastreamentoSchema,
-    YNIDK,
-    Lateralidade,
-    TipoDeMamografia,
     TipoMamografiaRastreamento,
 )
 
@@ -32,8 +30,8 @@ def _load_data(json_path: Path) -> dict:
 
 
 @pytest.fixture
-def base_data(fake_json_file):
-    return _load_data(Path(fake_json_file))
+def base_data(fake_json_rastreio_file):
+    return _load_data(Path(fake_json_rastreio_file))
 
 
 # 1) Teste de tem_nodulo_ou_caroco_na_mama

@@ -41,10 +41,10 @@ async def playwright_page():
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_preencher_campos_metodo_playwright(
-    playwright_page: Page, fake_json_file
+    playwright_page: Page, fake_json_rastreio_file
 ):
     page = playwright_page
-    data = Validator.load_json(fake_json_file)
+    data = Validator.load_json(fake_json_rastreio_file)
 
     await page.get_by_label("Ponto de Referência").fill(data["ponto_de_referencia"])
     await page.get_by_label("Apelido").fill(data["apelido"])

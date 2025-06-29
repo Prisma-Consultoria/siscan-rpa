@@ -33,8 +33,8 @@ def _load_data(path):
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_fill_text_input(siscan_form, fake_json_file):
-    data = _load_data(fake_json_file)
+async def test_fill_text_input(siscan_form, fake_json_rastreio_file):
+    data = _load_data(fake_json_rastreio_file)
     xpath = await XPE.create(siscan_form.context)
     label = siscan_form.get_field_label("ponto_de_referencia")
     await xpath.find_form_input(label, InputType.TEXT)
@@ -44,8 +44,8 @@ async def test_fill_text_input(siscan_form, fake_json_file):
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_fill_select_input(siscan_form, fake_json_file):
-    data = _load_data(fake_json_file)
+async def test_fill_select_input(siscan_form, fake_json_rastreio_file):
+    data = _load_data(fake_json_rastreio_file)
     xpath = await XPE.create(siscan_form.context)
     label = siscan_form.get_field_label("escolaridade")
     await xpath.find_form_input(label, InputType.SELECT)
