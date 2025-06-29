@@ -79,14 +79,15 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
             title="MAMA DIREITA - ESPESSAMENTO LOCALIZAÇÃO",
         ),
     ] = None
-    exame_clinico_mama_direta_linfonodo_palpavel: Annotated[
+    exame_clinico_mama_direita_linfonodo_palpavel: Annotated[
         Optional[List[LocalizacaoLinfonodo]],
         Field(
             description="Exame clínico da mama direita: Linfonodo palpável (01=Axilar, 02=Supraclavicular)",
             json_schema_extra={"x-widget": "checkbox"},
             title="MAMA DIREITA - LINFONODO PALPÁVEL",
+            alias="exame_clinico_mama_direita_linfonodo_papavel",
         ),
-    ]
+    ] = None
     exame_clinico_mama_esquerda_lesao_papilar: Annotated[
         Optional[YesOrNone],
         Field(
@@ -125,6 +126,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
             description="Exame clínico da mama esquerda: Linfonodo palpável (01=Axilar, 02=Supraclavicular)",
             json_schema_extra={"x-widget": "checkbox"},
             title="MAMA ESQUERDA - LINFONODO PALPÁVEL",
+            alias="exame_clinico_mama_esquerda_linfonodo_papavel",
         ),
     ] = None
     controle_radiologico_lesao_categoria_3: Annotated[
@@ -143,12 +145,13 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
             title="CONTROLE RADIOLOGICO DE LESÃO CATEGORIA 3 > MAMA DIREITA - NÓDULO",
         ),
     ] = None
-    controle_radiologico_lesao_categoria_3_mama_direita_microcalcificacoes: Annotated[
+    controle_radiologico_lesao_categoria_3_mama_direita_microcalcificacao: Annotated[
         Optional[YesOrNone],
         Field(
             description="Controle radiológico de lesão categoria 3 na mama direita: Microcalcificações (S=Sim, None=Não)",
             json_schema_extra={"x-widget": "checkbox"},
             title="CONTROLE RADIOLOGICO DE LESÃO CATEGORIA 3 > MAMA DIREITA - MICROCALCIFICAÇÕES",
+            alias="controle_radiologico_lesao_categoria_3_mama_direita_microcalcificacoes",
         ),
     ] = None
     controle_radiologico_lesao_categoria_3_mama_direita_assimetria_focal: Annotated[
@@ -199,12 +202,13 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
             title="CONTROLE RADIOLOGICO DE LESÃO CATEGORIA 3 > MAMA ESQUERDA - NÓDULO",
         ),
     ] = None
-    controle_radiologico_lesao_categoria_3_mama_esquerda_microcalcificacoes: Annotated[
+    controle_radiologico_lesao_categoria_3_mama_esquerda_microcalcificacao: Annotated[
         Optional[YesOrNone],
         Field(
             description="Controle radiológico de lesão categoria 3 na mama esquerda: Microcalcificações (S=Sim, None=Não)",
             json_schema_extra={"x-widget": "checkbox"},
             title="CONTROLE RADIOLOGICO DE LESÃO CATEGORIA 3 > MAMA ESQUERDA - MICROCALCIFICAÇÕES",
+            alias="controle_radiologico_lesao_categoria_3_mama_esquerda_microcalcificacoes",
         ),
     ] = None
     # continue com a mama esquerda
@@ -264,12 +268,13 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
             title="LESÃO COM DIAGNÓSTICO DE CÂNCER > MAMA DIREITA - NÓDULO",
         ),
     ] = None
-    lesao_diagnostico_cancer_mama_direita_microcalcificacoes: Annotated[
+    lesao_diagnostico_cancer_mama_direita_microcalcificacao: Annotated[
         Optional[YesOrNone],
         Field(
             description="Lesão diagnóstico de câncer na mama direita: Microcalcificações (S=Sim, None=Não)",
             json_schema_extra={"x-widget": "checkbox"},
             title="LESÃO COM DIAGNÓSTICO DE CÂNCER > MAMA DIREITA - MICROCALCIFICAÇÕES",
+            alias="lesao_diagnostico_cancer_mama_direita_microcalcificacoes",
         ),
     ] = None
     lesao_diagnostico_cancer_mama_direita_assimetria_focal: Annotated[
@@ -320,12 +325,13 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
             title="LESÃO COM DIAGNÓSTICO DE CÂNCER > MAMA ESQUERDA - NÓDULO",
         ),
     ] = None
-    lesao_diagnostico_cancer_mama_esquerda_microcalcificacoes: Annotated[
+    lesao_diagnostico_cancer_mama_esquerda_microcalcificacao: Annotated[
         Optional[YesOrNone],
         Field(
             description="Lesão diagnóstico de câncer na mama esquerda: Microcalcificações (S=Sim, None=Não)",
             json_schema_extra={"x-widget": "checkbox"},
             title="LESÃO COM DIAGNÓSTICO DE CÂNCER > MAMA ESQUERDA - MICROCALCIFICAÇÕES",
+            alias="lesao_diagnostico_cancer_mama_esquerda_microcalcificacoes",
         ),
     ] = None
     lesao_diagnostico_cancer_mama_esquerda_assimetria_focal: Annotated[
@@ -472,12 +478,13 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
             title="CONTROLE DE LESÃO PÓS-BIÓPSIA PAAF BENIGNA > MAMA DIREITA - NÓDULO",
         ),
     ] = None
-    controle_lesao_pos_biopsia_paaf_benigna_mama_direita_microcalcificacoes: Annotated[
+    controle_lesao_pos_biopsia_paaf_benigna_mama_direita_microcalcificacao: Annotated[
         Optional[YesOrNone],
         Field(
             description="Controle de lesão pós-biópsia PAAF benigna na mama direita: Microcalcificações (S=Sim, None=Não)",
             json_schema_extra={"x-widget": "checkbox"},
             title="CONTROLE DE LESÃO PÓS-BIÓPSIA PAAF BENIGNA > MAMA DIREITA - MICROCALCIFICAÇÕES",
+            alias="controle_lesao_pos_biopsia_paaf_benigna_mama_direita_microcalcificacoes",
         ),
     ] = None
     controle_lesao_pos_biopsia_paaf_benigna_mama_direita_assimetria_focal: Annotated[
@@ -528,12 +535,13 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
             title="CONTROLE DE LESÃO PÓS-BIÓPSIA PAAF BENIGNA > MAMA ESQUERDA - NÓDULO",
         ),
     ] = None
-    controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_microcalcificacoes: Annotated[
+    controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_microcalcificacao: Annotated[
         Optional[YesOrNone],
         Field(
             description="Controle de lesão pós-biópsia PAAF benigna na mama esquerda: Microcalcificações (S=Sim, None=Não)",
             json_schema_extra={"x-widget": "checkbox"},
             title="CONTROLE DE LESÃO PÓS-BIÓPSIA PAAF BENIGNA > MAMA ESQUERDA - MICROCALCIFICAÇÕES",
+            alias="controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_microcalcificacoes",
         ),
     ] = None
     controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_assimetria_focal: Annotated[
@@ -585,7 +593,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
             "exame_clinico_mama_direita_descarga_papilar_espontanea",
             "exame_clinico_mama_direita_nodulo_localizacao",
             "exame_clinico_mama_direita_espessamento_localizacao",
-            "exame_clinico_mama_direta_linfonodo_palpavel",
+            "exame_clinico_mama_direita_linfonodo_palpavel",
             "exame_clinico_mama_esquerda_lesao_papilar",
             "exame_clinico_mama_esquerda_descarga_papilar_espontanea",
             "exame_clinico_mama_esquerda_nodulo_localizacao",
@@ -598,14 +606,14 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         # grupo controle_radiologico_lesao_categoria_3
         fields_controle_radiologico = [
             "controle_radiologico_lesao_categoria_3_mama_direita_nodulo",
-            "controle_radiologico_lesao_categoria_3_mama_direita_microcalcificacoes",
+            "controle_radiologico_lesao_categoria_3_mama_direita_microcalcificacao",
             "controle_radiologico_lesao_categoria_3_mama_direita_assimetria_focal",
             "controle_radiologico_lesao_categoria_3_mama_direita_assimetria_difusa",
             "controle_radiologico_lesao_categoria_3_mama_direita_area_densa",
             "controle_radiologico_lesao_categoria_3_mama_direita_distorcao_focal",
             "controle_radiologico_lesao_categoria_3_mama_direita_linfonodo_axilar",
             "controle_radiologico_lesao_categoria_3_mama_esquerda_nodulo",
-            "controle_radiologico_lesao_categoria_3_mama_esquerda_microcalcificacoes",
+            "controle_radiologico_lesao_categoria_3_mama_esquerda_microcalcificacao",
             "controle_radiologico_lesao_categoria_3_mama_esquerda_assimetria_focal",
             "controle_radiologico_lesao_categoria_3_mama_esquerda_assimetria_difusa",
             "controle_radiologico_lesao_categoria_3_mama_esquerda_area_densa",
@@ -618,14 +626,14 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         # grupo lesao_diagnostico_cancer
         fields_lesao_cancer = [
             "lesao_diagnostico_cancer_mama_direita_nodulo",
-            "lesao_diagnostico_cancer_mama_direita_microcalcificacoes",
+            "lesao_diagnostico_cancer_mama_direita_microcalcificacao",
             "lesao_diagnostico_cancer_mama_direita_assimetria_focal",
             "lesao_diagnostico_cancer_mama_direita_assimetria_difusa",
             "lesao_diagnostico_cancer_mama_direita_area_densa",
             "lesao_diagnostico_cancer_mama_direita_distorcao_focal",
             "lesao_diagnostico_cancer_mama_direita_linfonodo_axilar",
             "lesao_diagnostico_cancer_mama_esquerda_nodulo",
-            "lesao_diagnostico_cancer_mama_esquerda_microcalcificacoes",
+            "lesao_diagnostico_cancer_mama_esquerda_microcalcificacao",
             "lesao_diagnostico_cancer_mama_esquerda_assimetria_focal",
             "lesao_diagnostico_cancer_mama_esquerda_assimetria_difusa",
             "lesao_diagnostico_cancer_mama_esquerda_area_densa",
@@ -656,14 +664,14 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         # grupo controle_lesao_pos_biopsia_paaf_benigna
         fields_controle_paaf = [
             "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_nodulo",
-            "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_microcalcificacoes",
+            "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_microcalcificacao",
             "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_assimetria_focal",
             "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_assimetria_difusa",
             "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_area_densa",
             "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_distorcao_focal",
             "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_linfonodo_axilar",
             "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_nodulo",
-            "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_microcalcificacoes",
+            "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_microcalcificacao",
             "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_assimetria_focal",
             "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_assimetria_difusa",
             "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_area_densa",
