@@ -5,6 +5,7 @@ from pathlib import Path
 from src.siscan.requisicao_exame_mamografia import RequisicaoExameMamografia
 from src.env import SISCAN_URL, SISCAN_USER, SISCAN_PASSWORD
 from src.utils.validator import Validator
+from src.siscan.context import SiscanBrowserContext
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,8 @@ async def test_preencher_mamografia():
     req = RequisicaoExameMamografia(
         base_url=SISCAN_URL, user=SISCAN_USER, password=SISCAN_PASSWORD
     )
+
+    req._context = SiscanBrowserContext(headless=False)
 
     await req.authenticate()
     await req.preencher(json_data)

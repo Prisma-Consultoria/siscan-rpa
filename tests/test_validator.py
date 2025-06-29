@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from src.utils.schema import MamografiaRequest
+from src.utils.schema import SolicitacaoMamografiaRastreamentoSchema
 from src.utils.validator import Validator, SchemaValidationError
 
 
@@ -16,19 +16,19 @@ def _load_data(json_path: Path) -> dict:
 
 def test_validator_accepts_fake_data(fake_json_file):
     data = _load_data(Path(fake_json_file))
-    model = Validator.validate_data(data, MamografiaRequest)
-    assert isinstance(model, MamografiaRequest)
+    model = Validator.validate_data(data, SolicitacaoMamografiaRastreamentoSchema)
+    assert isinstance(model, SolicitacaoMamografiaRastreamentoSchema)
 
 
 def test_validator_missing_required_field(fake_json_file):
     data = _load_data(Path(fake_json_file))
     data.pop("nome", None)
     with pytest.raises(SchemaValidationError):
-        Validator.validate_data(data, MamografiaRequest)
+        Validator.validate_data(data, SolicitacaoMamografiaRastreamentoSchema)
 
 
 def test_validator_invalid_cartao_sus(fake_json_file):
     data = _load_data(Path(fake_json_file))
     data["cartao_sus"] = "12345"  # Invalid length (should be 15)
     with pytest.raises(SchemaValidationError):
-        Validator.validate_data(data, MamografiaRequest)
+        Validator.validate_data(data, SolicitacaoMamografiaRastreamentoSchema)

@@ -72,7 +72,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
     def __init__(self, base_url: str, user: str, password: str):
         schema_path = (
             Path(__file__).parent
-            / "schemas"
+            / "schema"
             / "requisicao_exame_mamografia_rastreamento.schema.json"
         )
 
@@ -199,7 +199,9 @@ class RequisicaoExameMamografia(RequisicaoExame):
 
         await super().preencher(data)
 
-        xpath_ctx = await XPE.create(self.context) # TOFIX Não faz setido criar um xpath apenas com o contexto
+        xpath_ctx = await XPE.create(
+            self.context
+        )  # TOFIX Não faz setido criar um xpath apenas com o contexto
 
         await (await xpath_ctx.find_form_button("Avançar")).handle_click()
 

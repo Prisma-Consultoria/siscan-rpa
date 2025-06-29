@@ -194,7 +194,7 @@ class WebPage(ABC):
         else:
             mapping = {value: label for value, label in options.items()}
         self.FIELDS_MAP[field_name] = mapping
-        
+
         xpath.reset()
 
     def mount_fields_map_and_data(
@@ -271,7 +271,7 @@ class WebPage(ABC):
         xpath = await XPE.create(self.context)
         field_label, field_type, _ = self.get_field_metadata(field_name)
         await xpath.find_form_input(field_label, field_type)
-        self.update_field_map_from_select(field_name, xpath)
+        await self.update_field_map_from_select(field_name, xpath)
 
     async def select_value(
         self, field_name: str, data: dict

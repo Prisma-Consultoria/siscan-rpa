@@ -84,17 +84,8 @@ class Validator:
 
     @classmethod
     def load_json(cls, schema_path: Union[str, Path]) -> Dict[str, Any]:
-        """Carrega e retorna o JSON Schema do arquivo especificado.
-
-        Parâmetros
-        ----------
-        schema_path : str | Path
-            Caminho para o arquivo JSON Schema.
-
-        Retorno
-        -------
-        dict
-            Dicionário representando o JSON Schema.
+        """
+        Carrega e retorna o JSON Schema do arquivo especificado.
         """
         schema_path = Path(schema_path)
         with open(schema_path, encoding="utf-8") as f:
@@ -105,9 +96,7 @@ class Validator:
         cls, error: ValidationError, schema: Dict[str, Any]
     ) -> List[Tuple[str, Optional[str], Optional[Union[str, list]]]]:
         """Dada a exceção de required condicional, retorna uma lista de tuplas:
-            (nome_campo_tornado_obrigatório,
-            nome_campo_disparador,
-            valor_esperado).
+            (nome_campo_tornado_obrigatório, nome_campo_disparador, valor_esperado).
 
         Se múltiplos campos tornaram-se obrigatórios pelo mesmo bloco 'if',
         retorna todos.

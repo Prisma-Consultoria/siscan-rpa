@@ -18,7 +18,7 @@ Este projeto implementa uma automação (RPA) para interação com o sistema SIS
   - `requisicao_exame.py` abstrai o preenchimento do formulário de exame.
   - `requisicao_exame_mamografia.py` especializa o fluxo para mamografia.
   - `webtools/` e `utils/` contêm classes de apoio (XPathConstructor, validação de esquemas, etc.).
-  - `schemas/` guarda arquivos JSON Schema para validação dos dados.
+  - `schema/` guarda arquivos JSON Schema para validação dos dados.
 - **tests/** – casos de teste em pytest para os endpoints da API.
 
 ## Gerar chaves RSA

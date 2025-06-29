@@ -9,4 +9,4 @@ static/tmp/
 *.png
 /src/dados.json
 fake_data.json
-real_data.json
+real_data*.json
