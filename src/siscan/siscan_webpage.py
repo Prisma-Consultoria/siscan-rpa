@@ -52,7 +52,7 @@ class SiscanWebPage(WebPage):
             "SchemaModel", Path(schema_path)
         )
         map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
-            schema_path, fields=SiscanWebPage.MAP_SCHEMA_FIELDS
+            self.schema_model, fields=SiscanWebPage.MAP_SCHEMA_FIELDS
         )
         SiscanWebPage.MAP_DATA_LABEL = map_data_label
         self.FIELDS_MAP.update(fields_map)
