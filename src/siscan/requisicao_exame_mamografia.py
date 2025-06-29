@@ -1,11 +1,12 @@
 import re
 
-from pathlib import Path
-
 import logging
 
 from src.siscan.exception import CartaoSusNotFoundError
 from src.siscan.requisicao_exame import RequisicaoExame
+from src.siscan.schema.RequisicaoMamografiaRastreamentoSchema import (
+    RequisicaoMamografiaRastreamentoSchema,
+)
 from src.utils.SchemaMapExtractor import SchemaMapExtractor
 from src.utils.xpath_constructor import XPathConstructor as XPE  # XPathElement
 from src.utils import messages as msg
@@ -70,19 +71,12 @@ class RequisicaoExameMamografia(RequisicaoExame):
     }
 
     def __init__(self, base_url: str, user: str, password: str):
-        schema_path = (
-            Path(__file__).parent
-            / "schema"
-            / "requisicao_exame_mamografia_rastreamento.schema.json"
+        super().__init__(
+            base_url,
+            user,
+            password,
+            RequisicaoMamografiaRastreamentoSchema,
         )
-
-        # Verifica se o arquivo de schema existe
-        if not schema_path.is_file():
-            raise FileNotFoundError(
-                f"Arquivo de schema '{schema_path}' nao encontrado."
-            )
-
-        super().__init__(base_url, user, password, schema_path)
 
         map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
             self.schema_model, fields=RequisicaoExameMamografia.MAP_SCHEMA_FIELDS

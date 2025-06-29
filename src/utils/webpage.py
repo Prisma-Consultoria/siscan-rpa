@@ -2,7 +2,9 @@ from pathlib import Path
 from datetime import datetime
 import logging
 from abc import abstractmethod, ABC
-from typing import Optional, Union
+from typing import Optional, Type
+
+from pydantic import BaseModel
 
 from src.siscan.exception import FieldValueNotFoundError
 from src.utils.xpath_constructor import XPathConstructor as XPE, InputType
@@ -20,13 +22,11 @@ class WebPage(ABC):
 
     FIELDS_MAP: dict[str, dict[str, str]] = {}
 
-    def __init__(
-        self, base_url: str, user: str, password: str, schema_path: Union[str, Path]
-    ):
+    def __init__(self, base_url: str, user: str, password: str, schema_model: Type[BaseModel]):
         self._base_url = base_url
         self._user = user
         self._password = password
-        self._schema_path = schema_path
+        self._schema_model = schema_model
         self._context: Optional[SiscanBrowserContext] = None
 
     @property
@@ -61,8 +61,8 @@ class WebPage(ABC):
         raise NotImplementedError("Subclasses devem implementar este método.")
 
     @property
-    def schema_path(self):
-        return self._schema_path
+    def schema_model(self) -> Type[BaseModel]:
+        return self._schema_model
 
     def get_field_metadata(
         self, field_name: str, map_label: Optional[dict[str, tuple]] = None

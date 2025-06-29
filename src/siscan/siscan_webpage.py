@@ -1,8 +1,9 @@
 import time
-from pathlib import Path
 
 import logging
-from typing import Callable, Any, Union
+from typing import Callable, Any, Type
+
+from pydantic import BaseModel
 
 from src.siscan.exception import (
     SiscanLoginError,
@@ -14,7 +15,6 @@ from src.siscan.exception import (
 )
 from src.utils.SchemaMapExtractor import SchemaMapExtractor
 from src.utils.validator import Validator, SchemaValidationError
-from src.utils.schema import create_model_from_json_schema
 from src.utils.webpage import WebPage
 from src.utils.xpath_constructor import XPathConstructor as XPE
 from src.utils import messages as msg
@@ -45,12 +45,9 @@ class SiscanWebPage(WebPage):
     MAP_SCHEMA_FIELDS = MAP_DATA_FIND_CARTAO_SUS + MAP_DATA_CARTAO_SUS
 
     def __init__(
-        self, base_url: str, user: str, password: str, schema_path: Union[str, Path]
+        self, base_url: str, user: str, password: str, schema_model: Type[BaseModel]
     ):
-        super().__init__(base_url, user, password, schema_path)
-        self.schema_model = create_model_from_json_schema(
-            "SchemaModel", Path(schema_path)
-        )
+        super().__init__(base_url, user, password, schema_model)
         map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
             self.schema_model, fields=SiscanWebPage.MAP_SCHEMA_FIELDS
         )

@@ -2,7 +2,6 @@ from typing import Optional
 import time
 import logging
 from playwright.async_api import Page, Locator, TimeoutError, ElementHandle
-from src.siscan.context import SiscanBrowserContext
 from src.siscan.exception import (
     SiscanMenuNotFoundError,
     XpathNotFoundError,
@@ -955,7 +954,7 @@ class XPathConstructor:
                 if reset:
                     self.reset()
                 return self
-            except Exception as e:
+            except Exception:
                 time.sleep(interval)
                 elapsed += interval
         raise TimeoutError(
