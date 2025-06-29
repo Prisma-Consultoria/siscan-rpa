@@ -336,12 +336,20 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
                 msg.CARTAO_SUS_NAO_INFORMADO,
             )
 
+        logger.debug("Iniciando preenchimento da requisição de mamografia diagnóstica")
+        # Preenche os campos comuns do formulário
         await super().preencher(data)
+        logger.debug("Preenchendo achados de exame clínico")
         await self.preencher_achados_exame_clinico(data)
+        logger.debug("Preenchendo controle radiológico de lesão categoria 3")
         await self.preencher_controle_radiologico_lesao_categoria_3(data)
+        logger.debug("Preenchendo lesão de diagnóstico de câncer")
         await self.preencher_lesao_diagnostico_cancer(data)
+        logger.debug("Preenchendo avaliação de resposta à quimioterapia")
         await self.preencher_avaliacao_resposta_quimioterapia(data)
+        logger.debug("Preenchendo revisão de mamografia de outra instituição")
         await self.preencher_revisao_mamografia_outra_instituicao(data)
+        logger.debug("Preenchendo controle de lesão pós-biópsia PAAF benigna")
         await self.preencher_controle_lesao_pos_biopsia_paaf_benigna(data)
 
     async def _check_checkbox_by_id(self, element_id: str):

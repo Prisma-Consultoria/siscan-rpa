@@ -29,7 +29,7 @@ async def test_preencher_requisicao_mamografia_rastreamento():
         base_url=SISCAN_URL, user=SISCAN_USER, password=SISCAN_PASSWORD
     )
 
-    req._context = SiscanBrowserContext(headless=False)
+    req._context = SiscanBrowserContext(headless=True)
 
     await req.authenticate()
     await req.preencher(json_data)
