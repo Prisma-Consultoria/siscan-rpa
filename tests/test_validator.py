@@ -21,6 +21,14 @@ def _load_data(json_path: Path) -> dict:
     data.setdefault("tipo_de_mamografia", TipoDeMamografia.RASTREAMENTO.value)
     # caso mamografia de rastreamento seja exigida
     data.setdefault("mamografia_de_rastreamento", MamografiaDeRastreamento.field_01.value)
+    # definir valor neutro para radioterapia e remover campos dependentes,
+    # permitindo que cada teste configure os valores necessários
+    data["fez_radioterapia_na_mama_ou_no_plastrao"] = (
+        FezRadioterapiaNaMamaOuNoPlastrao.field_02.value
+    )
+    data.pop("radioterapia_localizacao", None)
+    data.pop("ano_da_radioterapia_direita", None)
+    data.pop("ano_da_radioterapia_esquerda", None)
     return data
 
 
