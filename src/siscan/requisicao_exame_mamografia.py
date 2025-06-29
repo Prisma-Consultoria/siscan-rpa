@@ -3,6 +3,7 @@ import re
 import logging
 
 from src.siscan.exception import CartaoSusNotFoundError
+from src.siscan.siscan_webpage import SiscanWebPage
 from src.siscan.requisicao_exame import RequisicaoExame
 from src.siscan.schema.RequisicaoMamografiaRastreamentoSchema import (
     RequisicaoMamografiaRastreamentoSchema,
@@ -339,6 +340,17 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         logger.debug("Iniciando preenchimento da requisição de mamografia diagnóstica")
         # Preenche os campos comuns do formulário
         await super().preencher(data)
+
+        # Remove campos já utilizados pelas etapas anteriores para evitar
+        # que sejam processados novamente nas próximas fases do formulário.
+        fields_to_remove = (
+            SiscanWebPage.MAP_SCHEMA_FIELDS
+            + RequisicaoExame.MAP_SCHEMA_FIELDS
+            + RequisicaoExameMamografia.MAP_SCHEMA_FIELDS
+        )
+        for field in set(fields_to_remove):
+            data.pop(field, None)
+
         logger.debug("Preenchendo achados de exame clínico")
         await self.preencher_achados_exame_clinico(data)
         logger.debug("Preenchendo controle radiológico de lesão categoria 3")
