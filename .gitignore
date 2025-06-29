@@ -10,3 +10,5 @@ static/tmp/
 /src/dados.json
 fake_data.json
 real_data*.json
+
+.DS_Store

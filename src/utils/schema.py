@@ -212,6 +212,10 @@ def _parse_field(fs: dict, required: bool):
         kwargs = {}
         if "pattern" in fs:
             kwargs["pattern"] = fs["pattern"]
+        if "minLength" in fs:
+            kwargs["min_length"] = fs["minLength"]
+        if "maxLength" in fs:
+            kwargs["max_length"] = fs["maxLength"]
         return (Optional[typ] if optional else typ, Field(default, **kwargs))
     if t == "array":
         items = fs.get("items", {})
