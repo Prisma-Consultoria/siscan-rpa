@@ -24,7 +24,7 @@ async def test_authenticate():
     await req.authenticate()
 
     assert (
-        (await req.context.page)
+        await (await req.context.page)
         .locator('h1:text("SEJA BEM VINDO AO SISCAN")')
         .is_visible()
     )

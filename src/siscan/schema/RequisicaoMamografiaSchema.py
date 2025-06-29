@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Annotated, List, Optional
 from pydantic import Field
 from pydantic.functional_validators import model_validator
+
 from src.siscan.schema.RequisicaoNovoExameSchema import RequisicaoNovoExameSchema
 from src.siscan.schema import (
     YNIDK,
@@ -415,17 +416,5 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
                     "Se 'radioterapia_localizacao' = 03, precisa informar ambos "
                     "'ano_da_radioterapia_direita' e 'ano_da_radioterapia_esquerda'."
                 )
-
-        # 5) Se tipo_de_mamografia == 'Rastreamento', tipo_mamografia_de_rastreamento é obrigatório
-        tipo = values.tipo_de_mamografia
-        mamo = values.tipo_mamografia_de_rastreamento
-        if tipo == TipoDeMamografia.RASTREAMENTO and not mamo:
-            raise ValueError(
-                "Se tipo_de_mamografia = Rastreamento, precisa informar 'tipo_mamografia_de_rastreamento'."
-            )
-        if tipo != TipoDeMamografia.RASTREAMENTO and mamo:
-            raise ValueError(
-                "Se tipo_de_mamografia ≠ Rastreamento, não deve informar 'tipo_mamografia_de_rastreamento'."
-            )
 
         return values

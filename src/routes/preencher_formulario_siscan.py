@@ -1,6 +1,11 @@
 from fastapi import APIRouter, Depends
 
-from src.utils.schema import PreencherSolicitacaoInput
+from src.siscan.schema.RequisicaoMamografiaDiagnosticaSchema import (
+    RequisicaoMamografiaDiagnosticaSchema,
+)
+from src.siscan.schema.RequisicaoMamografiaRastreamentoSchema import (
+    RequisicaoMamografiaRastreamentoSchema,
+)
 from src.utils.dependencies import _get_user_uuid
 from src.utils.helpers import run_rpa
 
@@ -8,15 +13,29 @@ router = APIRouter(prefix="/preencher-formulario-siscan", tags=["siscan"])
 
 
 @router.post(
-    "/solicitacao-mamografia",
-    summary="Preencher Solicitação de Mamografia",
-    description="Executa o RPA para preencher a solicitação de mamografia no SIScan",
+    "/requisicao-mamografia-rastreamento",
+    summary="Requisição de Mamografia de Rastreamento",
+    description="Executa o RPA para preencher o formulário de requisição de mamografia de rastreamento no SISCAN",
 )
 async def preencher_solicitacao(
-    data: PreencherSolicitacaoInput,
+    data: RequisicaoMamografiaRastreamentoSchema,
     uuid: str = Depends(_get_user_uuid),
 ):
-    result = await run_rpa("solicitacao", data.__dict__)
+    result = await run_rpa("requisicao-rastreamento", data.__dict__)
+    result.update({"user_uuid": uuid})
+    return result
+
+
+@router.post(
+    "/requisicao-mamografia-diagnostica",
+    summary="Requisição de Mamografia Diagnóstica",
+    description="Executa o RPA para preencher o formulário de requisição de mamografia diagnóstica no SISCAN",
+)
+async def preencher_solicitacao_diagnostica(
+    data: RequisicaoMamografiaDiagnosticaSchema,
+    uuid: str = Depends(_get_user_uuid),
+):
+    result = await run_rpa("requisicao-diagnostica", data.__dict__)
     result.update({"user_uuid": uuid})
     return result
 

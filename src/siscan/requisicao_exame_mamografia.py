@@ -140,7 +140,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
             erro_dependente_msg=msg.ANO_MAMOGRAFIA_REQUIRED,
         )
 
-    async def preenche_fez_radioterapia_na_mama_ou_no_plastao(self, data: dict):
+    async def preencher_fez_radioterapia_na_mama_ou_no_plastao(self, data: dict):
         # Para "FEZ RADIOTERAPIA NA MAMA OU NO PLASTRÃO?"
         _, value = await self.select_value(
             "fez_radioterapia_na_mama_ou_no_plastrao", data
@@ -165,13 +165,13 @@ class RequisicaoExameMamografia(RequisicaoExame):
                 erro_dependente_msg=msg.ANO_RADIOTERAPIA_REQUIRED,
             )
 
-    async def preenche_fez_cirurgia_cirurgica(self, data: dict):
+    async def preencher_fez_cirurgia_cirurgica(self, data: dict):
         # Para "FEZ CIRURGIA DE MAMA?"
         _, value = await self.select_value("fez_cirurgia_de_mama", data)
         if value == "S":
             await self.preencher_ano_cirurgia(data)
 
-    async def preenche_tipo_mamografia(self, data: dict):
+    async def preencher_tipo_mamografia(self, data: dict):
         text, _ = await self.select_value("tipo_de_mamografia", data)
         if text == "Rastreamento":
             await self.select_value("tipo_mamografia_de_rastreamento", data)
@@ -203,9 +203,9 @@ class RequisicaoExameMamografia(RequisicaoExame):
         await (await xpath_ctx.find_form_button("Avançar")).handle_click()
 
         await self.preecher_fez_mamografia_alguma_vez(data)
-        await self.preenche_fez_radioterapia_na_mama_ou_no_plastao(data)
-        await self.preenche_fez_cirurgia_cirurgica(data)
-        await self.preenche_tipo_mamografia(data)
+        await self.preencher_fez_radioterapia_na_mama_ou_no_plastao(data)
+        await self.preencher_fez_cirurgia_cirurgica(data)
+        await self.preencher_tipo_mamografia(data)
 
         await self.select_value("tem_nodulo_ou_caroco_na_mama", data)
         data.pop("tem_nodulo_ou_caroco_na_mama")
@@ -220,7 +220,6 @@ class RequisicaoExameMamografia(RequisicaoExame):
         await self.take_screenshot("screenshot_04_requisicao_exame_mamografia.png")
 
     async def preencher_ano_cirurgia(self, data: dict):
-
         anos_procedimentos = [
             "ano_biopsia_cirurgica_incisional_direita",
             "ano_biopsia_cirurgica_incisional_esquerda",
@@ -311,7 +310,6 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
 
         return data
 
-
     async def preencher(self, data: dict):
         """
         Preenche o formulário de requisição de exame com os dados fornecidos.
@@ -372,7 +370,7 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
             await xpath_ctx.fill_form_fields(data_final, fields_map)
             for k in sub_campos:
                 data.pop(k, None)
-    
+
     async def preencher_achados_exame_clinico(self, data: dict):
         """
         Preenche os achados do exame clínico de mama com base nos dados fornecidos.
@@ -383,7 +381,7 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
             prefixo="exame_clinico_mama",
             element_id="frm:achadosExameClinico",
         )
-    
+
     async def preencher_controle_radiologico_lesao_categoria_3(self, data: dict):
         """
         Preenche o controle radiológico de lesão categoria 3 com base nos dados fornecidos.
@@ -416,7 +414,7 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
             prefixo="avaliacao_resposta_quimioterapia",
             element_id="frm:avaliacaoRespostaQuimioterapia",
         )
-    
+
     async def preencher_revisao_mamografia_outra_instituicao(self, data: dict):
         """
         Preenche a revisão de mamografia de outra instituição com base nos dados fornecidos.
