@@ -30,7 +30,7 @@ if not priv.exists() or not pub.exists():
         )
     )
 
-from src.main import app
+from src.main import app  # noqa: E402
 
 
 @pytest.fixture

@@ -1,6 +1,6 @@
-from pathlib import Path
+from typing import Type
 
-from typing import Union
+from pydantic import BaseModel
 
 from abc import abstractmethod
 
@@ -27,9 +27,9 @@ class RequisicaoExame(SiscanWebPage):
     ]
 
     def __init__(
-        self, base_url: str, user: str, password: str, schema_path: Union[str, Path]
+        self, base_url: str, user: str, password: str, schema_model: Type[BaseModel]
     ):
-        super().__init__(base_url, user, password, schema_path)
+        super().__init__(base_url, user, password, schema_model)
         map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
             self.schema_model, fields=RequisicaoExame.MAP_SCHEMA_FIELDS
         )
