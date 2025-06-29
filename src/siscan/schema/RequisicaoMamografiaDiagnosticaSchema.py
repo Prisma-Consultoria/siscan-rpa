@@ -576,3 +576,101 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
             title="CONTROLE DE LESÃO PÓS-BIÓPSIA PAAF BENIGNA > MAMA ESQUERDA - LINFONODO AXILAR",
         ),
     ] = None
+
+    @model_validator(mode="after")
+    def valida_grupos(cls, values):
+        # grupo achados_exame_clinico
+        fields_achados = [
+            "exame_clinico_mama_direita_lesao_papilar",
+            "exame_clinico_mama_direita_descarga_papilar_espontanea",
+            "exame_clinico_mama_direita_nodulo_localizacao",
+            "exame_clinico_mama_direita_espessamento_localizacao",
+            "exame_clinico_mama_direta_linfonodo_palpavel",
+            "exame_clinico_mama_esquerda_lesao_papilar",
+            "exame_clinico_mama_esquerda_descarga_papilar_espontanea",
+            "exame_clinico_mama_esquerda_nodulo_localizacao",
+            "exame_clinico_mama_esquerda_espessamento_localizacao",
+            "exame_clinico_mama_esquerda_linfonodo_palpavel",
+        ]
+        if any(getattr(values, f) is not None for f in fields_achados):
+            values.achados_exame_clinico = True
+
+        # grupo controle_radiologico_lesao_categoria_3
+        fields_controle_radiologico = [
+            "controle_radiologico_lesao_categoria_3_mama_direita_nodulo",
+            "controle_radiologico_lesao_categoria_3_mama_direita_microcalcificacoes",
+            "controle_radiologico_lesao_categoria_3_mama_direita_assimetria_focal",
+            "controle_radiologico_lesao_categoria_3_mama_direita_assimetria_difusa",
+            "controle_radiologico_lesao_categoria_3_mama_direita_area_densa",
+            "controle_radiologico_lesao_categoria_3_mama_direita_distorcao_focal",
+            "controle_radiologico_lesao_categoria_3_mama_direita_linfonodo_axilar",
+            "controle_radiologico_lesao_categoria_3_mama_esquerda_nodulo",
+            "controle_radiologico_lesao_categoria_3_mama_esquerda_microcalcificacoes",
+            "controle_radiologico_lesao_categoria_3_mama_esquerda_assimetria_focal",
+            "controle_radiologico_lesao_categoria_3_mama_esquerda_assimetria_difusa",
+            "controle_radiologico_lesao_categoria_3_mama_esquerda_area_densa",
+            "controle_radiologico_lesao_categoria_3_mama_esquerda_distorcao_focal",
+            "controle_radiologico_lesao_categoria_3_mama_esquerda_linfonodo_axilar",
+        ]
+        if any(getattr(values, f) is not None for f in fields_controle_radiologico):
+            values.controle_radiologico_lesao_categoria_3 = True
+
+        # grupo lesao_diagnostico_cancer
+        fields_lesao_cancer = [
+            "lesao_diagnostico_cancer_mama_direita_nodulo",
+            "lesao_diagnostico_cancer_mama_direita_microcalcificacoes",
+            "lesao_diagnostico_cancer_mama_direita_assimetria_focal",
+            "lesao_diagnostico_cancer_mama_direita_assimetria_difusa",
+            "lesao_diagnostico_cancer_mama_direita_area_densa",
+            "lesao_diagnostico_cancer_mama_direita_distorcao_focal",
+            "lesao_diagnostico_cancer_mama_direita_linfonodo_axilar",
+            "lesao_diagnostico_cancer_mama_esquerda_nodulo",
+            "lesao_diagnostico_cancer_mama_esquerda_microcalcificacoes",
+            "lesao_diagnostico_cancer_mama_esquerda_assimetria_focal",
+            "lesao_diagnostico_cancer_mama_esquerda_assimetria_difusa",
+            "lesao_diagnostico_cancer_mama_esquerda_area_densa",
+            "lesao_diagnostico_cancer_mama_esquerda_distorcao_focal",
+            "lesao_diagnostico_cancer_mama_esquerda_linfonodo_axilar",
+        ]
+        if any(getattr(values, f) is not None for f in fields_lesao_cancer):
+            values.lesao_diagnostico_cancer = True
+
+        # grupo avaliacao_resposta_quimioterapia_neoadjuvante
+        if values.avaliacao_resposta_quimioterapia_lateralidade is not None:
+            values.avaliacao_resposta_quimioterapia_neoadjuvante = True
+
+        # grupo revisao_mamografia_outra_instituicao
+        fields_revisao = [
+            "revisao_mamografia_outra_instituicao_mama_direita_categoria_0",
+            "revisao_mamografia_outra_instituicao_mama_direita_categoria_3",
+            "revisao_mamografia_outra_instituicao_mama_direita_categoria_4",
+            "revisao_mamografia_outra_instituicao_mama_direita_categoria_5",
+            "revisao_mamografia_outra_instituicao_mama_esquerda_categoria_0",
+            "revisao_mamografia_outra_instituicao_mama_esquerda_categoria_3",
+            "revisao_mamografia_outra_instituicao_mama_esquerda_categoria_4",
+            "revisao_mamografia_outra_instituicao_mama_esquerda_categoria_5",
+        ]
+        if any(getattr(values, f) is not None for f in fields_revisao):
+            values.revisao_mamografia_outra_instituicao = True
+
+        # grupo controle_lesao_pos_biopsia_paaf_benigna
+        fields_controle_paaf = [
+            "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_nodulo",
+            "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_microcalcificacoes",
+            "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_assimetria_focal",
+            "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_assimetria_difusa",
+            "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_area_densa",
+            "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_distorcao_focal",
+            "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_linfonodo_axilar",
+            "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_nodulo",
+            "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_microcalcificacoes",
+            "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_assimetria_focal",
+            "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_assimetria_difusa",
+            "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_area_densa",
+            "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_distorcao_focal",
+            "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_linfonodo_axilar",
+        ]
+        if any(getattr(values, f) is not None for f in fields_controle_paaf):
+            values.controle_lesao_pos_biopsia_paaf_benigna = True
+
+        return values
