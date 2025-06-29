@@ -819,8 +819,7 @@ class XPathConstructor:
                 return self
             await self._select_option_with_retry(locator, value, timeout)
         elif input_type == InputType.CHECKBOX:
-            # Para checkbox: encontrar todos os inputs dentro da tabela
-            # localizada
+            # Para checkbox: encontrar todos os inputs dentro da tabela localizada
             valores = value if isinstance(value, list) else [value]
             # Usar CSS selector!
             checkboxes = locator.locator("input[type='checkbox']")

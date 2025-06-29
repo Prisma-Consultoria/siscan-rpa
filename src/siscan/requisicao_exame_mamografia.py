@@ -220,6 +220,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
         await self.take_screenshot("screenshot_04_requisicao_exame_mamografia.png")
 
     async def preencher_ano_cirurgia(self, data: dict):
+
         anos_procedimentos = [
             "ano_biopsia_cirurgica_incisional_direita",
             "ano_biopsia_cirurgica_incisional_esquerda",
@@ -248,6 +249,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
             "ano_inclusao_implantes_direita",
             "ano_inclusao_implantes_esquerda",
         ]
+
         for campo_nome in anos_procedimentos:
             lado = "direita" if "direita" in campo_nome else "esquerda"
 
@@ -307,3 +309,80 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         # Chama validação da classe base "RequisicaoExame"
         RequisicaoExame.validation(self, data)
 
+        return data
+
+
+    async def preencher(self, data: dict):
+        """
+        Preenche o formulário de requisição de exame com os dados fornecidos.
+
+        Parâmetros
+        ----------
+        data : dict
+            Dicionário contendo os dados a serem preenchidos no formulário.
+        """
+        data = self.validation(data)
+
+        # Verifica se o Cartão SUS foi informado
+        if not data.get("cartao_sus"):
+            raise CartaoSusNotFoundError(
+                self.context,
+                msg.CARTAO_SUS_NAO_INFORMADO,
+            )
+
+        await super().preencher(data)
+        await self.preencher_achados_exame_clinico(data)
+        await self.preencher_controle_radiologico_lesao_categoria_3(data)
+        await self.preencher_lesao_diagnostico_cancer(data)
+        await self.preencher_revisao_mamografia_outra_instituicao(data)
+        await self.preencher_controle_lesao_pos_biopsia_paaf_benigna(data)
+    
+    async def preencher_achados_exame_clinico(self, data: dict):
+        """
+        Preenche os achados do exame clínico de mama com base nos dados fornecidos.
+        """
+        xpath_ctx = await XPE.create(self.context)
+
+        # Verifica se existe algum campo em data que se inicia com exame_clinico_mama
+        exame_clinico_fields = [
+            key for key in data.keys() if key.startswith("exame_clinico_mama")
+        ]
+        if not exame_clinico_fields:
+            logger.warning(
+                "Nenhum campo de exame clínico de mama encontrado em 'data'."
+            )
+            return
+        else:
+            # Clica no botão de "Achados do Exame Clínico"
+            await xpath_ctx.handle_fill("ACHADOS NO EXAME CLÍNICO", "checkbox")
+            pass
+    
+    async def preencher_controle_radiologico_lesao_categoria_3(self, data: dict):
+        """
+        Preenche o controle radiológico de lesão categoria 3 com base nos dados fornecidos.
+        """
+        pass
+
+    async def preencher_lesao_diagnostico_cancer(self, data: dict):
+        """
+        Preenche a lesão de diagnóstico de câncer com base nos dados fornecidos.
+        """
+        pass
+
+    async def preencher_avaliacao_resposta_quimioterapia(self, data: dict):
+        """
+        Preenche a avaliação de resposta à quimioterapia com base nos dados fornecidos.
+        """
+        pass
+    
+    async def preencher_revisao_mamografia_outra_instituicao(self, data: dict):
+        """
+        Preenche a revisão de mamografia de outra instituição com base nos dados fornecidos.
+        """
+        pass
+
+    async def preencher_controle_lesao_pos_biopsia_paaf_benigna(self, data: dict):
+        """
+        Preenche o controle de lesão pós-biópsia PAAF benigna com base nos dados fornecidos.
+        """
+        pass
