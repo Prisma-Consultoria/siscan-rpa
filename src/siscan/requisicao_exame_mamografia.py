@@ -300,6 +300,14 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         fields_map.update(self.FIELDS_MAP)
         self.FIELDS_MAP = fields_map
 
+    def get_map_label(self) -> dict[str, tuple[str, str, str]]:
+        """Retorna o mapeamento de campos específico deste exame."""
+        map_label = {
+            **RequisicaoExameMamografiaDiagnostica.MAP_DATA_LABEL,
+        }
+        map_label.update(super().get_map_label())
+        return map_label
+
     def validation(self, data: dict):
         # Define o tipo de exame como Mamografia Diagnóstica
         data["tipo_exame_mama"] = "01"
