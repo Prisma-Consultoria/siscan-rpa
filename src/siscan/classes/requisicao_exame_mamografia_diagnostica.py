@@ -1,5 +1,7 @@
 import logging
 
+from typing import Type
+from pydantic import BaseModel
 
 from src.siscan.classes.requisicao_exame import RequisicaoExame
 from src.siscan.classes.requisicao_exame_mamografia import (
@@ -20,14 +22,13 @@ logger = logging.getLogger(__name__)
 class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
     """Preenche a solicitação de mamografia do tipo diagnóstica."""
 
-    def __init__(self, base_url: str, user: str, password: str):
+    def __init__(self, base_url: str, user: str, password: str, schema_model: Type[BaseModel] = RequisicaoMamografiaDiagnosticaSchema):
         # Inicializa com o schema específico para mamografia diagnóstica
-        RequisicaoExame.__init__(
-            self,
+        super().__init__(
             base_url,
             user,
             password,
-            RequisicaoMamografiaDiagnosticaSchema,
+            schema_model,
         )
 
         base_fields = set(RequisicaoMamografiaSchema.model_fields.keys())
@@ -73,10 +74,8 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         """
 
         logger.debug("Iniciando preenchimento da requisição de mamografia diagnóstica")
-        # Preenche os campos comuns do formulário
-        print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-        print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-        await RequisicaoExame.preencher(self, data)
+
+        await super().preencher(data)
 
         xpath_ctx = await XPE.create(
             self.context

@@ -17,7 +17,7 @@ SISCAN_URL = os.getenv("SISCAN_URL", "https://siscan.saude.gov.br/")
 SISCAN_USER = os.getenv("SISCAN_USER", "")
 SISCAN_PASSWORD = os.getenv("SISCAN_PASSWORD", "")
 
-DEFAULT_TIMEOUT = 5
+DEFAULT_TIMEOUT = 10
 
 # Carrega chaves RSA
 with open("rsa_private_key.pem", "rb") as f:

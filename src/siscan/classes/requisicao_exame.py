@@ -157,4 +157,4 @@ class RequisicaoExame(SiscanWebPage):
         fields_map.pop("prestador")
 
         await xpath.fill_form_fields(data_final, fields_map)
-        await self.take_screenshot("screenshot_03_requisicao_exame.png")
+        await self.take_screenshot("screenshot_03.png")

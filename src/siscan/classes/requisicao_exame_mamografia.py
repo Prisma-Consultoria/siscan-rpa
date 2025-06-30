@@ -2,6 +2,9 @@ import re
 
 import logging
 
+from typing import Type
+from pydantic import BaseModel
+
 from src.siscan.exception import CartaoSusNotFoundError
 from src.siscan.classes.requisicao_exame import RequisicaoExame
 
@@ -31,12 +34,18 @@ class RequisicaoExameMamografia(RequisicaoExame):
         },
     }
 
-    def __init__(self, base_url: str, user: str, password: str):
+    def __init__(
+        self,
+        base_url: str,
+        user: str,
+        password: str,
+        schema_model: Type[BaseModel] = RequisicaoMamografiaSchema,
+    ):
         super().__init__(
             base_url,
             user,
             password,
-            RequisicaoMamografiaSchema,
+            schema_model,
         )
 
         map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
@@ -61,7 +70,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
         map_label = {
             **RequisicaoExameMamografia.MAP_DATA_LABEL,
         }
-        # map_label.update(super().get_map_label())
+        map_label.update(super().get_map_label())
         return map_label
 
     async def selecionar_tipo_exame(self, data: dict):
@@ -130,7 +139,6 @@ class RequisicaoExameMamografia(RequisicaoExame):
 
     async def preencher_tipo_mamografia(self, data: dict):
         text, _ = await self.select_value("tipo_de_mamografia", data)
-            
 
     async def preencher(self, data: dict):
         """
@@ -175,7 +183,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
         )
         await xpath_ctx.fill_form_fields(data_final, fields_map)
 
-        await self.take_screenshot("screenshot_04_requisicao_exame_mamografia.png")
+        await self.take_screenshot("screenshot_04.png")
 
     async def preencher_ano_cirurgia(self, data: dict):
         anos_procedimentos = [
@@ -235,8 +243,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
             )
             data.pop(campo_nome)
 
+
 base_fields = set(RequisicaoNovoExameSchema.model_fields.keys())
 diag_fields = set(RequisicaoMamografiaSchema.model_fields.keys())
-RequisicaoExameMamografia.MAP_SCHEMA_FIELDS = sorted(
-    diag_fields - base_fields
-)
+RequisicaoExameMamografia.MAP_SCHEMA_FIELDS = sorted(diag_fields - base_fields)
