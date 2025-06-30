@@ -122,7 +122,7 @@ class PreencherSolicitacaoInput(BaseModel):
     ano_mastoplastia_redutora_esquerda: str
     ano_inclusao_implantes_direita: str
     ano_inclusao_implantes_esquerda: str
-    mamografia_de_rastreamento: str
+    tipo_mamografia_de_rastreamento: str
     data_da_solicitacao: str
 
     model_config = {

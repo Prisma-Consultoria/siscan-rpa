@@ -140,7 +140,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
             erro_dependente_msg=msg.ANO_MAMOGRAFIA_REQUIRED,
         )
 
-    async def preenche_fez_radioterapia_na_mama_ou_no_plastao(self, data: dict):
+    async def preencher_fez_radioterapia_na_mama_ou_no_plastao(self, data: dict):
         # Para "FEZ RADIOTERAPIA NA MAMA OU NO PLASTRÃO?"
         _, value = await self.select_value(
             "fez_radioterapia_na_mama_ou_no_plastrao", data
@@ -165,13 +165,13 @@ class RequisicaoExameMamografia(RequisicaoExame):
                 erro_dependente_msg=msg.ANO_RADIOTERAPIA_REQUIRED,
             )
 
-    async def preenche_fez_cirurgia_cirurgica(self, data: dict):
+    async def preencher_fez_cirurgia_cirurgica(self, data: dict):
         # Para "FEZ CIRURGIA DE MAMA?"
         _, value = await self.select_value("fez_cirurgia_de_mama", data)
         if value == "S":
             await self.preencher_ano_cirurgia(data)
 
-    async def preenche_tipo_mamografia(self, data: dict):
+    async def preencher_tipo_mamografia(self, data: dict):
         text, _ = await self.select_value("tipo_de_mamografia", data)
         if text == "Rastreamento":
             await self.select_value("tipo_mamografia_de_rastreamento", data)
@@ -203,9 +203,9 @@ class RequisicaoExameMamografia(RequisicaoExame):
         await (await xpath_ctx.find_form_button("Avançar")).handle_click()
 
         await self.preecher_fez_mamografia_alguma_vez(data)
-        await self.preenche_fez_radioterapia_na_mama_ou_no_plastao(data)
-        await self.preenche_fez_cirurgia_cirurgica(data)
-        await self.preenche_tipo_mamografia(data)
+        await self.preencher_fez_radioterapia_na_mama_ou_no_plastao(data)
+        await self.preencher_fez_cirurgia_cirurgica(data)
+        await self.preencher_tipo_mamografia(data)
 
         await self.select_value("tem_nodulo_ou_caroco_na_mama", data)
         data.pop("tem_nodulo_ou_caroco_na_mama")

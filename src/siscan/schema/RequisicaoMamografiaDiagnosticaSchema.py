@@ -79,14 +79,14 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
             title="MAMA DIREITA - ESPESSAMENTO LOCALIZAÇÃO",
         ),
     ] = None
-    exame_clinico_mama_direta_linfonodo_palpavel: Annotated[
+    exame_clinico_mama_direita_linfonodo_palpavel: Annotated[
         Optional[List[LocalizacaoLinfonodo]],
         Field(
             description="Exame clínico da mama direita: Linfonodo palpável (01=Axilar, 02=Supraclavicular)",
             json_schema_extra={"x-widget": "checkbox"},
             title="MAMA DIREITA - LINFONODO PALPÁVEL",
         ),
-    ]
+    ] = None
     exame_clinico_mama_esquerda_lesao_papilar: Annotated[
         Optional[YesOrNone],
         Field(
@@ -94,7 +94,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
             json_schema_extra={"x-widget": "checkbox"},
             title="MAMA ESQUERDA - LESÃO PAPILAR",
         ),
-    ]
+    ] = None
     exame_clinico_mama_esquerda_descarga_papilar_espontanea: Annotated[
         Optional[TipoDescargaPapilar],
         Field(
@@ -585,7 +585,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
             "exame_clinico_mama_direita_descarga_papilar_espontanea",
             "exame_clinico_mama_direita_nodulo_localizacao",
             "exame_clinico_mama_direita_espessamento_localizacao",
-            "exame_clinico_mama_direta_linfonodo_palpavel",
+            "exame_clinico_mama_direita_linfonodo_palpavel",
             "exame_clinico_mama_esquerda_lesao_papilar",
             "exame_clinico_mama_esquerda_descarga_papilar_espontanea",
             "exame_clinico_mama_esquerda_nodulo_localizacao",
