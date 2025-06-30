@@ -41,7 +41,7 @@ def test_create_user_env(client):
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_authenticate_env_user():
+async def test_authenticate_env_user(headless: bool):
     # Captura o usuário e senha do banco de dados, tomando o usuário como chave única
     db = get_db()
     user = db.query(User).filter_by(username=SISCAN_USER).first()
@@ -69,7 +69,7 @@ async def test_authenticate_env_user():
     )
     req._context = SiscanBrowserContext(
         base_url=SISCAN_URL,
-        headless=False,
+        headless=headless,
         timeout=15000,
     )
 

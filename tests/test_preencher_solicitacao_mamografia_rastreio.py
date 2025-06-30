@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_preencher_requisicao_mamografia_rastreamento():
+async def test_preencher_requisicao_mamografia_rastreamento(headless: bool):
     # Você precisa ter um arquivo JSON com dados reais apra preencher o formulário, certifique-se de que o caminho está correto.
     dados_path = Path("real_data_rastreamento.json")
 
@@ -27,7 +27,7 @@ async def test_preencher_requisicao_mamografia_rastreamento():
         base_url=SISCAN_URL, user=SISCAN_USER, password=SISCAN_PASSWORD
     )
 
-    req._context = SiscanBrowserContext(headless=True)
+    req._context = SiscanBrowserContext(headless=headless)
 
     await req.authenticate()
     await req.preencher(json_data)

@@ -14,14 +14,14 @@ logger = logging.getLogger(__name__)
 
 
 @pytest_asyncio.fixture(scope="session")
-async def siscan_form():
+async def siscan_form(headless: bool):
     """Autentica no SIScan e navega até o formulário de novo exame."""
     req = RequisicaoExameMamografiaRastreio(
         base_url=SISCAN_URL,
         user=SISCAN_USER,
         password=SISCAN_PASSWORD,
     )
-    req._context = SiscanBrowserContext(headless=True)
+    req._context = SiscanBrowserContext(headless=headless)
 
     await req.authenticate()
     await req._novo_exame(event_button=True)

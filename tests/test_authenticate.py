@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.asyncio
-async def test_authenticate():
+async def test_authenticate(headless: bool):
     req = RequisicaoExameMamografiaRastreio(
         base_url=SISCAN_URL,
         user=SISCAN_USER,
@@ -19,7 +19,7 @@ async def test_authenticate():
     # Use contexto headless para nao abrir janela durante testes
     req._context = SiscanBrowserContext(
         base_url=SISCAN_URL,
-        headless=False,
+        headless=headless,
         timeout=15000,
     )
 
