@@ -7,7 +7,7 @@ from abc import abstractmethod
 import logging
 
 from src.siscan.exception import SiscanInvalidFieldValueError
-from src.siscan.siscan_webpage import SiscanWebPage
+from src.siscan.classes.webpage import SiscanWebPage
 from src.utils.SchemaMapExtractor import SchemaMapExtractor
 from src.utils.xpath_constructor import XPathConstructor as XPE, InputType
 from src.utils.webpage import RequirementLevel

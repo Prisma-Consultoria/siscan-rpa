@@ -113,7 +113,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
         """
         await self.select_value("tipo_exame_mama", data)
 
-    async def preecher_tem_nodulo_ou_caroco_na_mama(self, data: dict):
+    async def preencher_tem_nodulo_ou_caroco_na_mama(self, data: dict):
         """
         Preenche o campo de nódulo ou caroço na mama com base nos dados
         fornecidos.
@@ -207,6 +207,8 @@ class RequisicaoExameMamografia(RequisicaoExame):
         await self.preencher_fez_cirurgia_cirurgica(data)
         await self.preencher_tipo_mamografia(data)
 
+        # TODO
+        # TOFIX, não seria para implementar self.preencher_tem_nodulo_ou_caroco_na_mama ?
         await self.select_value("tem_nodulo_ou_caroco_na_mama", data)
         data.pop("tem_nodulo_ou_caroco_na_mama")
 
