@@ -10,6 +10,17 @@ from fastapi.testclient import TestClient
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 
+# Determine whether Playwright should run in headless mode. This can be
+# controlled via the ``HEADLESS`` environment variable. If the variable is not
+# defined, the default is ``True``.
+HEADLESS: bool = os.getenv("HEADLESS", "true").lower() == "true"
+
+
+@pytest.fixture(scope="session")
+def headless() -> bool:
+    """Return whether tests should run Playwright in headless mode."""
+    return HEADLESS
+
 ROOT = Path(__file__).resolve().parents[1]
 
 priv = ROOT / "rsa_private_key.pem"

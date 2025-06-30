@@ -10,10 +10,10 @@ logger = logging.getLogger(__name__)
 
 
 @pytest_asyncio.fixture(scope="session")
-async def playwright_page():
+async def playwright_page(headless: bool):
     """Cria contexto Playwright manualmente e autentica no SIScan."""
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
+        browser = await p.chromium.launch(headless=headless)
         context = await browser.new_context(base_url=SISCAN_URL)
         page = await context.new_page()
 
