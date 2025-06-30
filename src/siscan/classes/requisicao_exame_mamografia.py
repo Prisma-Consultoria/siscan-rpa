@@ -3,7 +3,7 @@ import re
 import logging
 
 from src.siscan.exception import CartaoSusNotFoundError
-from src.siscan.requisicao_exame import RequisicaoExame
+from src.siscan.classes.requisicao_exame import RequisicaoExame
 from src.siscan.schema.RequisicaoMamografiaRastreamentoSchema import (
     RequisicaoMamografiaRastreamentoSchema,
 )
@@ -222,7 +222,6 @@ class RequisicaoExameMamografia(RequisicaoExame):
         await self.take_screenshot("screenshot_04_requisicao_exame_mamografia.png")
 
     async def preencher_ano_cirurgia(self, data: dict):
-
         anos_procedimentos = [
             "ano_biopsia_cirurgica_incisional_direita",
             "ano_biopsia_cirurgica_incisional_esquerda",
@@ -313,7 +312,6 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
 
         return data
 
-
     async def preencher(self, data: dict):
         """
         Preenche o formulário de requisição de exame com os dados fornecidos.
@@ -374,7 +372,7 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
             await xpath_ctx.fill_form_fields(data_final, fields_map)
             for k in sub_campos:
                 data.pop(k, None)
-    
+
     async def preencher_achados_exame_clinico(self, data: dict):
         """
         Preenche os achados do exame clínico de mama com base nos dados fornecidos.
@@ -385,7 +383,7 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
             prefixo="exame_clinico_mama",
             element_id="frm:achadosExameClinico",
         )
-    
+
     async def preencher_controle_radiologico_lesao_categoria_3(self, data: dict):
         """
         Preenche o controle radiológico de lesão categoria 3 com base nos dados fornecidos.
@@ -418,7 +416,7 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
             prefixo="avaliacao_resposta_quimioterapia",
             element_id="frm:avaliacaoRespostaQuimioterapia",
         )
-    
+
     async def preencher_revisao_mamografia_outra_instituicao(self, data: dict):
         """
         Preenche a revisão de mamografia de outra instituição com base nos dados fornecidos.

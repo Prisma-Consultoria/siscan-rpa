@@ -1,6 +1,8 @@
 import pytest
 import pytest_asyncio
-from src.siscan.requisicao_exame_mamografia import RequisicaoExameMamografia
+from src.siscan.classes.requisicao_exame_mamografia_rastreio import (
+    RequisicaoExameMamografiaRastreio,
+)
 from src.utils.xpath_constructor import XPathConstructor as XPE, InputType
 from src.utils.validator import Validator
 from src.siscan.context import SiscanBrowserContext
@@ -14,7 +16,7 @@ logger = logging.getLogger(__name__)
 @pytest_asyncio.fixture(scope="session")
 async def siscan_form():
     """Autentica no SIScan e navega até o formulário de novo exame."""
-    req = RequisicaoExameMamografia(
+    req = RequisicaoExameMamografiaRastreio(
         base_url=SISCAN_URL,
         user=SISCAN_USER,
         password=SISCAN_PASSWORD,

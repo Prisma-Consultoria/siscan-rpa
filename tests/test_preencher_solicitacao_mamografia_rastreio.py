@@ -2,9 +2,8 @@ import pytest
 import logging
 from pathlib import Path
 
-from src.siscan.requisicao_exame_mamografia import (
-    RequisicaoExameMamografia,
-    RequisicaoExameMamografiaDiagnostica,
+from src.siscan.classes.requisicao_exame_mamografia_rastreio import (
+    RequisicaoExameMamografiaRastreio,
 )
 from src.env import SISCAN_URL, SISCAN_USER, SISCAN_PASSWORD
 from src.utils.validator import Validator
@@ -24,7 +23,7 @@ async def test_preencher_requisicao_mamografia_rastreamento():
 
     json_data = Validator.load_json(dados_path)
 
-    req = RequisicaoExameMamografia(
+    req = RequisicaoExameMamografiaRastreio(
         base_url=SISCAN_URL, user=SISCAN_USER, password=SISCAN_PASSWORD
     )
 

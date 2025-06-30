@@ -5,7 +5,9 @@ import secrets
 from src.main import app
 from src.env import SISCAN_USER, SISCAN_PASSWORD, SISCAN_URL, get_db
 from src.models import User, ApiKey
-from src.siscan.requisicao_exame_mamografia import RequisicaoExameMamografia
+from src.siscan.classes.requisicao_exame_mamografia_rastreio import (
+    RequisicaoExameMamografiaRastreio,
+)
 from src.siscan.context import SiscanBrowserContext
 
 
@@ -60,7 +62,7 @@ async def test_authenticate_env_user():
         ),
     ).decode()
 
-    req = RequisicaoExameMamografia(
+    req = RequisicaoExameMamografiaRastreio(
         base_url=SISCAN_URL,
         user=SISCAN_USER,
         password=password,
@@ -74,7 +76,7 @@ async def test_authenticate_env_user():
     await req.authenticate()
 
     assert await (
-         (await req.context.page).locator('h1:text("SEJA BEM VINDO AO SISCAN")')
+        (await req.context.page).locator('h1:text("SEJA BEM VINDO AO SISCAN")')
     ).is_visible()
 
     await req.context.close()

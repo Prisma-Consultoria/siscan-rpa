@@ -1,4 +1,6 @@
-from src.siscan.requisicao_exame_mamografia import RequisicaoExameMamografia
+from src.siscan.classes.requisicao_exame_mamografia_rastreio import (
+    RequisicaoExameMamografiaRastreio,
+)
 from src.siscan.context import SiscanBrowserContext
 from src.env import SISCAN_USER, SISCAN_PASSWORD, SISCAN_URL
 import logging
@@ -9,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.asyncio
 async def test_authenticate():
-    req = RequisicaoExameMamografia(
+    req = RequisicaoExameMamografiaRastreio(
         base_url=SISCAN_URL,
         user=SISCAN_USER,
         password=SISCAN_PASSWORD,

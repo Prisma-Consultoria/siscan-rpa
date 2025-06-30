@@ -2,7 +2,7 @@ import pytest
 import logging
 from pathlib import Path
 
-from src.siscan.requisicao_exame_mamografia import (
+from src.siscan.classes.requisicao_exame_mamografia_diagnostica import (
     RequisicaoExameMamografiaDiagnostica,
 )
 from src.env import SISCAN_URL, SISCAN_USER, SISCAN_PASSWORD

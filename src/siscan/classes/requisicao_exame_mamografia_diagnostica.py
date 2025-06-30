@@ -1,8 +1,10 @@
 import logging
 
 
-from src.siscan.requisicao_exame import RequisicaoExame
-from src.siscan.requisicao_exame_mamografia import RequisicaoExameMamografia
+from src.siscan.classes.requisicao_exame import RequisicaoExame
+from src.siscan.classes.requisicao_exame_mamografia_rastreio import (
+    RequisicaoExameMamografia,
+)
 from src.utils.SchemaMapExtractor import SchemaMapExtractor
 from src.utils.xpath_constructor import XPathConstructor as XPE  # XPathElement
 
@@ -84,7 +86,11 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         await (await xpath_ctx.find_form_button("Avançar")).handle_click()
 
         await RequisicaoExameMamografia.preencher_fez_mamografia_alguma_vez(self, data)
-        await RequisicaoExameMamografia.preencher_fez_radioterapia_na_mama_ou_no_plastao(self, data)
+        await (
+            RequisicaoExameMamografia.preencher_fez_radioterapia_na_mama_ou_no_plastao(
+                self, data
+            )
+        )
         await RequisicaoExameMamografia.preencher_fez_cirurgia_cirurgica(self, data)
         await RequisicaoExameMamografia.preencher_tipo_mamografia(self, data)
 
