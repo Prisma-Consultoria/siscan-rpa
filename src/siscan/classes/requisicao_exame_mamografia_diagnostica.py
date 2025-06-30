@@ -58,7 +58,7 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         data["tipo_de_mamografia"] = "Diagnóstica"
 
         # Chama validação da classe base "RequisicaoExame"
-        RequisicaoExame.validation(self, data)
+        # RequisicaoExame.validation(self, data)
 
         return data
 

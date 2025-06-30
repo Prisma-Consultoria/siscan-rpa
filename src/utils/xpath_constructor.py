@@ -1105,8 +1105,7 @@ class XPathConstructor:
         for nome_campo, valor in data.items():
             if nome_campo not in campos_map:
                 logger.warning(
-                    f"Campo '{nome_campo}' não está mapeado "
-                    f"ou não é editável. Ignorado."
+                    f"Campo '{nome_campo}' não está mapeado ou não é editável. Ignorado."
                 )
                 continue
 

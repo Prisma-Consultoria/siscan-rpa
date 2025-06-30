@@ -68,8 +68,18 @@ async def run_rpa(form_type, data):
         # TODO: implementar login no SISCAN usando CPF/senha de users db
 
         # TODO: navegar até o formulário e preencher campos com 'data'
-        # Exemplo: page.handle_fill("input[name=campo1]", data.get("campo1", ""))
+        # Exemplo: page.handle_fill("input[name=campo1]",
+        """
+        req = RequisicaoExameMamografiaRastreio(
+            base_url=SISCAN_URL, user=SISCAN_USER, password=SISCAN_PASSWORD
+        )
 
+        req._context = SiscanBrowserContext(headless=headless)
+
+        await req.authenticate()
+        await req.preencher(json_data)
+        """
+        # informations = req.context.information_messages
         if not PRODUCTION and TAKE_SCREENSHOT:
             for i in range(1, 4):
                 path = f"static/tmp/{form_type}_step{i}.png"

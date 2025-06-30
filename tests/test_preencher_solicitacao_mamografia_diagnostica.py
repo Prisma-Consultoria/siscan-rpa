@@ -30,10 +30,4 @@ async def test_preencher_requisicao_mamografia_diagnostica(headless: bool):
     await req.authenticate()
     await req.preencher(json_data)
 
-    informations = req.context.information_messages
-
-    logger.info("Informações coletadas:")
-    for key, messages in informations.items():
-        logger.info(f"{key}: {', '.join(messages)}")
-
     await req.context.close()
