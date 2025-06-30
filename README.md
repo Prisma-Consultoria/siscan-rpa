@@ -80,3 +80,18 @@ PWDEBUG=1 DEBUG=pw:api pytest -s tests/test_playwright_flow.py --headed --browse
 ## Documentação
 
 Acesse [http://localhost:5001/docs](http://localhost:5001/docs) para visualizar a documentação da API e testar seus endpoints
+
+## Reference SDK
+
+O código de automação organiza algumas estruturas de mapeamento utilizadas nos fluxos de preenchimento. A seguir estão as principais definições:
+
+- **`FIELDS_MAP`** – dicionário que relaciona cada campo do formulário a um mapeamento de opções válidas. Ele converte valores fornecidos nos dados para os valores requeridos pelos elementos HTML (value de `<select>`, radio, etc.).
+- **`MAP_DATA_LABEL`** – dicionário onde a chave é o nome do campo e o valor é uma tupla `(label, tipo, obrigatoriedade)` definindo o texto exibido, o tipo de input e o nível de obrigatoriedade.
+- **`MAP_SCHEMA_FIELDS`** – lista com os nomes de campos extraídos do JSON Schema para compor os mapas anteriores. Cada classe define sua própria lista de campos relevantes.
+
+O utilitário `SchemaMapExtractor.schema_to_maps()` lê um JSON Schema e retorna dois dicionários:
+
+1. `map_data_label`: no formato de `MAP_DATA_LABEL` descrito acima;
+2. `fields_map`: no formato de `FIELDS_MAP` para campos definidos como `enum` ou `array[enum]` no schema.
+
+Esses mapas são utilizados pelas classes de página para validar e preencher automaticamente os formulários do SIScan.
