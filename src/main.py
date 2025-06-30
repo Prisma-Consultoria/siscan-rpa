@@ -8,7 +8,7 @@ from .routes.preencher_formulario_siscan import (
 from .routes.security import router as security_router
 
 logging.basicConfig(
-    level=logging.DEBUG,  # Troque para logging.INFO caso deseje menos verbosidade
+    level=logging.ERROR,  # Troque para logging.INFO caso deseje menos verbosidade
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 

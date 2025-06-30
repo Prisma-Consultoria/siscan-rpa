@@ -67,7 +67,7 @@ async def test_authenticate_env_user():
     )
     req._context = SiscanBrowserContext(
         base_url=SISCAN_URL,
-        headless=False,
+        headless=True,
         timeout=15000,
     )
 

@@ -2,7 +2,7 @@ import pytest
 import logging
 from pathlib import Path
 
-from src.siscan.requisicao_exame_mamografia import (
+from src.siscan.classes.requisicao_exame_mamografia_diagnostica import (
     RequisicaoExameMamografiaDiagnostica,
 )
 from src.env import SISCAN_URL, SISCAN_USER, SISCAN_PASSWORD
@@ -28,7 +28,7 @@ async def test_preencher_requisicao_mamografia_diagnostica():
         base_url=SISCAN_URL, user=SISCAN_USER, password=SISCAN_PASSWORD
     )
 
-    req._context = SiscanBrowserContext(headless=True)
+    req._context = SiscanBrowserContext(headless=False)
 
     await req.authenticate()
     await req.preencher(json_data)

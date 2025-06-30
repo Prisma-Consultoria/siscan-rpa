@@ -21,6 +21,16 @@ from src.utils import messages as msg
 
 logger = logging.getLogger(__name__)
 
+"""
+=============================================================================
+============================== SiscanWebPage ================================
+=============================================================================
+
+Classe base responsável por encapsular as principais interações 
+automatizadas com a interface web do SISCAN.
+
+=============================================================================
+"""
 
 class SiscanWebPage(WebPage):
     MAP_DATA_FIND_CARTAO_SUS = [
