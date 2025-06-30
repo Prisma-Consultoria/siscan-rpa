@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Annotated, List, Optional
 from pydantic import Field
 from pydantic.functional_validators import model_validator
-from src.siscan.schema.RequisicaoNovoExameSchema import RequisicaoNovoExameSchema
+from src.siscan.schema.requisicao_novo_exame_schema import RequisicaoNovoExameSchema
 from src.siscan.schema import (
     YNIDK,
     Lateralidade,

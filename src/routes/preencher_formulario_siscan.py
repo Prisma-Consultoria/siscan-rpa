@@ -8,18 +8,30 @@ router = APIRouter(prefix="/preencher-formulario-siscan", tags=["siscan"])
 
 
 @router.post(
-    "/solicitacao-mamografia",
-    summary="Preencher Solicitação de Mamografia",
-    description="Executa o RPA para preencher a solicitação de mamografia no SIScan",
+    "/requisicao-mamografia-rastreamento",
+    summary="Requisição de Mamografia de Rastreamento",
+    description="Executa o RPA para preencher a requisição de mamografia de rastreamento na interface web do SISCAN",
 )
-async def preencher_solicitacao(
+async def preencher_requisicao_mamografia_rastreamento(
     data: PreencherSolicitacaoInput,
     uuid: str = Depends(_get_user_uuid),
 ):
-    result = await run_rpa("solicitacao", data.__dict__)
+    result = await run_rpa("requisicao-rastreamento", data.__dict__)
     result.update({"user_uuid": uuid})
     return result
 
+@router.post(
+    "/requisicao-mamografia-diagnostica",
+    summary="Requisição de Mamografia de Diagnóstica",
+    description="Executa o RPA para preencher a requisição de mamografia de diagnóstica na interface web do SISCAN",
+)
+async def preencher_requisicao_mamografia_diagnostica(
+    data: PreencherSolicitacaoInput,
+    uuid: str = Depends(_get_user_uuid),
+):
+    result = await run_rpa("requisicao-diagnostica", data.__dict__)
+    result.update({"user_uuid": uuid})
+    return result
 
 @router.post(
     "/laudo-mamografia",

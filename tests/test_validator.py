@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from src.siscan.schema.RequisicaoMamografiaRastreamentoSchema import (
+from src.siscan.schema.requisicao_mamografia_rastreamento_schema import (
     RequisicaoMamografiaRastreamentoSchema,
     TipoMamografiaRastreamento,
 )

@@ -2,17 +2,17 @@ import logging
 
 
 from src.siscan.classes.requisicao_exame import RequisicaoExame
-from src.siscan.classes.requisicao_exame_mamografia_rastreio import (
+from src.siscan.classes.requisicao_exame_mamografia import (
     RequisicaoExameMamografia,
 )
 from src.utils.SchemaMapExtractor import SchemaMapExtractor
 from src.utils.xpath_constructor import XPathConstructor as XPE  # XPathElement
 
 
-from src.siscan.schema.RequisicaoMamografiaDiagnosticaSchema import (
+from src.siscan.schema.requisicao_mamografia_diagnostica_schema import (
     RequisicaoMamografiaDiagnosticaSchema,
 )
-from src.siscan.schema.RequisicaoMamografiaSchema import RequisicaoMamografiaSchema
+from src.siscan.schema.requisicao_mamografia_schema import RequisicaoMamografiaSchema
 
 logger = logging.getLogger(__name__)
 

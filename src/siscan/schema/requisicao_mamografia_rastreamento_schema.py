@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Annotated, Optional
 
 from pydantic import Field
-from src.siscan.schema.RequisicaoMamografiaSchema import RequisicaoMamografiaSchema
+from src.siscan.schema.requisicao_mamografia_schema import RequisicaoMamografiaSchema
 
 
 class TipoMamografiaRastreamento(Enum):

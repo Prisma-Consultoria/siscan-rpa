@@ -6,7 +6,7 @@ from typing import Annotated, Optional, List
 from pydantic import Field
 from pydantic.functional_validators import model_validator
 
-from src.siscan.schema.RequisicaoMamografiaSchema import RequisicaoMamografiaSchema
+from src.siscan.schema.requisicao_mamografia_schema import RequisicaoMamografiaSchema
 from src.siscan.schema import Lateralidade
 
 
