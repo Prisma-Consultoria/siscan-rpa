@@ -1,11 +1,16 @@
-from typing import Union, Dict, Any, Tuple, Optional, List
+from __future__ import annotations
 
 import json
 import re
-from pathlib import Path
 import logging
-from jsonschema import validate, ValidationError, SchemaError, Draft7Validator
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union, Type
+
+from jsonschema import validate, Draft7Validator
 from jsonschema.exceptions import ValidationError, SchemaError
+from pydantic import BaseModel
+
+from src.utils import messages as msg
 
 logger = logging.getLogger(__name__)
 
@@ -13,15 +18,17 @@ logger = logging.getLogger(__name__)
 class SchemaValidationError(ValidationError):
     def __init__(
         self,
-        required_missing=None,
-        required_errors=None,
-        pattern_errors=None,
-        enum_errors=None,
-        conditional_failure=None,
-        conditional_errors=None,
-        outros_erros=None,
-        message=None,
-        **kwargs
+        required_missing: Optional[List[str]] = None,
+        required_errors: Optional[List[ValidationError]] = None,
+        pattern_errors: Optional[List[ValidationError]] = None,
+        enum_errors: Optional[List[ValidationError]] = None,
+        conditional_failure: Optional[
+            List[Tuple[str, Optional[str], Optional[Union[str, list]]]]
+        ] = None,
+        conditional_errors: Optional[List[ValidationError]] = None,
+        outros_erros: Optional[List[ValidationError]] = None,
+        message: Optional[str] = None,
+        **kwargs,
     ):
         self.required_missing = required_missing or []
         self.required_errors = required_errors or []
@@ -41,33 +48,27 @@ class SchemaValidationError(ValidationError):
             if self.pattern_errors:
                 for err in self.pattern_errors:
                     msgs.append(
-                        f"Campo '{err.path[-1]}' com valor '{err.instance}' "
-                        f"não corresponde ao padrão '{err.validator_value}'"
+                        msg.E_PATTERN(err.path[-1], err.instance, err.validator_value)
                     )
             if self.enum_errors:
                 for err in self.enum_errors:
                     msgs.append(
-                        f"Campo '{err.path[-1]}' com valor '{err.instance}' "
-                        f"não está entre os valores permitidos: "
-                        f"{err.validator_value}"
+                        msg.E_ENUM(err.path[-1], err.instance, err.validator_value)
                     )
             if self.conditional_failure:
-                for field_required, field_trigger, trigger_value \
-                        in self.conditional_failure:
+                for (
+                    field_required,
+                    field_trigger,
+                    trigger_value,
+                ) in self.conditional_failure:
                     msgs.append(
-                        f"O campo '{field_required}' tornou-se obrigatório "
-                        f"porque o campo '{field_trigger}' foi informado com "
-                        f"o valor '{trigger_value}'."
+                        msg.E_CONDITIONAL(field_required, field_trigger, trigger_value)
                     )
             if self.outros_erros:
                 for err in self.outros_erros:
                     if err.validator == "maxItems":
                         value = err.schema["items"]["const"]
-                        msgs.append(
-                            f"Quando o valor do campo '{err.path[-1]}' for "
-                            f"'{value}', apenas ele deve constar na lista. "
-                            f"Foir informado '{err.instance}'."
-                        )
+                        msgs.append(msg.E_MAX_ITEMS(err.path[-1], value, err.instance))
                     else:
                         msgs.append(err.message)
             message = "; ".join(msgs)
@@ -75,16 +76,15 @@ class SchemaValidationError(ValidationError):
         super().__init__(message, **kwargs)
 
 
-class SchemaValidator:
-    """
-    Classe utilitária para validação de dados com base em JSON Schema.
+class Validator:
+    """Classe utilitária para validação de dados com base em JSON Schema.
+
     JSON Schema Draft-07
     """
 
     @classmethod
     def load_json(cls, schema_path: Union[str, Path]) -> Dict[str, Any]:
-        """
-        Carrega e retorna o JSON Schema do arquivo especificado.
+        """Carrega e retorna o JSON Schema do arquivo especificado.
 
         Parâmetros
         ----------
@@ -102,10 +102,9 @@ class SchemaValidator:
 
     @classmethod
     def _find_trigger_for_conditional_required(
-            cls, error: ValidationError, schema: Dict[str, Any]
+        cls, error: ValidationError, schema: Dict[str, Any]
     ) -> List[Tuple[str, Optional[str], Optional[Union[str, list]]]]:
-        """
-        Dada a exceção de required condicional, retorna uma lista de tuplas:
+        """Dada a exceção de required condicional, retorna uma lista de tuplas:
             (nome_campo_tornado_obrigatório,
             nome_campo_disparador,
             valor_esperado).
@@ -113,14 +112,11 @@ class SchemaValidator:
         Se múltiplos campos tornaram-se obrigatórios pelo mesmo bloco 'if',
         retorna todos.
         """
-        results: List[
-            Tuple[str, Optional[str], Optional[Union[str, list]]]] = []
-        # Navega no schema original até o nível do erro
+        results: List[Tuple[str, Optional[str], Optional[Union[str, list]]]] = []
         schema_cursor = schema
-        for p in list(error.absolute_schema_path)[
-                 :-2]:  # Remove 'then', 'required'
+        # Navega no schema original até o nível do erro
+        for p in list(error.absolute_schema_path)[:-2]:  # Remove 'then', 'required'
             schema_cursor = schema_cursor[p]
-
         # Ex: {'if': {...}, 'then': {'required': [...]}}
         if_block = schema_cursor.get("if")
         required_fields = []
@@ -129,8 +125,6 @@ class SchemaValidator:
         elif error.validator_value:
             # fallback: alguns validadores passam o próprio required
             required_fields = error.validator_value
-
-        # Recupera campo e valor do(s) disparador(es)
         if if_block and "properties" in if_block:
             properties = if_block["properties"]
             for field, condition in properties.items():
@@ -151,9 +145,10 @@ class SchemaValidator:
         return results
 
     @classmethod
-    def validate_data(cls, data: Dict[str, Any],
-                      schema_path: Union[str, Path]) -> bool:
-        schema = cls.load_json(schema_path)
+    def validate_data(cls, data: Dict[str, Any], model: Type[BaseModel]) -> BaseModel:
+        schema = getattr(model, "__schema__", None)
+        if schema is None:
+            raise SchemaError("Modelo sem schema associado")
 
         try:
             validate(instance=data, schema=schema)
@@ -165,20 +160,19 @@ class SchemaValidator:
         validator = Draft7Validator(schema)
         errors = list(validator.iter_errors(data))
 
-        required_missing = []
-        required_errors = []
-        pattern_errors = []
-        enum_errors = []
-        conditional_failure = set()
-        conditional_errors = []
-        outros_erros = []
+        required_missing: List[str] = []
+        required_errors: List[ValidationError] = []
+        pattern_errors: List[ValidationError] = []
+        enum_errors: List[ValidationError] = []
+        conditional_failure: set = set()
+        conditional_errors: List[ValidationError] = []
+        outros_erros: List[ValidationError] = []
 
         for error in errors:
             if error.validator == "required" and "then" in error.schema_path:
-                failures = cls._find_trigger_for_conditional_required(error,
-                                                                      schema)
+                failures = cls._find_trigger_for_conditional_required(error, schema)
                 for failure in failures:
-                    conditional_failure.add(failure)
+                    conditional_failure.add(tuple(failure))
                 conditional_errors.append(error)
             elif error.validator == "required":
                 match = re.search(r"'([^']+)'", error.message)
@@ -192,11 +186,13 @@ class SchemaValidator:
             else:
                 outros_erros.append(error)
 
-        if (required_missing
-                or pattern_errors
-                or enum_errors
-                or conditional_errors
-                or outros_erros):
+        if (
+            required_missing
+            or pattern_errors
+            or enum_errors
+            or conditional_errors
+            or outros_erros
+        ):
             raise SchemaValidationError(
                 required_missing=required_missing,
                 required_errors=required_errors,
@@ -207,4 +203,4 @@ class SchemaValidator:
                 outros_erros=outros_erros,
             )
 
-        return True
+        return model.model_validate(data)
