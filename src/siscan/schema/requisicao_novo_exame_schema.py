@@ -34,7 +34,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         str,
         Field(
             description="Número do Cartão SUS (15 dígitos)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={
+                "x-widget": "text",
+                "x-xpath": "//label[normalize-space(text())='Cartão SUS']/following-sibling::input[1]",
+            },
             max_length=15,
             min_length=15,
             title="Cartão SUS",
@@ -44,7 +47,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         Optional[str],
         Field(
             description="CPF do paciente (apenas números, 11 dígitos) - opcional",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={
+                "x-widget": "text",
+                "x-xpath": "//label[normalize-space(text())='CPF']/following-sibling::input[1]",
+            },
             pattern="^\\d{11}$",
             title="CPF",
         ),
@@ -53,7 +59,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         str,
         Field(
             description="Nome completo do paciente",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={
+                "x-widget": "text",
+                "x-xpath": "//label[normalize-space(text())='Nome']/following-sibling::input[1]",
+            },
             min_length=1,
             title="Nome",
         ),
@@ -62,7 +71,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         str,
         Field(
             description="Nome completo da mãe do paciente",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={
+                "x-widget": "text",
+                "x-xpath": "//label[normalize-space(text())='Nome da Mãe']/following-sibling::input[1]",
+            },
             min_length=1,
             title="Nome da Mãe",
         ),
@@ -71,7 +83,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         str,
         Field(
             description="Data de nascimento no formato DD/MM/AAAA",
-            json_schema_extra={"x-widget": "date"},
+            json_schema_extra={
+                "x-widget": "date",
+                "x-xpath": "//label[normalize-space(text())='Data de Nascimento']/following-sibling::span[1]//input",
+            },
             pattern="^\\d{2}/\\d{2}/\\d{4}$",
             title="Data de Nascimento",
         ),
@@ -80,7 +95,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         str,
         Field(
             description="Nacionalidade do paciente",
-            json_schema_extra={"x-widget": "select"},
+            json_schema_extra={
+                "x-widget": "select",
+                "x-xpath": "//label[normalize-space(text())='Nacionalidade']/following-sibling::select[1]",
+            },
             title="Nacionalidade",
         ),
     ]
@@ -88,7 +106,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         Sexo,
         Field(
             description="Sexo biológico do paciente (M=Masculino, F=Feminino)",
-            json_schema_extra={"x-widget": "checkbox"},
+            json_schema_extra={
+                "x-widget": "checkbox",
+                "x-xpath": "//label[normalize-space(text())='Sexo']/following-sibling::table[1]",
+            },
             title="Sexo",
         ),
     ]
@@ -96,7 +117,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         str,
         Field(
             description="Raça/Cor declarada pelo paciente",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={
+                "x-widget": "text",
+                "x-xpath": "//label[normalize-space(text())='Raça/Cor']/following-sibling::input[1]",
+            },
             title="Raça/Cor",
         ),
     ]
@@ -104,7 +128,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         str,
         Field(
             description="Unidade Federativa (UF) com 2 letras",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={
+                "x-widget": "text",
+                "x-xpath": "//label[normalize-space(text())='UF']/following-sibling::input[1]",
+            },
             max_length=2,
             min_length=2,
             title="UF",
@@ -114,7 +141,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         str,
         Field(
             description="Nome do município de residência",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={
+                "x-widget": "text",
+                "x-xpath": "//label[normalize-space(text())='Município']/following-sibling::input[1]",
+            },
             title="Município",
         ),
     ]
@@ -122,7 +152,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         str,
         Field(
             description="Tipo de logradouro (ex: Rua, Avenida)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={
+                "x-widget": "text",
+                "x-xpath": "//label[normalize-space(text())='Tipo Logradouro']/following-sibling::input[1]",
+            },
             title="Tipo Logradouro",
         ),
     ]
@@ -130,7 +163,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         str,
         Field(
             description="Nome do logradouro",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={
+                "x-widget": "text",
+                "x-xpath": "//label[normalize-space(text())='Nome Logradouro']/following-sibling::input[1]",
+            },
             title="Nome Logradouro",
         ),
     ]
@@ -138,7 +174,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         str,
         Field(
             description="Número do endereço",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={
+                "x-widget": "text",
+                "x-xpath": "//label[normalize-space(text())='Numero']/following-sibling::input[1]",
+            },
             title="Numero",
         ),
     ]
@@ -146,7 +185,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         str,
         Field(
             description="Bairro de residência",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={
+                "x-widget": "text",
+                "x-xpath": "//label[normalize-space(text())='Bairro']/following-sibling::input[1]",
+            },
             title="Bairro",
         ),
     ]
@@ -154,7 +196,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         str,
         Field(
             description="CEP (apenas números, 8 dígitos)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={
+                "x-widget": "text",
+                "x-xpath": "//label[normalize-space(text())='Cep']/following-sibling::input[1]",
+            },
             pattern="^\\d{8}$",
             title="Cep",
         ),
@@ -163,7 +208,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         Optional[str],
         Field(
             description="Apelido do paciente (opcional)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={
+                "x-widget": "text",
+                "x-xpath": "//label[normalize-space(text())='Apelido']/following-sibling::input[1]",
+            },
             title="Apelido",
         ),
     ] = None
@@ -171,7 +219,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         Optional[Escolaridade],
         Field(
             description="Nível de escolaridade (0=Selecione, 1=Analfabeto, 2=Ensino Fundamental Incompleto, 3=Ensino Fundamental Completo, 4=Ensino Médio Completo, 5=Ensino Superior Completo)",
-            json_schema_extra={"x-widget": "select"},
+            json_schema_extra={
+                "x-widget": "select",
+                "x-xpath": "//label[normalize-space(text())='Escolaridade:']/following-sibling::select[1]",
+            },
             title="Escolaridade:",
         ),
     ] = None
@@ -179,7 +230,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         Optional[str],
         Field(
             description="Ponto de referência (opcional)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={
+                "x-widget": "text",
+                "x-xpath": "//label[normalize-space(text())='Ponto de Referência']/following-sibling::input[1]",
+            },
             title="Ponto de Referência",
         ),
     ] = None
@@ -187,7 +241,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         Optional[TipoExameMama],
         Field(
             description="Tipo de exame de mama: 01=Mamografia, 03=Cito de Mama, 05=Histo de Mama",
-            json_schema_extra={"x-widget": "radio"},
+            json_schema_extra={
+                "x-widget": "radio",
+                "x-xpath": "//fieldset[legend[normalize-space(text())='Mama']]",
+            },
             title="Mama",
         ),
     ] = None
@@ -195,7 +252,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         str,
         Field(
             description="CNES da unidade requisitante",
-            json_schema_extra={"x-widget": "select"},
+            json_schema_extra={
+                "x-widget": "select",
+                "x-xpath": "//label[normalize-space(text())='Unidade Requisitante']/following-sibling::select[1]",
+            },
             title="Unidade Requisitante",
         ),
     ]
@@ -203,7 +263,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         str,
         Field(
             description="Nome do prestador de serviço",
-            json_schema_extra={"x-widget": "select"},
+            json_schema_extra={
+                "x-widget": "select",
+                "x-xpath": "//label[normalize-space(text())='Prestador']/following-sibling::select[1]",
+            },
             title="Prestador",
         ),
     ]

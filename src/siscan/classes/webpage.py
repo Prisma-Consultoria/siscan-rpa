@@ -204,7 +204,10 @@ class SiscanWebPage(WebPage):
         """
         xpath = menu_action()
         await (
-            await xpath.find_search_link_after_input(self.get_field_label("cartao_sus"))
+            await xpath.find_search_link_after_input(
+                self.get_field_label("cartao_sus"),
+                self.get_field_xpath("cartao_sus"),
+            )
         ).handle_click()
         await xpath.wait_page_ready()
 
@@ -251,7 +254,10 @@ class SiscanWebPage(WebPage):
         while elapsed < timeout:
             xpath.reset()
             cartao_sus_ele = await (
-                await xpath.find_form_input(self.get_field_label("cartao_sus"))
+                await xpath.find_form_input(
+                    self.get_field_label("cartao_sus"),
+                    xpath=self.get_field_xpath("cartao_sus"),
+                )
             ).wait_until_enabled()
             await cartao_sus_ele.handle_fill(numero, reset=False)
             await cartao_sus_ele.on_blur()

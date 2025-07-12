@@ -13,9 +13,11 @@ class SchemaMapExtractor:
         fields: Optional[List[str]] = None,
     ) -> Tuple[Dict[str, tuple], Dict[str, dict]]:
         """
-        Dado um JSON Schema, retorna duas tuplas:
+        Dado um JSON Schema, retorna dois dicionários:
           - MAP_DATA_LABEL: dicionário no formato esperado, restrito aos
-            campos informados (se fornecidos)
+            campos informados (se fornecidos). Cada valor é uma tupla
+            ``(label, input_type, requirement, xpath)`` onde ``xpath`` pode
+            ser ``None`` caso não esteja definido no esquema.
           - FIELDS_MAP: dicionário para campos do tipo enum, array[enum], etc.
         """
         map_data_label = {}
@@ -41,7 +43,8 @@ class SchemaMapExtractor:
             requirement = SchemaMapExtractor._infer_requirement_level(
                 field, required_fields
             )
-            map_data_label[field] = (label, input_type, requirement)
+            xpath = field_schema.get("x-xpath")
+            map_data_label[field] = (label, input_type, requirement, xpath)
             fm = SchemaMapExtractor._extract_fields_map(field_schema)
             if fm:
                 fields_map[field] = fm
