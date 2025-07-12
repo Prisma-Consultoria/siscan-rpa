@@ -712,7 +712,7 @@ class XPathConstructor:
                 elapsed += interval
         raise TimeoutError(f"Timeout ao tentar selecionar o radio com value='{value}'.")
 
-    async def find_search_link_after_input(self, label_name: str) -> "XPathConstructor":
+    async def find_search_link_after_input(self, label_name: str, xpath: str | None = None) -> "XPathConstructor":
         """
         Localiza o link (<a>) de busca imediatamente após um campo input identificado pelo label.
 
@@ -724,21 +724,30 @@ class XPathConstructor:
         -------
         xpath.find_search_link_after_input("Cartão SUS").handle_click()
         """
-        await self.find_form_input(label_name, input_type=InputType.TEXT)
+        await self.find_form_input(label_name, input_type=InputType.TEXT, xpath=xpath)
         # Adiciona o seletor para o <a> logo após o campo
         self._xpath += "/following-sibling::a[1]"
         logger.debug(f"XPath para lupa após input '{label_name}': {self._xpath}")
         return self
 
     async def find_form_input(
-        self, label_name: str, input_type: str | InputType | None = None
+        self,
+        label_name: str,
+        input_type: str | InputType | None = None,
+        xpath: str | None = None,
     ) -> "XPathConstructor":
         """
         Localiza um campo de formulário pelo label e tipo, construindo o XPath adequado. Suporta diferentes estruturas HTML e tipos de input (input, select, textarea, date, checkbox, radio).
         """
         self._label = label_name
-        
+
         input_type = self._get_input_type(input_type)
+        if xpath:
+            self._xpath = xpath
+            self._input_type = input_type
+            logger.debug(f"XPath from schema: {self._xpath}")
+            return self
+
         label_xpath = f"//label[normalize-space(text())='{label_name}']"
 
         if input_type == InputType.DATE:
