@@ -5,7 +5,9 @@ import secrets
 from src.main import app
 from src.env import SISCAN_USER, SISCAN_PASSWORD, SISCAN_URL, get_db
 from src.models import User, ApiKey
-from src.siscan.requisicao_exame_mamografia import RequisicaoExameMamografia
+from src.siscan.classes.requisicao_exame_mamografia_rastreio import (
+    RequisicaoExameMamografiaRastreio,
+)
 from src.siscan.context import SiscanBrowserContext
 
 
@@ -39,7 +41,7 @@ def test_create_user_env(client):
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_authenticate_env_user():
+async def test_authenticate_env_user(headless: bool):
     # Captura o usuário e senha do banco de dados, tomando o usuário como chave única
     db = get_db()
     user = db.query(User).filter_by(username=SISCAN_USER).first()
@@ -60,20 +62,20 @@ async def test_authenticate_env_user():
         ),
     ).decode()
 
-    req = RequisicaoExameMamografia(
+    req = RequisicaoExameMamografiaRastreio(
         base_url=SISCAN_URL,
         user=SISCAN_USER,
         password=password,
     )
     req._context = SiscanBrowserContext(
         base_url=SISCAN_URL,
-        headless=False,
+        headless=headless,
         timeout=15000,
     )
 
     await req.authenticate()
 
-    assert (
+    assert await (
         (await req.context.page).locator('h1:text("SEJA BEM VINDO AO SISCAN")')
     ).is_visible()
 

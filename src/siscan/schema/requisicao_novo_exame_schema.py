@@ -186,9 +186,9 @@ class RequisicaoNovoExameSchema(BaseModel):
     tipo_exame_mama: Annotated[
         Optional[TipoExameMama],
         Field(
-            description='Tipo de exame de mama: 01=Mamografia, 03=Cito de Mama, 05=Histo de Mama',
-            json_schema_extra={'x-widget': 'radio'},
-            title='Mama',
+            description="Tipo de exame de mama: 01=Mamografia, 03=Cito de Mama, 05=Histo de Mama",
+            json_schema_extra={"x-widget": "radio"},
+            title="Mama",
         ),
     ] = None
     unidade_requisitante: Annotated[

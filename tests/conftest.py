@@ -10,6 +10,17 @@ from fastapi.testclient import TestClient
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 
+# Determine whether Playwright should run in headless mode. This can be
+# controlled via the ``HEADLESS`` environment variable. If the variable is not
+# defined, the default is ``True``.
+HEADLESS: bool = os.getenv("HEADLESS", "true").lower() == "true"
+
+
+@pytest.fixture(scope="session")
+def headless() -> bool:
+    """Return whether tests should run Playwright in headless mode."""
+    return HEADLESS
+
 ROOT = Path(__file__).resolve().parents[1]
 
 priv = ROOT / "rsa_private_key.pem"
@@ -112,16 +123,15 @@ def fake_json_file(tmp_path_factory):
         **{
             f"ano_{c}_esquerda": str(base_year + i + 1) for i, c in enumerate(cirurgias)
         },
-        "mamografia_de_rastreamento": "01",
+        "tipo_mamografia_de_rastreamento": "01",
         "data_da_solicitacao": fake.date_between(
             start_date="-30d", end_date="today"
         ).strftime("%d/%m/%Y"),
     }
 
     output_path = Path("./fake_data.json")
-
-    if not output_path.exists():
-        with open(output_path, "w", encoding="utf-8") as fp:
-            json.dump(data, fp, ensure_ascii=False, indent=2)
+    # Always rewrite the fake data file to avoid stale content between test runs
+    with open(output_path, "w", encoding="utf-8") as fp:
+        json.dump(data, fp, ensure_ascii=False, indent=2)
 
     return output_path

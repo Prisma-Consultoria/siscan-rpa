@@ -22,7 +22,9 @@ class WebPage(ABC):
 
     FIELDS_MAP: dict[str, dict[str, str]] = {}
 
-    def __init__(self, base_url: str, user: str, password: str, schema_model: Type[BaseModel]):
+    def __init__(
+        self, base_url: str, user: str, password: str, schema_model: Type[BaseModel]
+    ):
         self._base_url = base_url
         self._user = user
         self._password = password
@@ -75,7 +77,7 @@ class WebPage(ABC):
             value = map_label.get(field_name)
 
         if value is None:
-            raise ValueError(f"Campo '{field_name}' não está mapeado.")
+            raise ValueError(f"get_field_metadata: Campo '{field_name}' não está mapeado.")
 
         if len(value) != 3:
             raise ValueError(
@@ -96,7 +98,7 @@ class WebPage(ABC):
             value = map_label.get(field_name)
 
         if value is None:
-            raise ValueError(f"Campo '{field_name}' não está mapeado.")
+            raise ValueError(f"get_field_label: Campo '{field_name}' não está mapeado.")
         return value[0]
 
     def get_field_type(
@@ -111,7 +113,7 @@ class WebPage(ABC):
             value = map_label.get(field_name)
 
         if value is None:
-            raise ValueError(f"Campo '{field_name}' não está mapeado.")
+            raise ValueError(f"get_field_type: Campo '{field_name}' não está mapeado.")
         return value[1]
 
     def get_field_required(
@@ -125,7 +127,7 @@ class WebPage(ABC):
             value = map_label.get(field_name)
 
         if value is None:
-            raise ValueError(f"Campo '{field_name}' não está mapeado.")
+            raise ValueError(f"get_field_required: Campo '{field_name}' não está mapeado.")
         return value[2]
 
     def get_field_value(self, field_name: str, data: dict) -> Optional[str | list]:
@@ -230,8 +232,7 @@ class WebPage(ABC):
         for field_name in data.keys():
             if field_name not in map_label.keys():
                 logger.warning(
-                    f"Campo '{field_name}' não está mapeado ou não "
-                    f"é editável. Ignorado."
+                    f"Campo '{field_name}' não está mapeado ou não é editável. Ignorado."
                 )
                 continue
             field_label, field_type, requirement_level = self.get_field_metadata(

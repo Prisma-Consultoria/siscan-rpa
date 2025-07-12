@@ -7,7 +7,7 @@ from abc import abstractmethod
 import logging
 
 from src.siscan.exception import SiscanInvalidFieldValueError
-from src.siscan.siscan_webpage import SiscanWebPage
+from src.siscan.classes.webpage import SiscanWebPage
 from src.utils.SchemaMapExtractor import SchemaMapExtractor
 from src.utils.xpath_constructor import XPathConstructor as XPE, InputType
 from src.utils.webpage import RequirementLevel
@@ -51,15 +51,7 @@ class RequisicaoExame(SiscanWebPage):
 
     def get_map_label(self) -> dict[str, tuple[str, str, str]]:
         """
-        Retorna o mapeamento de campos do formulário com seus respectivos
-        labels e tipos.
-
-        Retorna
-        -------
-        dict[str, tuple[str, str, str]]
-            Dicionário onde a chave é o nome do campo e o valor é uma tupla
-            contendo o label, o tipo do campo e o nível de
-            obrigatoriedade.
+        Retorna o mapeamento de campos do formulário com seus respectivos labels e tipos.
         """
         map_label = {
             **SiscanWebPage.MAP_DATA_LABEL,
@@ -94,62 +86,12 @@ class RequisicaoExame(SiscanWebPage):
 
     async def seleciona_unidade_requisitante(self, data: dict | None = None):
         """
-        Seleciona e valida a unidade requisitante a partir dos dados
-        fornecidos.
-
-        Este método realiza o carregamento e o mapeamento das opções
-        disponíveis para o campo 'unidade_requisitante' (campo responsável
-        pelo código CNES da unidade requisitante).
-        Inicialmente, carrega as opções do campo select, atualizando o
-        mapeamento (`FIELDS_MAP`) para considerar apenas o código CNES (parte
-        antes do hífen). Em seguida, remove os itens originais do mapeamento
-        que continham a descrição completa. Após o ajuste do mapeamento,
-        seleciona o valor informado em `data` e valida se o valor selecionado
-        é válido. Caso o valor seja inválido (valor igual a "0"), é lançada
-        uma exceção do tipo `SiscanInvalidFieldValueError`, informando os
-        valores de opção disponíveis para o campo.
-
-        Parâmetros
-        ----------
-        data : dict, opcional
-            Dicionário contendo os dados do formulário, incluindo o campo
-            'unidade_requisitante'.
-
-        Exceções
-        --------
-        SiscanInvalidFieldValueError
-            Lançada caso o valor selecionado para 'unidade_requisitante' seja
-            inválido, ou não esteja entre as opções disponíveis (por exemplo,
-            valor igual a "0").
-
-        Exemplo
-        -------
-        ```
-        self.seleciona_unidade_requisitante(
-        {'unidade_requisitante': '0274267'})
-        # Seleciona e valida a unidade requisitante com código CNES informado.
-        ```
-
-        Notas
-        -----
-        - O método atualiza o dicionário FIELDS_MAP['unidade_requisitante'],
-          mantendo apenas o código CNES como chave, removendo os itens
-          originais que continham  hífen e a descrição completa.
-        - Este método depende das implementações de `load_select_options` e
-          `select_value` para carregamento das opções do campo e seleção do
-          valor, respectivamente.
+        Seleciona e valida a unidade requisitante a partir dos dados fornecidos.
         """
         nome_campo = "unidade_requisitante"
         await self.load_select_options(nome_campo)
 
-        # Atualiza o mapeamento de campos com os valores do select para obter
-        # o código CNES do campo Unidade Requisitante.
-        # Para cada chave no mapeamento, mantém apenas a parte antes do hífen
-        # e.g., "0274267 - CENTRAL DE TELEATENDIMENTO SAUDE JA CURITIBA"
-        # se torna "0274267"
-
-        # Cria uma lista com os itens originais para evitar alteração durante
-        # o loop
+        # Atualiza o mapeamento de campos usando apenas o código CNES antes do hífen.
         for k, v in list(self.FIELDS_MAP[nome_campo].items()):
             key = f"{k.split('-')[0].strip()}"
             self.FIELDS_MAP[nome_campo][key] = v
@@ -170,43 +112,6 @@ class RequisicaoExame(SiscanWebPage):
     async def selecionar_prestador(self, data: dict | None = None):
         """
         Seleciona e valida o campo 'prestador' a partir dos dados fornecidos.
-
-        Este método realiza o carregamento das opções disponíveis para o campo
-         'prestador', utiliza o valor presente em `data` para seleção e
-        validação, e garante que o valor selecionado é válido conforme as
-        opções disponíveis. Caso o valor selecionado seja inválido (igual a
-        "0"), lança a exceção `SiscanInvalidFieldValueError`, informando os
-        valores válidos para o campo.
-
-        Parâmetros
-        ----------
-        data : dict, opcional
-            Dicionário contendo os dados do formulário, incluindo o campo
-            'prestador'.
-
-        Exceções
-        --------
-        SiscanInvalidFieldValueError
-            Lançada caso o valor selecionado para 'prestador' seja inválido,
-            ou não esteja entre as opções disponíveis (por exemplo, valor
-            igual a "0").
-
-        Exemplo
-        -------
-        ```
-        >>> self.selecionar_prestador({'prestador':
-        'HOSPITAL ERASTO GAERTNER'})
-        # Seleciona e valida o prestador informado.
-        ```
-
-        Notas
-        -----
-        - O método depende das implementações de `load_select_options` para
-          carregar as opções do campo 'prestador' e de `select_value` para
-          selecionar e validar o valor.
-        - A validação considera como inválido o valor "0", que normalmente
-          representa a opção  padrão "Selecione..." em campos select de
-          formulários web.
         """
         nome_campo = "prestador"
         await self.load_select_options(nome_campo)
@@ -252,4 +157,4 @@ class RequisicaoExame(SiscanWebPage):
         fields_map.pop("prestador")
 
         await xpath.fill_form_fields(data_final, fields_map)
-        await self.take_screenshot("screenshot_03_requisicao_exame.png")
+        await self.take_screenshot("screenshot_03.png")

@@ -97,7 +97,7 @@ class SiscanBrowserContext:
             try:
                 playwright = await async_playwright().start()
                 logger.debug("Abrindo navegador Chromium")
-                browser = await playwright.chromium.launch(headless=self.headless)
+                browser = await playwright.chromium.launch(headless=self.headless, slow_mo=100)
                 logger.debug("Modo headless: %s", self.headless)
 
                 page = await browser.new_page()

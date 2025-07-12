@@ -1,11 +1,14 @@
-from __future__ import annotations
-
 from enum import Enum
 from typing import Annotated, List, Optional
-
 from pydantic import Field
 from pydantic.functional_validators import model_validator
-from src.siscan.schema.RequisicaoNovoExameSchema import RequisicaoNovoExameSchema
+from src.siscan.schema.requisicao_novo_exame_schema import RequisicaoNovoExameSchema
+from src.siscan.schema import (
+    YNIDK,
+    Lateralidade,
+    TipoDeMamografia,
+    YN,
+)
 
 
 class TemNoduloOuCarocoNaMama(Enum):
@@ -14,37 +17,9 @@ class TemNoduloOuCarocoNaMama(Enum):
     NAO = "04"
 
 
-class YNIDK(Enum):
-    SIM = "01"
-    NAO = "02"
-    NAO_SABE = "03"
-
-
-class Lateralidade(Enum):
-    DIREITA = "01"
-    ESQUERDA = "02"
-    AMBAS = "03"
-
-
-class YN(Enum):
-    SIM = "01"
-    NAO = "02"
-
-
-class TipoDeMamografia(Enum):
-    DIAGNOSTICA = "Diagnóstica"
-    RASTREAMENTO = "Rastreamento"
-
-
-class TipoMamografiaRastreamento(Enum):
-    POPULACAO_ALVO = "01"
-    RISCO_ELEVADO_FAMILIAR = "02"
-    CANCER_PREVIO = "03"
-
-
-class RequisicaoMamografiaRastreamentoSchema(RequisicaoNovoExameSchema):
+class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
     num_prontuario: Annotated[
-        str,
+        Optional[str],
         Field(
             description="Número do prontuário do paciente",
             json_schema_extra={"x-widget": "text"},
@@ -376,14 +351,6 @@ class RequisicaoMamografiaRastreamentoSchema(RequisicaoNovoExameSchema):
             title="TIPO DE MAMOGRAFIA",
         ),
     ]
-    mamografia_de_rastreamento: Annotated[
-        Optional[TipoMamografiaRastreamento],
-        Field(
-            description="Indicação da mamografia de rastreamento: 01=População alvo, 02=Risco elevado, 03=Paciente já tratado",
-            json_schema_extra={"x-widget": "radio"},
-            title="MAMOGRAFIA DE RASTREAMENTO",
-        ),
-    ] = None
     data_da_solicitacao: Annotated[
         Optional[str],
         Field(
@@ -449,16 +416,16 @@ class RequisicaoMamografiaRastreamentoSchema(RequisicaoNovoExameSchema):
                     "'ano_da_radioterapia_direita' e 'ano_da_radioterapia_esquerda'."
                 )
 
-        # 5) Se tipo_de_mamografia == 'Rastreamento', mamografia_de_rastreamento é obrigatório
+        # 5) Se tipo_de_mamografia == 'Rastreamento', tipo_mamografia_de_rastreamento é obrigatório
         tipo = values.tipo_de_mamografia
-        mamo = values.mamografia_de_rastreamento
+        mamo = values.tipo_mamografia_de_rastreamento
         if tipo == TipoDeMamografia.RASTREAMENTO and not mamo:
             raise ValueError(
-                "Se tipo_de_mamografia = Rastreamento, precisa informar 'mamografia_de_rastreamento'."
+                "Se tipo_de_mamografia = Rastreamento, precisa informar 'tipo_mamografia_de_rastreamento'."
             )
         if tipo != TipoDeMamografia.RASTREAMENTO and mamo:
             raise ValueError(
-                "Se tipo_de_mamografia ≠ Rastreamento, não deve informar 'mamografia_de_rastreamento'."
+                "Se tipo_de_mamografia ≠ Rastreamento, não deve informar 'tipo_mamografia_de_rastreamento'."
             )
 
         return values

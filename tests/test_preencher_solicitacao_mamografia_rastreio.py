@@ -2,7 +2,9 @@ import pytest
 import logging
 from pathlib import Path
 
-from src.siscan.requisicao_exame_mamografia import RequisicaoExameMamografia
+from src.siscan.classes.requisicao_exame_mamografia_rastreio import (
+    RequisicaoExameMamografiaRastreio,
+)
 from src.env import SISCAN_URL, SISCAN_USER, SISCAN_PASSWORD
 from src.utils.validator import Validator
 from src.siscan.context import SiscanBrowserContext
@@ -11,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_preencher_requisicao_mamografia_rastreamento():
+async def test_preencher_requisicao_mamografia_rastreamento(headless: bool):
     # Você precisa ter um arquivo JSON com dados reais apra preencher o formulário, certifique-se de que o caminho está correto.
     dados_path = Path("real_data_rastreamento.json")
 
@@ -21,11 +23,11 @@ async def test_preencher_requisicao_mamografia_rastreamento():
 
     json_data = Validator.load_json(dados_path)
 
-    req = RequisicaoExameMamografia(
+    req = RequisicaoExameMamografiaRastreio(
         base_url=SISCAN_URL, user=SISCAN_USER, password=SISCAN_PASSWORD
     )
 
-    req._context = SiscanBrowserContext(headless=False)
+    req._context = SiscanBrowserContext(headless=headless)
 
     await req.authenticate()
     await req.preencher(json_data)

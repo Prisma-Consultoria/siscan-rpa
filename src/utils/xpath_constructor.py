@@ -30,6 +30,8 @@ class XPathConstructor:
         self._browser = browser
         self._context = context
         self._xpath = xpath
+        self._label:str = ""
+        self._id:str = ""
 
         self._input_type: Optional[str] = None
 
@@ -734,11 +736,14 @@ class XPathConstructor:
         """
         Localiza um campo de formulário pelo label e tipo, construindo o XPath adequado. Suporta diferentes estruturas HTML e tipos de input (input, select, textarea, date, checkbox, radio).
         """
+        self._label = label_name
+        
         input_type = self._get_input_type(input_type)
         label_xpath = f"//label[normalize-space(text())='{label_name}']"
 
         if input_type == InputType.DATE:
             # Para campos de data, encontra o span após o label e dentro dele busca o input de texto do calendário
+            # TODO O campo de data de solicitação não funciona dessa maneira, teremos que criar um retry para contemplar
             self._xpath += (
                 f"{label_xpath}/following-sibling::span[1]//{input_type.html_element}"
                 f"[contains(@class, 'date') or contains(@class, 'calendar')]"
@@ -819,8 +824,7 @@ class XPathConstructor:
                 return self
             await self._select_option_with_retry(locator, value, timeout)
         elif input_type == InputType.CHECKBOX:
-            # Para checkbox: encontrar todos os inputs dentro da tabela
-            # localizada
+            # Para checkbox: encontrar todos os inputs dentro da tabela localizada
             valores = value if isinstance(value, list) else [value]
             # Usar CSS selector!
             checkboxes = locator.locator("input[type='checkbox']")
@@ -1106,8 +1110,7 @@ class XPathConstructor:
         for nome_campo, valor in data.items():
             if nome_campo not in campos_map:
                 logger.warning(
-                    f"Campo '{nome_campo}' não está mapeado "
-                    f"ou não é editável. Ignorado."
+                    f"Campo '{nome_campo}' não está mapeado ou não é editável. Ignorado."
                 )
                 continue
 

@@ -2,10 +2,17 @@ import re
 
 import logging
 
+from typing import Type
+from pydantic import BaseModel
+
 from src.siscan.exception import CartaoSusNotFoundError
-from src.siscan.requisicao_exame import RequisicaoExame
-from src.siscan.schema.RequisicaoMamografiaRastreamentoSchema import (
-    RequisicaoMamografiaRastreamentoSchema,
+from src.siscan.classes.requisicao_exame import RequisicaoExame
+
+from src.siscan.schema.requisicao_mamografia_schema import (
+    RequisicaoMamografiaSchema,
+)
+from src.siscan.schema.requisicao_novo_exame_schema import (
+    RequisicaoNovoExameSchema,
 )
 from src.utils.SchemaMapExtractor import SchemaMapExtractor
 from src.utils.xpath_constructor import XPathConstructor as XPE  # XPathElement
@@ -16,49 +23,6 @@ logger = logging.getLogger(__name__)
 
 class RequisicaoExameMamografia(RequisicaoExame):
     # manual https://www.inca.gov.br/sites/ufu.sti.inca.local/files/media/document/manual_siscan_modulo2_2021_1.pdf
-    # Campos específicos deste formulário
-    MAP_SCHEMA_FIELDS = [
-        "num_prontuario",
-        "tem_nodulo_ou_caroco_na_mama",
-        "apresenta_risco_elevado_para_cancer_mama",
-        "antes_desta_consulta_teve_as_mamas_examinadas_por_um_profissional",
-        "fez_mamografia_alguma_vez",
-        "ano_que_fez_a_ultima_mamografia",
-        "fez_radioterapia_na_mama_ou_no_plastrao",
-        "radioterapia_localizacao",
-        "ano_da_radioterapia_direita",
-        "ano_da_radioterapia_esquerda",
-        "fez_cirurgia_de_mama",
-        "ano_biopsia_cirurgica_incisional_direita",
-        "ano_biopsia_cirurgica_incisional_esquerda",
-        "ano_biopsia_cirurgica_excisional_direita",
-        "ano_biopsia_cirurgica_excisional_esquerda",
-        "ano_segmentectomia_direita",
-        "ano_segmentectomia_esquerda",
-        "ano_centralectomia_direita",
-        "ano_centralectomia_esquerda",
-        "ano_dutectomia_direita",
-        "ano_dutectomia_esquerda",
-        "ano_mastectomia_direita",
-        "ano_mastectomia_esquerda",
-        "ano_mastectomia_poupadora_pele_direita",
-        "ano_mastectomia_poupadora_pele_esquerda",
-        "ano_mastectomia_poupadora_pele_complexo_papilar_direita",
-        "ano_mastectomia_poupadora_pele_complexo_papilar_esquerda",
-        "ano_linfadenectomia_axilar_direita",
-        "ano_linfadenectomia_axilar_esquerda",
-        "ano_biopsia_linfonodo_sentinela_direita",
-        "ano_biopsia_linfonodo_sentinela_esquerda",
-        "ano_reconstrucao_mamaria_direita",
-        "ano_reconstrucao_mamaria_esquerda",
-        "ano_mastoplastia_redutora_direita",
-        "ano_mastoplastia_redutora_esquerda",
-        "ano_inclusao_implantes_direita",
-        "ano_inclusao_implantes_esquerda",
-        "tipo_de_mamografia",
-        "mamografia_de_rastreamento",
-    ]
-
     FIELDS_MAP = {
         "tipo_de_mamografia": {
             "Diagnóstica": "01",
@@ -70,12 +34,18 @@ class RequisicaoExameMamografia(RequisicaoExame):
         },
     }
 
-    def __init__(self, base_url: str, user: str, password: str):
+    def __init__(
+        self,
+        base_url: str,
+        user: str,
+        password: str,
+        schema_model: Type[BaseModel] = RequisicaoMamografiaSchema,
+    ):
         super().__init__(
             base_url,
             user,
             password,
-            RequisicaoMamografiaRastreamentoSchema,
+            schema_model,
         )
 
         map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
@@ -95,8 +65,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
 
     def get_map_label(self) -> dict[str, tuple[str, str, str]]:
         """
-        Retorna o mapeamento de campos do formulário com seus respectivos
-        labels e tipos, específico para o exame de Mamografia.
+        Retorna o mapeamento de campos do formulário com seus respectivos labels e tipos, específico para o exame de Mamografia.
         """
         map_label = {
             **RequisicaoExameMamografia.MAP_DATA_LABEL,
@@ -110,7 +79,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
         """
         await self.select_value("tipo_exame_mama", data)
 
-    async def preecher_tem_nodulo_ou_caroco_na_mama(self, data: dict):
+    async def preencher_tem_nodulo_ou_caroco_na_mama(self, data: dict):
         """
         Preenche o campo de nódulo ou caroço na mama com base nos dados
         fornecidos.
@@ -124,7 +93,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
         option_values = self.get_field_value(nome_campo, data)
         await self.select_value(nome_campo, {nome_campo: option_values})
 
-    async def preecher_fez_mamografia_alguma_vez(self, data: dict):
+    async def preencher_fez_mamografia_alguma_vez(self, data: dict):
         await self.preencher_campo_dependente_multiplo(
             data,
             campo_chave="fez_mamografia_alguma_vez",
@@ -137,7 +106,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
             erro_dependente_msg=msg.ANO_MAMOGRAFIA_REQUIRED,
         )
 
-    async def preenche_fez_radioterapia_na_mama_ou_no_plastao(self, data: dict):
+    async def preencher_fez_radioterapia_na_mama_ou_no_plastao(self, data: dict):
         # Para "FEZ RADIOTERAPIA NA MAMA OU NO PLASTRÃO?"
         _, value = await self.select_value(
             "fez_radioterapia_na_mama_ou_no_plastrao", data
@@ -162,16 +131,14 @@ class RequisicaoExameMamografia(RequisicaoExame):
                 erro_dependente_msg=msg.ANO_RADIOTERAPIA_REQUIRED,
             )
 
-    async def preenche_fez_cirurgia_cirurgica(self, data: dict):
+    async def preencher_fez_cirurgia_cirurgica(self, data: dict):
         # Para "FEZ CIRURGIA DE MAMA?"
         _, value = await self.select_value("fez_cirurgia_de_mama", data)
         if value == "S":
             await self.preencher_ano_cirurgia(data)
 
-    async def preenche_tipo_mamografia(self, data: dict):
+    async def preencher_tipo_mamografia(self, data: dict):
         text, _ = await self.select_value("tipo_de_mamografia", data)
-        if text == "Rastreamento":
-            await self.select_value("mamografia_de_rastreamento", data)
 
     async def preencher(self, data: dict):
         """
@@ -199,11 +166,13 @@ class RequisicaoExameMamografia(RequisicaoExame):
 
         await (await xpath_ctx.find_form_button("Avançar")).handle_click()
 
-        await self.preecher_fez_mamografia_alguma_vez(data)
-        await self.preenche_fez_radioterapia_na_mama_ou_no_plastao(data)
-        await self.preenche_fez_cirurgia_cirurgica(data)
-        await self.preenche_tipo_mamografia(data)
+        await self.preencher_fez_mamografia_alguma_vez(data)
+        await self.preencher_fez_radioterapia_na_mama_ou_no_plastao(data)
+        await self.preencher_fez_cirurgia_cirurgica(data)
+        await self.preencher_tipo_mamografia(data)
 
+        # TODO
+        # TOFIX, não seria para implementar self.preencher_tem_nodulo_ou_caroco_na_mama ?
         await self.select_value("tem_nodulo_ou_caroco_na_mama", data)
         data.pop("tem_nodulo_ou_caroco_na_mama")
 
@@ -214,7 +183,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
         )
         await xpath_ctx.fill_form_fields(data_final, fields_map)
 
-        await self.take_screenshot("screenshot_04_requisicao_exame_mamografia.png")
+        await self.take_screenshot("screenshot_04.png")
 
     async def preencher_ano_cirurgia(self, data: dict):
         anos_procedimentos = [
@@ -245,6 +214,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
             "ano_inclusao_implantes_direita",
             "ano_inclusao_implantes_esquerda",
         ]
+
         for campo_nome in anos_procedimentos:
             lado = "direita" if "direita" in campo_nome else "esquerda"
 
@@ -268,6 +238,12 @@ class RequisicaoExameMamografia(RequisicaoExame):
                 raise ValueError("O parâmetro 'lado' deve ser 'direita' ou 'esquerda'.")
             xpath = await XPE.create(self.context, xpath=base_xpath)
             await xpath.handle_fill(
-                self.get_field_value(campo_nome, data), self.get_field_type(campo_nome)
+                self.get_field_value(campo_nome, data),
+                self.get_field_type(campo_nome),
             )
             data.pop(campo_nome)
+
+
+base_fields = set(RequisicaoNovoExameSchema.model_fields.keys())
+diag_fields = set(RequisicaoMamografiaSchema.model_fields.keys())
+RequisicaoExameMamografia.MAP_SCHEMA_FIELDS = sorted(diag_fields - base_fields)
