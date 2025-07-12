@@ -6,10 +6,11 @@ Este projeto implementa uma automação (RPA) para interação com o sistema SIS
 
 - **run.py** – ponto de entrada que carrega variáveis de ambiente e executa o servidor FastAPI via Uvicorn.
 - **src/main.py** – inicializa a aplicação FastAPI e registra as rotas.
-- **src/routes.py** – define os endpoints da API:
-  - `/cadastrar-usuario` – cadastro de usuários com senha criptografada em SQLite.
-  - `/preencher-solicitacao-mamografia` – inicia o RPA para preencher uma solicitação de exame.
-  - `/preencher-laudo-mamografia` – inicia o RPA para preencher um laudo de mamografia.
+- **src/routes/** – módulos de rotas da API:
+  - `user.py` com `/user` (criação) e `/user/me` para obter o usuário autenticado.
+    O endpoint `/user` exige o cabeçalho `Api-Key` válido e `/user/me` exige autenticação JWT.
+  - `preencher_formulario_siscan.py` com `/preencher-formulario-siscan/solicitacao-mamografia` e `/preencher-formulario-siscan/laudo-mamografia`.
+    Esses endpoints podem ser acessados com JWT ou com `Api-Key` registrada no banco de dados (e não expirada).
   Utiliza Playwright para abrir o navegador e ainda possui *TODOs* de implementação.
 - **src/siscan/** – código principal de automação:
   - `context.py` controla o navegador e coleta mensagens informativas.
@@ -17,7 +18,7 @@ Este projeto implementa uma automação (RPA) para interação com o sistema SIS
   - `requisicao_exame.py` abstrai o preenchimento do formulário de exame.
   - `requisicao_exame_mamografia.py` especializa o fluxo para mamografia.
   - `webtools/` e `utils/` contêm classes de apoio (XPathConstructor, validação de esquemas, etc.).
-  - `schemas/` guarda arquivos JSON Schema para validação dos dados.
+  - `schema/` guarda arquivos JSON Schema para validação dos dados.
 - **tests/** – casos de teste em pytest para os endpoints da API.
 
 ## Gerar chaves RSA
@@ -50,6 +51,14 @@ Ou com Docker Compose:
 
 ```bash
 docker compose up -d --build
+```
+
+### Criar ApiKey
+
+Gere uma chave de acesso para clientes externos executando:
+
+```bash
+python cli.py create-apikey
 ```
 
 ## Rodando testes

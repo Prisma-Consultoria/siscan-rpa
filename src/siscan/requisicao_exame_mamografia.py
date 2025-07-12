@@ -1,13 +1,14 @@
 import re
 
-from pathlib import Path
-
 import logging
 
 from src.siscan.exception import CartaoSusNotFoundError
 from src.siscan.requisicao_exame import RequisicaoExame
+from src.siscan.schema.RequisicaoMamografiaRastreamentoSchema import (
+    RequisicaoMamografiaRastreamentoSchema,
+)
 from src.utils.SchemaMapExtractor import SchemaMapExtractor
-from src.utils.xpath_constructor import XPathConstructor as XPE # XPathElement
+from src.utils.xpath_constructor import XPathConstructor as XPE  # XPathElement
 from src.utils import messages as msg
 
 logger = logging.getLogger(__name__)
@@ -70,22 +71,15 @@ class RequisicaoExameMamografia(RequisicaoExame):
     }
 
     def __init__(self, base_url: str, user: str, password: str):
-        schema_path = (
-            Path(__file__).parent
-            / "schemas"
-            / "requisicao_exame_mamografia_rastreamento.schema.json"
+        super().__init__(
+            base_url,
+            user,
+            password,
+            RequisicaoMamografiaRastreamentoSchema,
         )
 
-        # Verifica se o arquivo de schema existe
-        if not schema_path.is_file():
-            raise FileNotFoundError(
-                f"Arquivo de schema '{schema_path}' nao encontrado."
-            )
-
-        super().__init__(base_url, user, password, schema_path)
-
         map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
-            schema_path, fields=RequisicaoExameMamografia.MAP_SCHEMA_FIELDS
+            self.schema_model, fields=RequisicaoExameMamografia.MAP_SCHEMA_FIELDS
         )
         RequisicaoExameMamografia.MAP_DATA_LABEL = map_data_label
         fields_map.update(self.FIELDS_MAP)
@@ -199,8 +193,11 @@ class RequisicaoExameMamografia(RequisicaoExame):
 
         await super().preencher(data)
 
-        xpath = await XPE.create(self.context)
-        await (await xpath.find_form_button("Avançar")).handle_click()
+        xpath_ctx = await XPE.create(
+            self.context
+        )  # TOFIX Não faz setido criar um xpath apenas com o contexto
+
+        await (await xpath_ctx.find_form_button("Avançar")).handle_click()
 
         await self.preecher_fez_mamografia_alguma_vez(data)
         await self.preenche_fez_radioterapia_na_mama_ou_no_plastao(data)
@@ -215,7 +212,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
             RequisicaoExameMamografia.MAP_DATA_LABEL,
             suffix="",
         )
-        await xpath.fill_form_fields(data_final, fields_map)
+        await xpath_ctx.fill_form_fields(data_final, fields_map)
 
         await self.take_screenshot("screenshot_04_requisicao_exame_mamografia.png")
 

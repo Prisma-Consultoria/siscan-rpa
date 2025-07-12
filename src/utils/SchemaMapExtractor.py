@@ -1,14 +1,16 @@
 from pathlib import Path
 
-from typing import Tuple, Dict, List, Optional, Union
+from typing import Tuple, Dict, List, Optional, Union, Type
 
+from pydantic import BaseModel
 from src.utils.validator import Validator
 
 
 class SchemaMapExtractor:
     @staticmethod
     def schema_to_maps(
-        schema_path: Union[str, Path], fields: Optional[List[str]] = None
+        schema: Union[str, Path, Type[BaseModel]],
+        fields: Optional[List[str]] = None,
     ) -> Tuple[Dict[str, tuple], Dict[str, dict]]:
         """
         Dado um JSON Schema, retorna duas tuplas:
@@ -19,10 +21,15 @@ class SchemaMapExtractor:
         map_data_label = {}
         fields_map = {}
 
-        schema = Validator.load_json(schema_path)
+        if isinstance(schema, (str, Path)):
+            schema_dict = Validator.load_json(schema)
+        elif isinstance(schema, type) and issubclass(schema, BaseModel):
+            schema_dict = getattr(schema, "__schema__", schema.model_json_schema())
+        else:
+            raise TypeError("schema must be a path or BaseModel class")
 
-        properties = schema.get("properties", {})
-        required_fields = schema.get("required", [])
+        properties = schema_dict.get("properties", {})
+        required_fields = schema_dict.get("required", [])
 
         # Se lista de campos for informada, filtra as propriedades
         if fields is not None:

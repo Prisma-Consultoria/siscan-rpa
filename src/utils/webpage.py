@@ -2,7 +2,9 @@ from pathlib import Path
 from datetime import datetime
 import logging
 from abc import abstractmethod, ABC
-from typing import Optional, Union
+from typing import Optional, Type
+
+from pydantic import BaseModel
 
 from src.siscan.exception import FieldValueNotFoundError
 from src.utils.xpath_constructor import XPathConstructor as XPE, InputType
@@ -20,13 +22,11 @@ class WebPage(ABC):
 
     FIELDS_MAP: dict[str, dict[str, str]] = {}
 
-    def __init__(
-        self, base_url: str, user: str, password: str, schema_path: Union[str, Path]
-    ):
+    def __init__(self, base_url: str, user: str, password: str, schema_model: Type[BaseModel]):
         self._base_url = base_url
         self._user = user
         self._password = password
-        self._schema_path = schema_path
+        self._schema_model = schema_model
         self._context: Optional[SiscanBrowserContext] = None
 
     @property
@@ -61,8 +61,8 @@ class WebPage(ABC):
         raise NotImplementedError("Subclasses devem implementar este método.")
 
     @property
-    def schema_path(self):
-        return self._schema_path
+    def schema_model(self) -> Type[BaseModel]:
+        return self._schema_model
 
     def get_field_metadata(
         self, field_name: str, map_label: Optional[dict[str, tuple]] = None
@@ -146,7 +146,7 @@ class WebPage(ABC):
                 value = self.FIELDS_MAP[field_name].get(value, None)
         return value
 
-    def update_field_map_from_select(
+    async def update_field_map_from_select(
         self,
         field_name: str,
         xpath: XPE,
@@ -188,12 +188,13 @@ class WebPage(ABC):
         {'0015466 - CENTRO DE ...': '4', ...}
         ```
         """
-        options = xpath.get_select_options(timeout=timeout)
+        options = await xpath.get_select_options(timeout=timeout)
         if label_as_key:
             mapping = {label: value for value, label in options.items()}
         else:
             mapping = {value: label for value, label in options.items()}
         self.FIELDS_MAP[field_name] = mapping
+
         xpath.reset()
 
     def mount_fields_map_and_data(
@@ -270,7 +271,7 @@ class WebPage(ABC):
         xpath = await XPE.create(self.context)
         field_label, field_type, _ = self.get_field_metadata(field_name)
         await xpath.find_form_input(field_label, field_type)
-        self.update_field_map_from_select(field_name, xpath)
+        await self.update_field_map_from_select(field_name, xpath)
 
     async def select_value(
         self, field_name: str, data: dict
@@ -285,7 +286,7 @@ class WebPage(ABC):
         xpath_obj = await type_exam_elem.handle_fill(
             self.get_field_value(field_name, data), field_type, reset=False
         )
-        value = xpath_obj.get_value(field_type)
+        value = await xpath_obj.get_value(field_type)
         # Para campos que retornam tupla (texto, valor)
         if isinstance(value, tuple):
             _, _value = value

@@ -1,6 +1,6 @@
 import logging
 import asyncio
-from typing import Optional, Any
+from typing import Optional
 from src.utils import messages as msg
 from playwright.async_api import async_playwright, Browser, Page
 

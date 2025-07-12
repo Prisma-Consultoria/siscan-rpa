@@ -1,30 +1,38 @@
 import pytest
 from fastapi.testclient import TestClient
+import secrets
 
 from src.main import app
 from src.env import SISCAN_USER, SISCAN_PASSWORD, SISCAN_URL, get_db
-from src.models import User
+from src.models import User, ApiKey
 from src.siscan.requisicao_exame_mamografia import RequisicaoExameMamografia
 from src.siscan.context import SiscanBrowserContext
 
 
 @pytest.fixture(scope="module")
 def client(tmp_path_factory):
-    db_file = tmp_path_factory.mktemp("data") / "env_user.db"
+    db_file = tmp_path_factory.mktemp("data") / "test.db"
     import src.env as env
 
     env.init_engine(str(db_file))
     from src import models  # noqa: F401
 
     env.Base.metadata.create_all(bind=env.engine)
+    key_value = secrets.token_hex(8)
+    db = get_db()
+    db.add(ApiKey(key=key_value))
+    db.commit()
+    db.close()
     with TestClient(app) as client:
-        yield client
+        yield client, key_value
 
 
 def test_create_user_env(client):
-    res = client.post(
-        "/cadastrar-usuario",
+    client_obj, key = client
+    res = client_obj.post(
+        "/user",
         json={"username": SISCAN_USER, "password": SISCAN_PASSWORD},
+        headers={"Api-Key": key},
     )
     assert res.status_code == 201
     assert res.json()["message"] == "user created"
@@ -52,10 +60,6 @@ async def test_authenticate_env_user():
         ),
     ).decode()
 
-    print("++++++++++++++++++")
-    print(f"User: {SISCAN_USER}, Password: {password}")
-    print("++++++++++++++++++")
-
     req = RequisicaoExameMamografia(
         base_url=SISCAN_URL,
         user=SISCAN_USER,
@@ -67,13 +71,10 @@ async def test_authenticate_env_user():
         timeout=15000,
     )
 
-    print("Iniciando autenticação no SISCAN...")
     await req.authenticate()
 
-    print("Autenticação bem-sucedida!")
     assert (
-        (await req.context.page)
-        .locator('h1:text("SEJA BEM VINDO AO SISCAN")')
+        (await req.context.page).locator('h1:text("SEJA BEM VINDO AO SISCAN")')
     ).is_visible()
 
     await req.context.close()
