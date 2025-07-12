@@ -1,6 +1,6 @@
-from pathlib import Path
+from typing import Type
 
-from typing import Union
+from pydantic import BaseModel
 
 from abc import abstractmethod
 
@@ -27,11 +27,11 @@ class RequisicaoExame(SiscanWebPage):
     ]
 
     def __init__(
-        self, base_url: str, user: str, password: str, schema_path: Union[str, Path]
+        self, base_url: str, user: str, password: str, schema_model: Type[BaseModel]
     ):
-        super().__init__(base_url, user, password, schema_path)
+        super().__init__(base_url, user, password, schema_model)
         map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
-            schema_path, fields=RequisicaoExame.MAP_SCHEMA_FIELDS
+            self.schema_model, fields=RequisicaoExame.MAP_SCHEMA_FIELDS
         )
         RequisicaoExame.MAP_DATA_LABEL = map_data_label
         self.FIELDS_MAP.update(fields_map)
@@ -226,9 +226,6 @@ class RequisicaoExame(SiscanWebPage):
 
         self.validation(data)
 
-        # verifica qual a página atual do browser
-        logger.debug("Verificando a página atual do browser")
-        logger.debug("Página atual: %s", (await self.context.page).url)
         xpath = await self._novo_exame(event_button=True)
 
         # 1o passo: Preenche o campo Cartão SUS e chama o evento onblur do campo

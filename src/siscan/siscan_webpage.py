@@ -1,10 +1,9 @@
 import time
 
-from jsonschema.exceptions import ValidationError
-from pathlib import Path
-
 import logging
-from typing import Callable, Any, Union
+from typing import Callable, Any, Type
+
+from pydantic import BaseModel
 
 from src.siscan.exception import (
     SiscanLoginError,
@@ -16,7 +15,6 @@ from src.siscan.exception import (
 )
 from src.utils.SchemaMapExtractor import SchemaMapExtractor
 from src.utils.validator import Validator, SchemaValidationError
-from src.utils.schema import create_model_from_json_schema
 from src.utils.webpage import WebPage
 from src.utils.xpath_constructor import XPathConstructor as XPE
 from src.utils import messages as msg
@@ -47,14 +45,11 @@ class SiscanWebPage(WebPage):
     MAP_SCHEMA_FIELDS = MAP_DATA_FIND_CARTAO_SUS + MAP_DATA_CARTAO_SUS
 
     def __init__(
-        self, base_url: str, user: str, password: str, schema_path: Union[str, Path]
+        self, base_url: str, user: str, password: str, schema_model: Type[BaseModel]
     ):
-        super().__init__(base_url, user, password, schema_path)
-        self.schema_model = create_model_from_json_schema(
-            "SchemaModel", Path(schema_path)
-        )
+        super().__init__(base_url, user, password, schema_model)
         map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
-            schema_path, fields=SiscanWebPage.MAP_SCHEMA_FIELDS
+            self.schema_model, fields=SiscanWebPage.MAP_SCHEMA_FIELDS
         )
         SiscanWebPage.MAP_DATA_LABEL = map_data_label
         self.FIELDS_MAP.update(fields_map)
@@ -64,29 +59,11 @@ class SiscanWebPage(WebPage):
             Validator.validate_data(data, self.schema_model)
             logger.debug("Dados válidos")
         except SchemaValidationError as ve:
-            # Exemplo: acesso aos detalhes
-            for campo in ve.required_missing:
-                logger.error("Campo obrigatório ausente: %s", campo)
-            for err in ve.pattern_errors:
-                logger.error("Erro de padrão: %s", err.message)
-            for err in ve.enum_errors:
-                logger.error("Erro de enum: %s", err.message)
-            for field_required, field_trigger, trigger_value in ve.conditional_failure:
-                logger.error(
-                    "Campo condicional: '%s' (devido a '%s' == '%s')",
-                    field_required,
-                    field_trigger,
-                    trigger_value,
-                )
-            for err in ve.outros_erros:
-                logger.error("Outro erro: %s", err.message)
-
+            for err in ve.errors:
+                logger.error(err)
             raise SiscanInvalidFieldValueError(
-                context=None, data=data, message=ve.message
+                context=None, data=data, message=str(ve)
             )
-
-        except ValidationError as ve:
-            logger.error(ve)
 
     async def authenticate(self):
         """
@@ -149,9 +126,7 @@ class SiscanWebPage(WebPage):
         interval : float, opcional (default=)
             Intervalo (em segundos) entre tentativas.
         """
-        interval = (
-            interval if interval is not None else XPE.ELAPSED_INTERVAL
-        )
+        interval = interval if interval is not None else XPE.ELAPSED_INTERVAL
 
         elapsed = 0
         last_exception = None

@@ -40,7 +40,7 @@ class SiscanException(Exception):
         ]
         mensagens = []
         for seletor in seletores:
-            elementos = await ctx.page.query_selector_all(seletor)
+            elementos = await (await ctx.page).query_selector_all(seletor)
             for el in elementos:
                 texto = el.inner_text().strip()
                 if texto:

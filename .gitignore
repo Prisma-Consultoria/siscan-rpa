@@ -1,7 +1,7 @@
 __pycache__/
 *.pyc
 .env
-users.db
+*.db
 rsa_private_key.pem
 rsa_public_key.pem
 static/tmp/
@@ -9,4 +9,6 @@ static/tmp/
 *.png
 /src/dados.json
 fake_data.json
-real_data.json
+real_data*.json
+
+.DS_Store
