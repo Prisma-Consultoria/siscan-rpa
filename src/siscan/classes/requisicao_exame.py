@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Type, Any
 
 from pydantic import BaseModel
 
@@ -10,7 +10,6 @@ from src.siscan.exception import SiscanInvalidFieldValueError
 from src.siscan.classes.webpage import SiscanWebPage
 from src.utils.SchemaMapExtractor import SchemaMapExtractor
 from src.utils.xpath_constructor import XPathConstructor as XPE, InputType
-from src.utils.webpage import RequirementLevel
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +48,7 @@ class RequisicaoExame(SiscanWebPage):
             "O método select_type_exam deve ser implementado na subclasse."
         )
 
-    def get_map_label(self) -> dict[str, tuple[str, str, str]]:
+    def get_map_label(self) -> dict[str, dict[str, Any]]:
         """
         Retorna o mapeamento de campos do formulário com seus respectivos labels e tipos.
         """
@@ -57,19 +56,19 @@ class RequisicaoExame(SiscanWebPage):
             **SiscanWebPage.MAP_DATA_LABEL,
             **RequisicaoExame.MAP_DATA_LABEL,
         }
-        map_label["cartao_sus"] = (
-            "Cartão SUS",
-            InputType.TEXT,
-            RequirementLevel.REQUIRED,
-        )
+        map_label["cartao_sus"] = SchemaMapExtractor.make_field_dict(
+            "Cartão SUS", InputType.TEXT, True)
         return map_label
 
-    async def acessar_menu_gerenciar_exame(self):
+    async def buscar_cartao_sus(self, data: dict):
+        await self._buscar_cartao_sus(data, menu_action=self._novo_exame)
+
+    async def _acessar_menu_gerenciar_exame(self):
         await self.acessar_menu("EXAME", "GERENCIAR EXAME")
 
     async def _novo_exame(self, event_button: bool = False) -> XPE:
         # TOFIX Não deveria ter um comando genérico para botões em vez de algo específico?
-        await self.acessar_menu_gerenciar_exame()
+        await self._acessar_menu_gerenciar_exame()
 
         xpath = await XPE.create(self.context)
         if event_button:
@@ -78,13 +77,10 @@ class RequisicaoExame(SiscanWebPage):
             # chamamos ``handle_click`` e aguardamos sua conclusão.
             await xpath.find_form_anchor_button("Novo Exame").handle_click()
 
-        await xpath.wait_page_ready()
+        await self.wait_page_ready()
         return xpath
 
-    async def buscar_cartao_sus(self, data: dict):
-        await self._buscar_cartao_sus(data, menu_action=self._novo_exame)
-
-    async def seleciona_unidade_requisitante(self, data: dict | None = None):
+    async def _seleciona_unidade_requisitante(self, data: dict | None = None):
         """
         Seleciona e valida a unidade requisitante a partir dos dados fornecidos.
         """
@@ -108,8 +104,9 @@ class RequisicaoExame(SiscanWebPage):
                 data=data,
                 options_values=self.FIELDS_MAP[nome_campo].keys(),
             )
+        data.pop(nome_campo, None)
 
-    async def selecionar_prestador(self, data: dict | None = None):
+    async def _selecionar_prestador(self, data: dict | None = None):
         """
         Seleciona e valida o campo 'prestador' a partir dos dados fornecidos.
         """
@@ -123,38 +120,41 @@ class RequisicaoExame(SiscanWebPage):
                 data=data,
                 options_values=self.FIELDS_MAP[nome_campo].keys(),
             )
+        data.pop(nome_campo, None)
 
     async def preencher(self, data: dict):
         """
         Preenche o formulário de novo exame de acordo com os campos informados.
         """
 
+        await self._authenticate()
+
         self.validation(data)
 
         xpath = await self._novo_exame(event_button=True)
 
         # 1o passo: Preenche o campo Cartão SUS e chama o evento onblur do campo
-        await self.preencher_cartao_sus(numero=self.get_field_value("cartao_sus", data))
+        await self.preencher_cartao_sus(
+            numero=self.get_field_value("cartao_sus", data),
+            timeout=20)
 
-        # 2o passo: Define o tipo de exame para então poder habilitar os campos de Prestador e Unidade Requisitante
+        # 2o passo: Define o tipo de exame para então poder habilitar os
+        # campos de Prestador e Unidade Requisitante
         await self.selecionar_tipo_exame(data)
 
-        # 3o passo: Obtem os valores do campo select Unidade Requisitante, atualiza o mapeamento de campos e preenche o campo
-        await self.seleciona_unidade_requisitante(data)
+        # 3o passo: Obtem os valores do campo select Unidade Requisitante,
+        # atualiza o mapeamento de campos e preenche o campo
+        await self._seleciona_unidade_requisitante(data)
 
-        # 4o passo: Obtem os valores do campo select Prestador, atualiza o mapeamento de campos e preenche o campo
-        await self.selecionar_prestador(data)
+        # 4o passo: Obtem os valores do campo select Prestador, atualiza o
+        # mapeamento de campos e preenche o campo
+        await self._selecionar_prestador(data)
 
-        # 5o passo: Preenche os campos adicionais do formulário Antes, monta o mapeamento de campos e os dados finais
-        fields_map, data_final = self.mount_fields_map_and_data(
+        # 5o passo: Preenche os campos adicionais do formulário
+        # apelido, escolaridade, ponto_de_referenciea
+        await self.fill_form_fields(
             data,
             RequisicaoExame.MAP_DATA_LABEL,
-            suffix="",
+            suffix=""
         )
-
-        # Remove os campos que já foram preenchidos
-        fields_map.pop("unidade_requisitante")
-        fields_map.pop("prestador")
-
-        await xpath.fill_form_fields(data_final, fields_map)
         await self.take_screenshot("screenshot_03.png")

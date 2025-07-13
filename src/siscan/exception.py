@@ -1,5 +1,6 @@
 from typing import Iterable
 from src.utils import messages as msg
+from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
 
 class SiscanException(Exception):
@@ -18,7 +19,6 @@ class SiscanException(Exception):
         # de buscar essas mensagens passa a ser do código chamador, que pode
         # utilizar ``await SiscanException.get_error_messages(ctx)`` quando
         # necessário.
-
         super().__init__(self.msg)
 
     @classmethod
@@ -222,3 +222,12 @@ class SiscanInvalidFieldValueError(SiscanException):
 
         super().__init__(context, m)
         self.field_name = field_name
+
+
+class SiscanTimeoutError(SiscanException, PlaywrightTimeoutError):
+    """
+    Exceção lançada quando ocorre um timeout em operações assíncronas do Playwright no SIScan.
+    Herda de SiscanException e playwright.async_api.TimeoutError.
+    """
+    def __init__(self, ctx, m: str | None = None):
+        super().__init__(ctx, m or "Elemento não ficou habilitado a tempo.")
