@@ -124,6 +124,7 @@ def fake_json_file(tmp_path_factory):
         "data_da_solicitacao": fake.date_between(
             start_date="-30d", end_date="today"
         ).strftime("%d/%m/%Y"),
+        "cns_responsavel_coleta": cns.generate(),
     }
 
     output_path = Path("./fake_data.json")
