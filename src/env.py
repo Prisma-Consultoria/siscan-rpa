@@ -6,18 +6,23 @@ from cryptography.hazmat.primitives import serialization
 
 load_dotenv(override=True)
 
-PRODUCTION = os.getenv("PRODUCTION", "false").lower() == "true"
+# Determine whether Playwright should run in headless mode. This can be
+# controlled via the ``HEADLESS`` environment variable. If the variable is not
+# defined, the default is ``True``.
+HEADLESS: bool = os.getenv("HEADLESS", "true").lower() == "true"
 
-TAKE_SCREENSHOT = os.getenv("TAKE_SCREENSHOT", "false").lower() == "true"
+PRODUCTION: bool = os.getenv("PRODUCTION", "false").lower() == "true"
 
-DATABASE = os.getenv("DATABASE_URL", "database.db")
+TAKE_SCREENSHOT: bool = os.getenv("TAKE_SCREENSHOT", "false").lower() == "true"
 
-SISCAN_URL = os.getenv("SISCAN_URL", "https://siscan.saude.gov.br/")
+DATABASE: str = os.getenv("DATABASE_URL", "database.db")
 
-SISCAN_USER = os.getenv("SISCAN_USER", "")
-SISCAN_PASSWORD = os.getenv("SISCAN_PASSWORD", "")
+SISCAN_URL: str = os.getenv("SISCAN_URL", "https://siscan.saude.gov.br/")
 
-DEFAULT_TIMEOUT = 10
+SISCAN_USER: str = os.getenv("SISCAN_USER", "")
+SISCAN_PASSWORD: str = os.getenv("SISCAN_PASSWORD", "")
+
+DEFAULT_TIMEOUT: int = 10
 
 # Carrega chaves RSA
 with open("rsa_private_key.pem", "rb") as f:

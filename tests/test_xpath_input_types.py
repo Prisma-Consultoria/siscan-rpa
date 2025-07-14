@@ -23,7 +23,7 @@ async def siscan_form(headless: bool):
     )
     req._context = SiscanBrowserContext(headless=headless)
 
-    await req.authenticate()
+    await req._authenticate()
     await req._novo_exame(event_button=True)
     yield req
 

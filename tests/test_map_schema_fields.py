@@ -43,7 +43,8 @@ def test_requiscao_mamografia_map_schema_fields():
         "ano_inclusao_implantes_direita",
         "ano_inclusao_implantes_esquerda",
         "tipo_de_mamografia",
-        "data_da_solicitacao"
+        "data_da_solicitacao",
+        "cns_responsavel_coleta"
     }
 
 def test_requiscao_mamografia_rastreamento_map_schema_fields():

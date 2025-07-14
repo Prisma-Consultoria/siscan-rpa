@@ -10,10 +10,7 @@ from fastapi.testclient import TestClient
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 
-# Determine whether Playwright should run in headless mode. This can be
-# controlled via the ``HEADLESS`` environment variable. If the variable is not
-# defined, the default is ``True``.
-HEADLESS: bool = os.getenv("HEADLESS", "true").lower() == "true"
+from src.env import HEADLESS
 
 
 @pytest.fixture(scope="session")
@@ -106,7 +103,7 @@ def fake_json_file(tmp_path_factory):
         "bairro": fake.bairro().upper(),
         "cep": bc._format_cep(fake.postcode()),
         "ponto_de_referencia": "PONTO DE REFERÊNCIA",
-        "unidade_requisitante": fake.numerify("#######"),
+        "cnes_unidade_requisitante": fake.numerify("#######"),
         "prestador": fake.company().upper(),
         "num_prontuario": fake.numerify("#########"),
         "tem_nodulo_ou_caroco_na_mama": ["01", "02"],
@@ -127,6 +124,7 @@ def fake_json_file(tmp_path_factory):
         "data_da_solicitacao": fake.date_between(
             start_date="-30d", end_date="today"
         ).strftime("%d/%m/%Y"),
+        "cns_responsavel_coleta": cns.generate(),
     }
 
     output_path = Path("./fake_data.json")

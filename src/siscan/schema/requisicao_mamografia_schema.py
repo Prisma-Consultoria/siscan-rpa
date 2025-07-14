@@ -1,5 +1,10 @@
+import enum
+
+import logging
+
 from enum import Enum
-from typing import Annotated, List, Optional
+from typing import Annotated, List, Optional, get_origin, get_args, Union, \
+    Literal
 from pydantic import Field
 from pydantic.functional_validators import model_validator
 from src.siscan.schema.requisicao_novo_exame_schema import RequisicaoNovoExameSchema
@@ -7,9 +12,10 @@ from src.siscan.schema import (
     YNIDK,
     Lateralidade,
     TipoDeMamografia,
-    YN,
+    YN
 )
 
+logger = logging.getLogger(__name__)
 
 class TemNoduloOuCarocoNaMama(Enum):
     SIM_MAMA_DIREITA = "01"
@@ -22,7 +28,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Número do prontuário do paciente",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             title="Nº do Prontuário",
         ),
     ]
@@ -30,7 +36,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         List[TemNoduloOuCarocoNaMama],
         Field(
             description="Presença de nódulo ou caroço na mama: 01=Sim Mama Direita, 02=Sim Mama Esquerda, 04=Não",
-            json_schema_extra={"x-widget": "checkbox"},
+            json_schema_extra={"x-widget": "checkbox", "x-xpath": ""},
             title="TEM NÓDULO OU CAROÇO NA MAMA?",
         ),
     ]
@@ -38,7 +44,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         YNIDK,
         Field(
             description="Risco elevado para câncer de mama: 01=Sim, 02=Não, 03=Não sabe",
-            json_schema_extra={"x-widget": "radio"},
+            json_schema_extra={"x-widget": "radio", "x-xpath": ""},
             title="APRESENTA RISCO ELEVADO PARA CÂNCER DE MAMA?",
         ),
     ]
@@ -46,7 +52,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         YNIDK,
         Field(
             description="As mamas já foram examinadas por profissional: 01=Sim, 02=Nunca, 03=Não sabe",
-            json_schema_extra={"x-widget": "radio"},
+            json_schema_extra={"x-widget": "radio", "x-xpath": ""},
             title="ANTES DESTA CONSULTA, TEVE AS MAMAS EXAMINADAS POR UM PROFISSIONAL DE SAÚDE?",
         ),
     ]
@@ -54,7 +60,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         YNIDK,
         Field(
             description="Já fez mamografia alguma vez: 01=Sim, 02=Não, 03=Não sabe",
-            json_schema_extra={"x-widget": "radio"},
+            json_schema_extra={"x-widget": "radio", "x-xpath": ""},
             title="FEZ MAMOGRAFIA ALGUMA VEZ?",
         ),
     ]
@@ -62,7 +68,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da última mamografia (AAAA)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="QUANDO FEZ A ÚLTIMA MAMOGRAFIA?",
         ),
@@ -71,7 +77,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         YNIDK,
         Field(
             description="Fez radioterapia na mama ou plastrão: 01=Sim, 02=Não, 03=Não sabe",
-            json_schema_extra={"x-widget": "radio"},
+            json_schema_extra={"x-widget": "radio", "x-xpath": ""},
             title="FEZ RADIOTERAPIA NA MAMA OU NO PLASTRÃO?",
         ),
     ]
@@ -79,7 +85,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[Lateralidade],
         Field(
             description="Localização da radioterapia: 01=Esquerda, 02=Direita, 03=Ambas",
-            json_schema_extra={"x-widget": "radio"},
+            json_schema_extra={"x-widget": "radio", "x-xpath": ""},
             title="RADIOTERAPIA - LOCALIZAÇÃO",
         ),
     ] = None
@@ -87,7 +93,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da radioterapia - mama direita (AAAA)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="ANO DA RADIOTERAPIA - DIREITA",
         ),
@@ -96,7 +102,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da radioterapia - mama esquerda (AAAA)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="ANO DA RADIOTERAPIA - ESQUERDA",
         ),
@@ -105,7 +111,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         YN,
         Field(
             description="Fez cirurgia de mama: 01=Sim, 02=Não",
-            json_schema_extra={"x-widget": "radio"},
+            json_schema_extra={"x-widget": "radio", "x-xpath": ""},
             title="FEZ CIRURGIA DE MAMA?",
         ),
     ]
@@ -113,7 +119,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da biópsia cirúrgica incisional (direita)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Biópsia cirúrgica incisional (Direita)",
         ),
@@ -122,7 +128,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da biópsia cirúrgica incisional (esquerda)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Biópsia cirúrgica incisional (Esquerda)",
         ),
@@ -131,7 +137,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da biópsia cirúrgica excisional (direita)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Biópsia cirúrgica excisional (Direita)",
         ),
@@ -140,7 +146,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da biópsia cirúrgica excisional (esquerda)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Biópsia cirúrgica excisional (Esquerda)",
         ),
@@ -149,7 +155,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da segmentectomia (direita)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Segmentectomia (Direita)",
         ),
@@ -158,7 +164,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da segmentectomia (esquerda)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Segmentectomia (Esquerda)",
         ),
@@ -167,7 +173,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da centralectomia (direita)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Centralectomia (Direita)",
         ),
@@ -176,7 +182,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da centralectomia (esquerda)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Centralectomia (Esquerda)",
         ),
@@ -185,7 +191,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da dutectomia (direita)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Dutectomia (Direita)",
         ),
@@ -194,7 +200,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da dutectomia (esquerda)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Dutectomia (Esquerda)",
         ),
@@ -203,7 +209,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da mastectomia (direita)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Mastectomia (Direita)",
         ),
@@ -212,7 +218,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da mastectomia (esquerda)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Mastectomia (Esquerda)",
         ),
@@ -221,7 +227,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da mastectomia poupadora de pele (direita)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Mastectomia poupadora de pele (Direita)",
         ),
@@ -230,7 +236,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da mastectomia poupadora de pele (esquerda)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Mastectomia poupadora de pele (Esquerda)",
         ),
@@ -239,7 +245,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da mastectomia poupadora de pele e complexo aréolo papilar (direita)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Mastectomia poupadora de pele e complexo aréolo papilar (Direita)",
         ),
@@ -248,7 +254,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da mastectomia poupadora de pele e complexo aréolo papilar (esquerda)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Mastectomia poupadora de pele e complexo aréolo papilar (Esquerda)",
         ),
@@ -257,7 +263,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da linfadenectomia axilar (direita)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Linfadenectomia axilar (Direita)",
         ),
@@ -266,7 +272,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da linfadenectomia axilar (esquerda)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Linfadenectomia axilar (Esquerda)",
         ),
@@ -275,7 +281,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da biópsia de linfonodo sentinela (direita)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Biópsia de linfonodo sentinela (Direita)",
         ),
@@ -284,7 +290,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da biópsia de linfonodo sentinela (esquerda)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Biópsia de linfonodo sentinela (Esquerda)",
         ),
@@ -293,7 +299,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da reconstrução mamária (direita)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Reconstrução mamária (Direita)",
         ),
@@ -302,7 +308,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da reconstrução mamária (esquerda)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Reconstrução mamária (Esquerda)",
         ),
@@ -311,7 +317,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da mastoplastia redutora (direita)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Mastoplastia redutora (Direita)",
         ),
@@ -320,7 +326,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da mastoplastia redutora (esquerda)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Mastoplastia redutora (Esquerda)",
         ),
@@ -329,7 +335,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da inclusão de implantes (direita)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Inclusão de implantes (Direita)",
         ),
@@ -338,7 +344,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Ano da inclusão de implantes (esquerda)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             pattern="^\\d{4}$",
             title="Inclusão de implantes (Esquerda)",
         ),
@@ -347,7 +353,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         TipoDeMamografia,
         Field(
             description="Tipo de mamografia: 01=Diagnóstica, 02=Rastreamento",
-            json_schema_extra={"x-widget": "radio"},
+            json_schema_extra={"x-widget": "radio", "x-xpath": ""},
             title="TIPO DE MAMOGRAFIA",
         ),
     ]
@@ -355,14 +361,27 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         Optional[str],
         Field(
             description="Data da solicitação do exame no formato DD/MM/AAAA",
-            json_schema_extra={"x-widget": "date"},
+            json_schema_extra={"x-widget": "date",
+                               "x-xpath": "//label[contains(normalize-space(.), 'Data da Solicitação:')]/following::input[@type='text'][1]"},
             pattern="^\\d{2}/\\d{2}/\\d{4}$",
             title="Data da Solicitação",
         ),
     ] = None
 
+    cns_responsavel_coleta: Annotated[
+        str,
+        Field(
+            description="CNS do responsável pela coleta (15 dígitos)",
+            json_schema_extra={
+                "x-widget": "select",
+                "x-xpath": "//select[@name='frm:responsavelColeta']"},
+            title="Responsável:",
+        ),
+    ]
+
     @model_validator(mode="after")
     def valida_regras_condicionais(cls, values):
+        logger.debug("Executando valida_regras_condicionais...")
         # 1) Se existe '04' em tem_nodulo_ou_caroco_na_mama, então só pode haver esse item
         nodulos = values.tem_nodulo_ou_caroco_na_mama or []
         if any(n.value == "04" for n in nodulos):
@@ -385,7 +404,8 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
                 "Se não fez mamografia (≠01), não deve informar 'ano_que_fez_a_ultima_mamografia'."
             )
 
-        # 3) Se fez_radioterapia_na_mama_ou_no_plastrao == '01', radioterapia_localizacao é obrigatório
+        # 3) Se fez_radioterapia_na_mama_ou_no_plastrao == '01',
+        # radioterapia_localizacao é obrigatório
         fez_radio = values.fez_radioterapia_na_mama_ou_no_plastrao
         loc = values.radioterapia_localizacao
         if fez_radio == YNIDK.SIM and not loc:
@@ -416,16 +436,58 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
                     "'ano_da_radioterapia_direita' e 'ano_da_radioterapia_esquerda'."
                 )
 
-        # 5) Se tipo_de_mamografia == 'Rastreamento', tipo_mamografia_de_rastreamento é obrigatório
-        tipo = values.tipo_de_mamografia
-        mamo = values.tipo_mamografia_de_rastreamento
-        if tipo == TipoDeMamografia.RASTREAMENTO and not mamo:
-            raise ValueError(
-                "Se tipo_de_mamografia = Rastreamento, precisa informar 'tipo_mamografia_de_rastreamento'."
-            )
-        if tipo != TipoDeMamografia.RASTREAMENTO and mamo:
-            raise ValueError(
-                "Se tipo_de_mamografia ≠ Rastreamento, não deve informar 'tipo_mamografia_de_rastreamento'."
-            )
-
         return values
+
+    @classmethod
+    def _extrai_valores_possiveis(cls, annotation):
+        """
+        Extrai valores possíveis do tipo anotado:
+        - Optional[...] → extrai tipo base e ignora None (mas pode incluir
+        como permitido)
+        - Literal[...] → retorna valores literais
+        - Enum → retorna valores da enumeração
+        - Annotated[...] → trata o primeiro argumento como tipo base
+        - List[T] → aplica recursivamente para T
+        """
+        origin = get_origin(annotation)
+        args = get_args(annotation)
+
+        logger.debug(
+            f"Extrai valores possíveis de {annotation}, "
+            f"origin: {origin}, "
+            f"args: {args}"
+        )
+
+        # Trata Annotated[T, ...]
+        if origin is Annotated:
+            return cls._extrai_valores_possiveis(args[0])
+
+        # Trata Union[T1, T2, ...] (inclui Optional[T])
+        if origin is Union:
+            valores = []
+            for arg in args:
+                if arg is type(None):
+                    valores.append(None)
+                else:
+                    valores += cls._extrai_valores_possiveis(arg)
+            return valores
+
+        # Trata List[T]
+        if origin in (list, List):
+            if args:
+                return cls._extrai_valores_possiveis(args[0])
+            return []
+
+        # Trata Literal["S", "N", ...]
+        if origin is Literal:
+            return list(args)
+
+        # Trata Enum
+        if isinstance(annotation, type):
+            try:
+                if issubclass(annotation, enum.Enum):
+                    return [e.value for e in annotation]
+            except TypeError:
+                pass
+
+        return []
