@@ -322,9 +322,7 @@ class XPathConstructor:
                 f"Aguardando preenchimento do campo localizado por "
                 f"XPath: {self._xpath}"
             )
-            await locator.wait_for(
-                state="visible", timeout=timeout * (self.TIMEOUT_MS_FACTOR / 2)
-            )
+            await locator.wait_for(state="visible", timeout=timeout)
 
             # Em seguida, espera até o atributo 'value' ser diferente de vazio
             logger.debug(
@@ -336,7 +334,7 @@ class XPathConstructor:
                     return element.value.length > 0;
                 }""",
                 arg=await locator.element_handle(),
-                timeout=timeout * (self.TIMEOUT_MS_FACTOR / 2),
+                timeout=timeout,
             )
             logger.info(f"Campo com XPath '{self._xpath}' foi preenchido "
                         f"com sucesso.")
@@ -347,8 +345,7 @@ class XPathConstructor:
             logger.error(
                 f"Timeout: O campo '{self._xpath}' não foi "
                 f"preenchido ou não se tornou visível dentro "
-                f"de {timeout * self.TIMEOUT_MS_FACTOR} "
-                f"milessegundos. Erro: {e}"
+                f"de {timeout} milessegundos. Erro: {e}"
             )
             raise XpathNotFoundError(
                 self._context,
@@ -781,8 +778,8 @@ class XPathConstructor:
         locator = await self.wait_and_get(timeout)
 
         logger.debug(
-            f"Preenchendo o campo do tipo {input_type.html_element} com "
-            f"valor: {value}"
+            f"Preenchendo locator: {locator} com o campo do "
+            f"elemento html: {input_type.html_element} e valor: {value}"
         )
         # Preenchimento dependendo do tipo de input
         if input_type in (InputType.SELECT, InputType.LIST):
@@ -794,27 +791,38 @@ class XPathConstructor:
                 return self
             await self._select_option_with_retry(locator, value, timeout)
         elif input_type == InputType.CHECKBOX:
-            # Para checkbox: encontrar todos os inputs dentro da tabela
-            # localizada
+            # Verifica se o próprio locator é um checkbox
+            tag_name = await locator.evaluate(
+                "(el) => el.tagName.toLowerCase()")
+            input_type_attr = await locator.get_attribute("type")
+
+            if tag_name == "input" and input_type_attr == "checkbox":
+                logger.debug("O locator é o próprio checkbox.")
+                checkboxes = locator
+                count = 1
+                checkboxes_list = [locator]
+            else:
+                # O locator é um contêiner; buscar checkboxes filhos
+                logger.debug(
+                    f"O locator é um contêiner; buscar checkboxes filhos "
+                    f"de: {locator}"
+                )
+                checkboxes = locator.locator("input[type='checkbox']")
+                count = await checkboxes.count()
+                checkboxes_list = [checkboxes.nth(i) for i in range(count)]
+
             valores = value if isinstance(value, list) else [value]
-            # Usar CSS selector!
-            checkboxes = locator.locator("input[type='checkbox']")
-            count = await checkboxes.count()
-            for i in range(count):
-                input_el = checkboxes.nth(i)
+
+            for input_el in checkboxes_list:
                 input_value = await input_el.get_attribute("value")
                 is_checked = await input_el.is_checked()
                 if input_value in valores and not is_checked:
                     logger.debug(
-                        f"Marcando checkbox value={input_value} "
-                        f"(checked={is_checked})"
-                    )
+                        f"Marcando checkbox value={input_value} (checked={is_checked})")
                     await input_el.check(force=True)
                 elif input_value not in valores and is_checked:
                     logger.debug(
-                        f"Desmarcando checkbox value={input_value} "
-                        f"(checked={is_checked})"
-                    )
+                        f"Desmarcando checkbox value={input_value} (checked={is_checked})")
                     await input_el.uncheck(force=True)
         elif input_type == InputType.RADIO:
             await self._select_radio_with_retry(locator, value, timeout)

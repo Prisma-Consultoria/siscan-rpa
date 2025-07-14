@@ -57,7 +57,6 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
 
     def validation(self, data: dict):
         # Define o tipo de exame como Mamografia Diagnóstica
-        data["tipo_exame_mama"] = TipoExameMama.MAMOGRAFIA.value
         data["tipo_de_mamografia"] = TipoDeMamografia.DIAGNOSTICA.value
         super().validation(data)
         return data
@@ -76,9 +75,11 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
 
         await super().preencher(data)
 
-        xpath_ctx = await XPE.create(
-            self.context
-        )
+        # 3o passo: preencher os campos específicos de diagnóstico
+        await self.fill_form_field("tipo_de_mamografia",
+                                   data, suffix="")
+
+
         print("Preenchendo achados de exame clínico")
         await self.preencher_achados_exame_clinico(data)
         logger.debug("Preenchendo controle radiológico de lesão categoria 3")
@@ -92,9 +93,13 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         logger.debug("Preenchendo controle de lesão pós-biópsia PAAF benigna")
         await self.preencher_controle_lesao_pos_biopsia_paaf_benigna(data)
 
-    async def _check_checkbox_by_id(self, element_id: str):
-        """Marca um checkbox identificando pelo atributo id."""
-        xpath = await XPE.create(self.context, xpath=f"//input[@id='{element_id}']")
+        await self._seleciona_responsavel_coleta(data)
+
+        await self.take_screenshot("screenshot_05_mamografia_diagnostica.png")
+
+    async def _check_checkbox_by_XP(self, x_xpath: str):
+        """Marca um checkbox identificando pelo xpath."""
+        xpath = await XPE.create(self.context, xpath=x_xpath)
         locator = await xpath.wait_and_get()
         if not await locator.is_checked():
             await locator.check(force=True)
@@ -105,14 +110,14 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         data: dict,
         campo_grupo: str,
         prefixo: str,
-        element_id: str,
     ):
         """Preenche um grupo de campos ativado por checkbox."""
         sub_campos = [k for k in list(data.keys()) if k.startswith(prefixo)]
         if not data.get(campo_grupo) and not sub_campos:
             return
 
-        await self._check_checkbox_by_id(element_id)
+        await self._check_checkbox_by_XP(
+            self.get_field_metadata(campo_grupo).get('xpath'))
         data.pop(campo_grupo, None)
 
         if sub_campos:
@@ -133,7 +138,6 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
             data,
             campo_grupo="achados_exame_clinico",
             prefixo="exame_clinico_mama",
-            element_id="frm:achadosExameClinico",
         )
 
     async def preencher_controle_radiologico_lesao_categoria_3(self, data: dict):
@@ -144,7 +148,6 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
             data,
             campo_grupo="controle_radiologico_lesao_categoria_3",
             prefixo="controle_radiologico_lesao_categoria_3",
-            element_id="frm:controleRadiologicoLesao",
         )
 
     async def preencher_lesao_diagnostico_cancer(self, data: dict):
@@ -155,7 +158,6 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
             data,
             campo_grupo="lesao_diagnostico_cancer",
             prefixo="lesao_diagnostico_cancer",
-            element_id="frm:lesaoDiagnosticoCancer",
         )
 
     async def preencher_avaliacao_resposta_quimioterapia(self, data: dict):
@@ -166,7 +168,6 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
             data,
             campo_grupo="avaliacao_resposta_quimioterapia_neoadjuvante",
             prefixo="avaliacao_resposta_quimioterapia",
-            element_id="frm:avaliacaoRespostaQuimioterapia",
         )
 
     async def preencher_revisao_mamografia_outra_instituicao(self, data: dict):
@@ -177,7 +178,6 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
             data,
             campo_grupo="revisao_mamografia_outra_instituicao",
             prefixo="revisao_mamografia_outra_instituicao",
-            element_id="frm:revisaoMamografia",
         )
 
     async def preencher_controle_lesao_pos_biopsia_paaf_benigna(self, data: dict):
@@ -188,5 +188,4 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
             data,
             campo_grupo="controle_lesao_pos_biopsia_paaf_benigna",
             prefixo="controle_lesao_pos_biopsia_paaf_benigna",
-            element_id="frm:controleLesao",
         )

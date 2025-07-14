@@ -48,7 +48,6 @@ class RequisicaoExameMamografiaRastreio(RequisicaoExameMamografia):
 
     def validation(self, data: dict):
         # Define o tipo de exame como Mamografia de Rastreio
-        data["tipo_exame_mama"] = TipoExameMama.MAMOGRAFIA.value
         data["tipo_de_mamografia"] = TipoDeMamografia.RASTREAMENTO.value
         super().validation(data)
         return data
@@ -62,7 +61,10 @@ class RequisicaoExameMamografiaRastreio(RequisicaoExameMamografia):
                                    data, suffix="")
         await self.fill_form_field(
             "tipo_mamografia_de_rastreamento", data, suffix="")
-        await self.take_screenshot("screenshot_05.png")
+
+        await self._seleciona_responsavel_coleta(data)
+
+        await self.take_screenshot("screenshot_05_mamografia_rastreamento.png")
 
 
 base_fields = set(RequisicaoMamografiaSchema.model_fields.keys())

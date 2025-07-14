@@ -368,6 +368,17 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         ),
     ] = None
 
+    cns_responsavel_coleta: Annotated[
+        str,
+        Field(
+            description="CNS do responsável pela coleta (15 dígitos)",
+            json_schema_extra={
+                "x-widget": "select",
+                "x-xpath": "//select[@name='frm:responsavelColeta']"},
+            title="Responsável:",
+        ),
+    ]
+
     @model_validator(mode="after")
     def valida_regras_condicionais(cls, values):
         logger.debug("Executando valida_regras_condicionais...")

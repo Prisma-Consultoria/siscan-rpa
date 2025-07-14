@@ -191,11 +191,14 @@ class RequisicaoNovoExameSchema(BaseModel):
             title="Mama",
         ),
     ] = None
-    unidade_requisitante: Annotated[
+    cnes_unidade_requisitante: Annotated[
         str,
         Field(
             description="CNES da unidade requisitante",
-            json_schema_extra={"x-widget": "select", "x-xpath": ""},
+            json_schema_extra={
+                "x-widget": "select",
+                "x-xpath": "//select[@name='frm:unidadeSaudeCoordenacaoMunicipal']"
+            },
             title="Unidade Requisitante",
         ),
     ]
@@ -203,7 +206,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         str,
         Field(
             description="Nome do prestador de serviço",
-            json_schema_extra={"x-widget": "select", "x-xpath": ""},
+            json_schema_extra={
+                "x-widget": "select",
+                "x-xpath": "//select[@name='frm:prestadorServicoCoordenacaoMunicipal']"
+            },
             title="Prestador",
         ),
     ]

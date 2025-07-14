@@ -72,7 +72,7 @@ class PreencherSolicitacaoInput(BaseModel):
     bairro: str
     cep: str
     ponto_de_referencia: str
-    unidade_requisitante: str
+    cnes_unidade_requisitante: str
     prestador: str
     num_prontuario: str
     tem_nodulo_ou_caroco_na_mama: List[str]
@@ -113,6 +113,7 @@ class PreencherSolicitacaoInput(BaseModel):
     ano_inclusao_implantes_esquerda: str
     tipo_mamografia_de_rastreamento: str
     data_da_solicitacao: str
+    cns_responsavel_coleta: str
 
     model_config = {
         "json_schema_extra": {
@@ -134,7 +135,7 @@ class PreencherSolicitacaoInput(BaseModel):
                 "bairro": "VILA IZABEL",
                 "cep": "80320030",
                 "ponto_de_referencia": "PONTO DE REFERÊNCIA",
-                "unidade_requisitante": "0274267",
+                "cnes_unidade_requisitante": "0274267",
                 "prestador": "HOSPITAL ERASTO GAERTNER",
                 "num_prontuario": "123456789",
                 "tem_nodulo_ou_caroco_na_mama": ["01", "02"],
@@ -175,6 +176,7 @@ class PreencherSolicitacaoInput(BaseModel):
                 "ano_inclusao_implantes_esquerda": "2025",
                 "mamografia_de_rastreamento": "01",
                 "data_da_solicitacao": "18/06/2025",
+                "cns_responsavel_coleta": "708005867753026"
             }
         }
     }
