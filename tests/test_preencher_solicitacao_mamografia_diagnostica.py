@@ -27,7 +27,9 @@ async def test_preencher_requisicao_mamografia_diagnostica(headless: bool):
 
     req._context = SiscanBrowserContext(headless=headless)
 
-    await req.authenticate()
+    # Preencher chama o método de autenticação, pois antes faz-se necessário
+    # verificar se os dados recebidos são válidos antes de inicializar o
+    # navegador e preencher a requisição.
     await req.preencher(json_data)
 
     await req.context.close()

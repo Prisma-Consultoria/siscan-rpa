@@ -18,7 +18,7 @@ class RequisicaoMamografiaRastreamentoSchema(RequisicaoMamografiaSchema):
         Optional[TipoMamografiaRastreamento],
         Field(
             description="Indicação da mamografia de rastreamento: 01=População alvo, 02=Risco elevado, 03=Paciente já tratado",
-            json_schema_extra={"x-widget": "radio"},
+            json_schema_extra={"x-widget": "radio", "x-xpath": ""},
             title="MAMOGRAFIA DE RASTREAMENTO",
         ),
     ] = None

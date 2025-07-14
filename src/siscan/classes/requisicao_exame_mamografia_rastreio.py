@@ -1,6 +1,6 @@
 import logging
 
-from typing import Type
+from typing import Type, Any
 from pydantic import BaseModel
 
 from src.siscan.schema.requisicao_mamografia_rastreamento_schema import (
@@ -25,15 +25,18 @@ class RequisicaoExameMamografiaRastreio(RequisicaoExameMamografia):
             schema_model,
         )
 
+        # Extrai o mapeamento dos labels e campos do schema informado
         map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
             self.schema_model, fields=self.MAP_SCHEMA_FIELDS
         )
 
+        # Atualiza o mapeamento de labels da classe
         RequisicaoExameMamografiaRastreio.MAP_DATA_LABEL = map_data_label
+        # Atualiza o dicionário de campos, mesclando com os campos já existentes
         fields_map.update(self.FIELDS_MAP)
         self.FIELDS_MAP = fields_map
 
-    def get_map_label(self) -> dict[str, tuple[str, str, str]]:
+    def get_map_label(self) -> dict[str, dict[str, Any]]:
         """Retorna o mapeamento de campos específico deste exame."""
         map_label = {
             **RequisicaoExameMamografiaRastreio.MAP_DATA_LABEL,
@@ -41,9 +44,22 @@ class RequisicaoExameMamografiaRastreio(RequisicaoExameMamografia):
         map_label.update(super().get_map_label())
         return map_label
 
+    def validation(self, data: dict):
+        # Define o tipo de exame como Mamografia Diagnóstica
+        data["tipo_exame_mama"] = "02"
+        data["tipo_de_mamografia"] = "Rastreamento"
+        super().validation(data)
+        return data
+
     async def preencher(self, data: dict):
+        self.validation(data)
         await super().preencher(data)
-        await self.select_value("tipo_mamografia_de_rastreamento", data)
+
+        # 3o passo: preencher os campos específicos de rastreio
+        await self.fill_form_field("tipo_de_mamografia",
+                                   data, suffix="")
+        await self.fill_form_field(
+            "tipo_mamografia_de_rastreamento", data, suffix="")
         await self.take_screenshot("screenshot_05.png")
 
 

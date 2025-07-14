@@ -1,6 +1,6 @@
 import logging
 
-from typing import Type
+from typing import Type, Any
 from pydantic import BaseModel
 
 from src.siscan.classes.requisicao_exame import RequisicaoExame
@@ -45,7 +45,7 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         fields_map.update(self.FIELDS_MAP)
         self.FIELDS_MAP = fields_map
 
-    def get_map_label(self) -> dict[str, tuple[str, str, str]]:
+    def get_map_label(self) -> dict[str, dict[str, Any]]:
         """Retorna o mapeamento de campos específico deste exame."""
         map_label = {
             **RequisicaoExameMamografiaDiagnostica.MAP_DATA_LABEL,
@@ -57,10 +57,7 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         # Define o tipo de exame como Mamografia Diagnóstica
         data["tipo_exame_mama"] = "01"
         data["tipo_de_mamografia"] = "Diagnóstica"
-
-        # Chama validação da classe base "RequisicaoExame"
-        # RequisicaoExame.validation(self, data)
-
+        super().validation(data)
         return data
 
     async def preencher(self, data: dict):
@@ -118,13 +115,11 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
 
         if sub_campos:
             sub_data = {k: data[k] for k in sub_campos}
-            fields_map, data_final = self.mount_fields_map_and_data(
+            await self.fill_form_fields(
                 sub_data,
                 RequisicaoExameMamografiaDiagnostica.MAP_DATA_LABEL,
-                suffix="",
+                suffix=""
             )
-            xpath_ctx = await XPE.create(self.context)
-            await xpath_ctx.fill_form_fields(data_final, fields_map)
             for k in sub_campos:
                 data.pop(k, None)
 
