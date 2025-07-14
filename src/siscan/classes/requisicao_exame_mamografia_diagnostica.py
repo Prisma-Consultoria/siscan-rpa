@@ -7,6 +7,8 @@ from src.siscan.classes.requisicao_exame import RequisicaoExame
 from src.siscan.classes.requisicao_exame_mamografia import (
     RequisicaoExameMamografia,
 )
+from src.siscan.schema import TipoDeMamografia
+from src.siscan.schema.requisicao_novo_exame_schema import TipoExameMama
 from src.utils.SchemaMapExtractor import SchemaMapExtractor
 from src.utils.xpath_constructor import XPathConstructor as XPE  # XPathElement
 
@@ -55,8 +57,8 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
 
     def validation(self, data: dict):
         # Define o tipo de exame como Mamografia Diagnóstica
-        data["tipo_exame_mama"] = "01"
-        data["tipo_de_mamografia"] = "Diagnóstica"
+        data["tipo_exame_mama"] = TipoExameMama.MAMOGRAFIA.value
+        data["tipo_de_mamografia"] = TipoDeMamografia.DIAGNOSTICA.value
         super().validation(data)
         return data
 

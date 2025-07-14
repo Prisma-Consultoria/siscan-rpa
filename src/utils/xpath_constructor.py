@@ -785,7 +785,7 @@ class XPathConstructor:
             f"valor: {value}"
         )
         # Preenchimento dependendo do tipo de input
-        if input_type in (InputType.SELECT, InputType.SELECT):
+        if input_type in (InputType.SELECT, InputType.LIST):
             if value is None:
                 logger.warning(
                     f"Valor vazio para campo do tipo {input_type.html_element}"
