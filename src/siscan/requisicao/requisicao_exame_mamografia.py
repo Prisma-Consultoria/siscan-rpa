@@ -1,23 +1,21 @@
-import re
-
 import logging
-
-from typing import Type
+import re
 from pydantic import BaseModel
+from typing import Type
 
 from src.siscan.exception import CartaoSusNotFoundError, \
     SiscanInvalidFieldValueError
-from src.siscan.classes.requisicao_exame import RequisicaoExame
-
+from src.siscan.requisicao.requisicao_exame import RequisicaoExame
 from src.siscan.schema.requisicao_mamografia_schema import (
     RequisicaoMamografiaSchema,
 )
 from src.siscan.schema.requisicao_novo_exame_schema import (
     RequisicaoNovoExameSchema, TipoExameMama,
 )
-from src.utils.SchemaMapExtractor import SchemaMapExtractor
-from src.utils.xpath_constructor import XPathConstructor as XPE  # XPathElement
+from src.siscan.webpage.xpath_constructor import \
+    XPathConstructor as XPE  # XPathElement
 from src.utils import messages as msg
+from src.utils.SchemaMapExtractor import SchemaMapExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +50,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
         map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
             self.schema_model, fields=RequisicaoExameMamografia.MAP_SCHEMA_FIELDS
         )
+
         RequisicaoExameMamografia.MAP_DATA_LABEL = map_data_label
         fields_map.update(self.FIELDS_MAP)
         self.FIELDS_MAP = fields_map
@@ -258,3 +257,4 @@ class RequisicaoExameMamografia(RequisicaoExame):
 base_fields = set(RequisicaoNovoExameSchema.model_fields.keys())
 diag_fields = set(RequisicaoMamografiaSchema.model_fields.keys())
 RequisicaoExameMamografia.MAP_SCHEMA_FIELDS = sorted(diag_fields - base_fields)
+

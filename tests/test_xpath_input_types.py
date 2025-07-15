@@ -1,11 +1,11 @@
 import pytest
 import pytest_asyncio
-from src.siscan.classes.requisicao_exame_mamografia_rastreio import (
+from src.siscan.requisicao.requisicao_exame_mamografia_rastreio import (
     RequisicaoExameMamografiaRastreio,
 )
-from src.utils.xpath_constructor import XPathConstructor as XPE, InputType
+from src.siscan.webpage.xpath_constructor import XPathConstructor as XPE, InputType
 from src.utils.validator import Validator
-from src.siscan.context import SiscanBrowserContext
+from src.siscan.webpage.context import SiscanBrowserContext
 from src.env import SISCAN_URL, SISCAN_USER, SISCAN_PASSWORD
 
 import logging

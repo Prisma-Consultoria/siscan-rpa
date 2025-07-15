@@ -1,22 +1,19 @@
 import logging
-
-from typing import Type, Any
 from pydantic import BaseModel
+from typing import Type, Any
 
-from src.siscan.classes.requisicao_exame import RequisicaoExame
-from src.siscan.classes.requisicao_exame_mamografia import (
+from src.siscan.requisicao.requisicao_exame_mamografia import (
     RequisicaoExameMamografia,
 )
 from src.siscan.schema import TipoDeMamografia
-from src.siscan.schema.requisicao_novo_exame_schema import TipoExameMama
-from src.utils.SchemaMapExtractor import SchemaMapExtractor
-from src.utils.xpath_constructor import XPathConstructor as XPE  # XPathElement
-
-
 from src.siscan.schema.requisicao_mamografia_diagnostica_schema import (
     RequisicaoMamografiaDiagnosticaSchema,
 )
-from src.siscan.schema.requisicao_mamografia_schema import RequisicaoMamografiaSchema
+from src.siscan.schema.requisicao_mamografia_schema import \
+    RequisicaoMamografiaSchema
+from src.siscan.webpage.xpath_constructor import \
+    XPathConstructor as XPE  # XPathElement
+from src.utils.SchemaMapExtractor import SchemaMapExtractor
 
 logger = logging.getLogger(__name__)
 

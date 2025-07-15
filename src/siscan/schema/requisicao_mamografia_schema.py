@@ -375,6 +375,8 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
             json_schema_extra={
                 "x-widget": "select",
                 "x-xpath": "//select[@name='frm:responsavelColeta']"},
+            max_length=15,
+            min_length=15,
             title="Responsável:",
         ),
     ]
@@ -382,6 +384,52 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
     @model_validator(mode="after")
     def valida_regras_condicionais(cls, values):
         logger.debug("Executando valida_regras_condicionais...")
+
+        # Cirurgias: se não fez, nenhum campo de cirurgia pode ser informado
+        # Validação dos campos de cirurgia de mama
+        campos_cirurgias = [
+            "ano_biopsia_cirurgica_incisional_direita",
+            "ano_biopsia_cirurgica_incisional_esquerda",
+            "ano_biopsia_cirurgica_excisional_direita",
+            "ano_biopsia_cirurgica_excisional_esquerda",
+            "ano_segmentectomia_direita",
+            "ano_segmentectomia_esquerda",
+            "ano_centralectomia_direita",
+            "ano_centralectomia_esquerda",
+            "ano_dutectomia_direita",
+            "ano_dutectomia_esquerda",
+            "ano_mastectomia_direita",
+            "ano_mastectomia_esquerda",
+            "ano_mastectomia_poupadora_pele_direita",
+            "ano_mastectomia_poupadora_pele_esquerda",
+            "ano_mastectomia_poupadora_pele_complexo_papilar_direita",
+            "ano_mastectomia_poupadora_pele_complexo_papilar_esquerda",
+            "ano_linfadenectomia_axilar_direita",
+            "ano_linfadenectomia_axilar_esquerda",
+            "ano_biopsia_linfonodo_sentinela_direita",
+            "ano_biopsia_linfonodo_sentinela_esquerda",
+            "ano_reconstrucao_mamaria_direita",
+            "ano_reconstrucao_mamaria_esquerda",
+            "ano_mastoplastia_redutora_direita",
+            "ano_mastoplastia_redutora_esquerda",
+            "ano_inclusao_implantes_direita",
+            "ano_inclusao_implantes_esquerda",
+        ]
+
+        if values.fez_cirurgia_de_mama == YN.SIM:
+            # Ao menos um dos campos de cirurgia deve ser informado
+            if not any(getattr(values, campo, None) for campo in
+                       campos_cirurgias):
+                raise ValueError(f"Se fez cirurgia de mama, "
+                                 f"deve informar pelo menos um dos campos: {campos_cirurgias}.")
+        else:
+            # Nenhum campo de cirurgia deve ser informado
+            for campo in campos_cirurgias:
+                if getattr(values, campo, None):
+                    raise ValueError(
+                        f"Se não fez cirurgia de mama, não pode informar '{campo}'."
+                    )
+
         # 1) Se existe '04' em tem_nodulo_ou_caroco_na_mama, então só pode haver esse item
         nodulos = values.tem_nodulo_ou_caroco_na_mama or []
         if any(n.value == "04" for n in nodulos):
@@ -418,13 +466,13 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
             )
 
         # 4) Dependências dentro de radioterapia_localizacao
-        if loc == Lateralidade.ESQUERDA and not values.ano_da_radioterapia_direita:
+        if loc == Lateralidade.ESQUERDA and not values.ano_da_radioterapia_esquerda:
             raise ValueError(
-                "Se 'radioterapia_localizacao' = 02, precisa 'ano_da_radioterapia_direita'."
+                "Se 'radioterapia_localizacao' = 02, precisa 'ano_da_radioterapia_esquerda'."
             )
-        if loc == Lateralidade.DIREITA and not values.ano_da_radioterapia_esquerda:
+        if loc == Lateralidade.DIREITA and not values.ano_da_radioterapia_direita:
             raise ValueError(
-                "Se 'radioterapia_localizacao' = 01, precisa 'ano_da_radioterapia_esquerda'."
+                "Se 'radioterapia_localizacao' = 01, precisa 'ano_da_radioterapia_direita'."
             )
         if loc == Lateralidade.AMBAS:
             if (

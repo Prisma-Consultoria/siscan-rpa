@@ -1,24 +1,26 @@
 import logging
-
-from typing import Type, Any
 from pydantic import BaseModel
+from typing import Type, Any
 
+from src.siscan.requisicao.requisicao_exame_mamografia import (
+    RequisicaoExameMamografia,
+)
 from src.siscan.schema import TipoDeMamografia
 from src.siscan.schema.requisicao_mamografia_rastreamento_schema import (
     RequisicaoMamografiaRastreamentoSchema,
 )
-from src.siscan.schema.requisicao_mamografia_schema import RequisicaoMamografiaSchema
-from src.siscan.classes.requisicao_exame_mamografia import (
-    RequisicaoExameMamografia,
-)
-from src.siscan.schema.requisicao_novo_exame_schema import TipoExameMama
+from src.siscan.schema.requisicao_mamografia_schema import \
+    RequisicaoMamografiaSchema
 from src.utils.SchemaMapExtractor import SchemaMapExtractor
 
 logger = logging.getLogger(__name__)
 
 
 class RequisicaoExameMamografiaRastreio(RequisicaoExameMamografia):
-    def __init__(self, base_url: str, user: str, password: str, schema_model: Type[BaseModel] = RequisicaoMamografiaRastreamentoSchema):
+    def __init__(
+            self, base_url: str, user: str, password: str,
+            schema_model: Type[BaseModel] = RequisicaoMamografiaRastreamentoSchema
+    ):
         # Inicializa com o schema específico para mamografia de rastreio
         super().__init__(
             base_url,
