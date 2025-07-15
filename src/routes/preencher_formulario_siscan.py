@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends
 
+from src.routes.auth.dependencies import get_current_user_uuid
+from src.siscan.rpa.runner import run_rpa
 from src.siscan.schema.requisicao_mamografia_diagnostica_schema import \
     RequisicaoMamografiaDiagnosticaSchema
 from src.siscan.schema.requisicao_mamografia_rastreamento_schema import \
     RequisicaoMamografiaRastreamentoSchema
-from src.utils.dependencies import _get_user_uuid
-from src.utils.helpers import run_rpa
+
 
 router = APIRouter(prefix="/preencher-formulario-siscan", tags=["siscan"])
 
@@ -18,7 +19,7 @@ router = APIRouter(prefix="/preencher-formulario-siscan", tags=["siscan"])
 )
 async def preencher_requisicao_mamografia_rastreamento(
     data: RequisicaoMamografiaRastreamentoSchema,
-    uuid: str = Depends(_get_user_uuid),
+    uuid: str = Depends(get_current_user_uuid),
 ):
     result = await run_rpa("requisicao-rastreamento", data.__dict__)
     result.update({"user_uuid": uuid})
@@ -32,7 +33,7 @@ async def preencher_requisicao_mamografia_rastreamento(
 )
 async def preencher_requisicao_mamografia_diagnostica(
     data: RequisicaoMamografiaDiagnosticaSchema,
-    uuid: str = Depends(_get_user_uuid),
+    uuid: str = Depends(get_current_user_uuid),
 ):
     result = await run_rpa("requisicao-diagnostica", data.__dict__)
     result.update({"user_uuid": uuid})
@@ -45,7 +46,7 @@ async def preencher_requisicao_mamografia_diagnostica(
 )
 async def preencher_laudo(
     data: dict,
-    uuid: str = Depends(_get_user_uuid),
+    uuid: str = Depends(get_current_user_uuid),
 ):
     result = await run_rpa("laudo", data)
     result.update({"user_uuid": uuid})

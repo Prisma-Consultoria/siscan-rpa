@@ -4,7 +4,7 @@ from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
 
 from src.env import get_db
 from src.models import ApiKey
-from src.utils.helpers import decode_access_token
+from src.routes.auth.utils import decode_access_token
 
 api_key_scheme = APIKeyHeader(name="Api-Key", auto_error=False)
 oauth2_optional = OAuth2PasswordBearer(tokenUrl="security/token", auto_error=False)
@@ -15,7 +15,7 @@ api_key_required = APIKeyHeader(
 )
 
 
-def _get_user_uuid(
+def get_current_user_uuid(
     user_uuid: str | None = None,
     token: str | None = Security(oauth2_optional),
     api_key: str | None = Security(api_key_scheme),

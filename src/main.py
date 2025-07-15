@@ -5,7 +5,7 @@ from .env import Base, engine
 from .routes.preencher_formulario_siscan import (
     router as formulario_router,
 )
-from .routes.security import router as security_router
+from .routes.auth.security import router as security_router
 from .routes.user import router as user_router
 
 logging.basicConfig(

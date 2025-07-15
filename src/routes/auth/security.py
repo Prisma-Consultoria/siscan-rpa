@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, status
 
-from ..env import get_db
-from ..models import User
-from ..siscan.schema.auth_schema import LoginInput
-from ..utils.helpers import verify_password, create_access_token
+from src.env import get_db
+from src.models import User
+from src.routes.auth.utils import verify_password, create_access_token
+from src.siscan.schema.auth_schema import LoginInput
 
 router = APIRouter(prefix="/security", tags=["security"])
 
