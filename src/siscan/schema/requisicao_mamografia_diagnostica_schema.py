@@ -1,17 +1,14 @@
 from __future__ import annotations
 
-import enum
-
 import logging
-
 from enum import Enum
-from typing import Annotated, Optional, List, ClassVar, get_args, Literal
-
 from pydantic import Field
 from pydantic.functional_validators import model_validator
+from typing import Annotated, Optional, List, ClassVar
 
-from src.siscan.schema.requisicao_mamografia_schema import RequisicaoMamografiaSchema
 from src.siscan.schema import Lateralidade
+from src.siscan.schema.requisicao_mamografia_schema import \
+    RequisicaoMamografiaSchema
 
 logger = logging.getLogger(__name__)
 
@@ -872,6 +869,126 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
             title="... MAMA ESQUERDA - LINFONODO AXILAR",
         ),
     ] = None
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "cartao_sus": "898001160104568",
+                "apelido": "",
+                "escolaridade": "4",
+                "ponto_de_referencia": "PONTO DE REFERÊNCIA",
+                "cnes_unidade_requisitante": "0274267",
+                "prestador": "HOSPITAL ERASTO GAERTNER",
+                "num_prontuario": "123456789",
+                "tem_nodulo_ou_caroco_na_mama": ["01", "02"],
+                "apresenta_risco_elevado_para_cancer_mama": "01",
+                "fez_mamografia_alguma_vez": "01",
+                "ano_que_fez_a_ultima_mamografia": "2025",
+                "antes_desta_consulta_teve_as_mamas_examinadas_por_um_profissional": "03",
+                "fez_radioterapia_na_mama_ou_no_plastrao": "01",
+                "radioterapia_localizacao": "03",
+                "ano_da_radioterapia_direita": "2023",
+                "ano_da_radioterapia_esquerda": "2023",
+                "fez_cirurgia_de_mama": "01",
+                "ano_biopsia_cirurgica_incisional_direita": "2000",
+                "ano_biopsia_cirurgica_incisional_esquerda": "2001",
+                "ano_biopsia_cirurgica_excisional_direita": "2002",
+                "ano_biopsia_cirurgica_excisional_esquerda": "2003",
+                "ano_segmentectomia_direita": "2004",
+                "ano_segmentectomia_esquerda": "2005",
+                "ano_centralectomia_direita": "2006",
+                "ano_centralectomia_esquerda": "2007",
+                "ano_dutectomia_direita": "2008",
+                "ano_dutectomia_esquerda": "2009",
+                "ano_mastectomia_direita": "2010",
+                "ano_mastectomia_esquerda": "2011",
+                "ano_mastectomia_poupadora_pele_direita": "2012",
+                "ano_mastectomia_poupadora_pele_esquerda": "2013",
+                "ano_mastectomia_poupadora_pele_complexo_papilar_direita": "2014",
+                "ano_mastectomia_poupadora_pele_complexo_papilar_esquerda": "2015",
+                "ano_linfadenectomia_axilar_direita": "2016",
+                "ano_linfadenectomia_axilar_esquerda": "2017",
+                "ano_biopsia_linfonodo_sentinela_direita": "2018",
+                "ano_biopsia_linfonodo_sentinela_esquerda": "2019",
+                "ano_reconstrucao_mamaria_direita": "2020",
+                "ano_reconstrucao_mamaria_esquerda": "2021",
+                "ano_mastoplastia_redutora_direita": "2022",
+                "ano_mastoplastia_redutora_esquerda": "2023",
+                "ano_inclusao_implantes_direita": "2024",
+                "ano_inclusao_implantes_esquerda": "2025",
+
+                "exame_clinico_mama_direita_lesao_papilar": "S",
+                "exame_clinico_mama_direita_descarga_papilar_espontanea": "01",
+                "exame_clinico_mama_direita_nodulo_localizacao": ["01","02","03","04","05","06","07","08","09","10"],
+                "exame_clinico_mama_direita_espessamento_localizacao": ["01","02","03","04","05","06","07","08","09","10"],
+                "exame_clinico_mama_direita_linfonodo_palpavel": ["01", "02"],
+                "exame_clinico_mama_esquerda_lesao_papilar": "S",
+                "exame_clinico_mama_esquerda_descarga_papilar_espontanea": "01",
+                "exame_clinico_mama_esquerda_nodulo_localizacao": ["01","02","03","04","05","06","07","08","09","10"],
+                "exame_clinico_mama_esquerda_espessamento_localizacao": ["01","02","03","04","05","06","07","08","09","10"],
+                "exame_clinico_mama_esquerda_linfonodo_palpavel": ["01", "02"],
+
+                "controle_radiologico_lesao_categoria_3_mama_direita_nodulo": None,
+                "controle_radiologico_lesao_categoria_3_mama_direita_microcalcificacoes": "S",
+                "controle_radiologico_lesao_categoria_3_mama_direita_assimetria_focal": None,
+                "controle_radiologico_lesao_categoria_3_mama_direita_assimetria_difusa": "S",
+                "controle_radiologico_lesao_categoria_3_mama_direita_area_densa": None,
+                "controle_radiologico_lesao_categoria_3_mama_direita_distorcao_focal": "S",
+                "controle_radiologico_lesao_categoria_3_mama_direita_linfonodo_axilar": None,
+                "controle_radiologico_lesao_categoria_3_mama_esquerda_nodulo": "S",
+                "controle_radiologico_lesao_categoria_3_mama_esquerda_microcalcificacoes": None,
+                "controle_radiologico_lesao_categoria_3_mama_esquerda_assimetria_focal": "S",
+                "controle_radiologico_lesao_categoria_3_mama_esquerda_assimetria_difusa": None,
+                "controle_radiologico_lesao_categoria_3_mama_esquerda_area_densa": "S",
+                "controle_radiologico_lesao_categoria_3_mama_esquerda_distorcao_focal": None,
+                "controle_radiologico_lesao_categoria_3_mama_esquerda_linfonodo_axilar": "S",
+
+                "lesao_diagnostico_cancer_mama_direita_nodulo": "S",
+                "lesao_diagnostico_cancer_mama_direita_microcalcificacoes": None,
+                "lesao_diagnostico_cancer_mama_direita_assimetria_focal": "S",
+                "lesao_diagnostico_cancer_mama_direita_assimetria_difusa": None,
+                "lesao_diagnostico_cancer_mama_direita_area_densa": "S",
+                "lesao_diagnostico_cancer_mama_direita_distorcao_focal": None,
+                "lesao_diagnostico_cancer_mama_direita_linfonodo_axilar": "S",
+                "lesao_diagnostico_cancer_mama_esquerda_nodulo": None,
+                "lesao_diagnostico_cancer_mama_esquerda_microcalcificacoes": "S",
+                "lesao_diagnostico_cancer_mama_esquerda_assimetria_focal": None,
+                "lesao_diagnostico_cancer_mama_esquerda_assimetria_difusa": "S",
+                "lesao_diagnostico_cancer_mama_esquerda_area_densa": None,
+                "lesao_diagnostico_cancer_mama_esquerda_distorcao_focal": "S",
+                "lesao_diagnostico_cancer_mama_esquerda_linfonodo_axilar": None,
+
+                "avaliacao_resposta_quimioterapia_lateralidade": "01",
+
+                "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_nodulo": "S",
+                "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_microcalcificacoes": None,
+                "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_assimetria_focal": "S",
+                "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_assimetria_difusa": None,
+                "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_area_densa": "S",
+                "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_distorcao_focal": None,
+                "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_linfonodo_axilar": "S",
+                "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_nodulo": None,
+                "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_microcalcificacoes": "S",
+                "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_assimetria_focal": None,
+                "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_assimetria_difusa": "S",
+                "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_area_densa": None,
+                "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_distorcao_focal": "S",
+                "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_linfonodo_axilar": None,
+
+                "revisao_mamografia_outra_instituicao_mama_direita_categoria_0": "S",
+                "revisao_mamografia_outra_instituicao_mama_direita_categoria_3": None,
+                "revisao_mamografia_outra_instituicao_mama_direita_categoria_4": None,
+                "revisao_mamografia_outra_instituicao_mama_direita_categoria_5": None,
+                "revisao_mamografia_outra_instituicao_mama_esquerda_categoria_0": "S",
+                "revisao_mamografia_outra_instituicao_mama_esquerda_categoria_3": None,
+                "revisao_mamografia_outra_instituicao_mama_esquerda_categoria_4": None,
+                "revisao_mamografia_outra_instituicao_mama_esquerda_categoria_5": None,
+
+                "data_da_solicitacao": "18/06/2025",
+                "cns_responsavel_coleta": "279802393660002"
+            }
+        }
+    }
 
     @model_validator(mode="before")
     @classmethod

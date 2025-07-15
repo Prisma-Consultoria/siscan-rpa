@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
-from uuid import uuid4
-
 from sqlalchemy import Column, String, LargeBinary, DateTime
+from uuid import uuid4
 
 from .env import Base
 

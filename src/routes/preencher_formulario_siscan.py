@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends
 
-from src.utils.schema import PreencherSolicitacaoInput
+from src.siscan.schema.requisicao_mamografia_diagnostica_schema import \
+    RequisicaoMamografiaDiagnosticaSchema
+from src.siscan.schema.requisicao_mamografia_rastreamento_schema import \
+    RequisicaoMamografiaRastreamentoSchema
 from src.utils.dependencies import _get_user_uuid
 from src.utils.helpers import run_rpa
 
@@ -14,7 +17,7 @@ router = APIRouter(prefix="/preencher-formulario-siscan", tags=["siscan"])
                 "rastreamento na interface web do SISCAN",
 )
 async def preencher_requisicao_mamografia_rastreamento(
-    data: PreencherSolicitacaoInput,
+    data: RequisicaoMamografiaRastreamentoSchema,
     uuid: str = Depends(_get_user_uuid),
 ):
     result = await run_rpa("requisicao-rastreamento", data.__dict__)
@@ -28,7 +31,7 @@ async def preencher_requisicao_mamografia_rastreamento(
                 "diagnóstica na interface web do SISCAN",
 )
 async def preencher_requisicao_mamografia_diagnostica(
-    data: PreencherSolicitacaoInput,
+    data: RequisicaoMamografiaDiagnosticaSchema,
     uuid: str = Depends(_get_user_uuid),
 ):
     result = await run_rpa("requisicao-diagnostica", data.__dict__)

@@ -1,8 +1,7 @@
 from pathlib import Path
-
+from pydantic import BaseModel
 from typing import Tuple, Dict, List, Optional, Union, Type
 
-from pydantic import BaseModel
 from src.utils.validator import Validator
 
 

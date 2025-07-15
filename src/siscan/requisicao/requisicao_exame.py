@@ -1,3 +1,12 @@
+#
+# Define a classe base RequisicaoExame, que representa a lógica de automação
+# para o preenchimento da requisição genérica de exames.
+#
+# Centraliza fluxos como autenticação, seleção de unidade requisitante,
+# prestador, preenchimento dos campos gerais do exame e validação dos dados.
+#
+# Serve de base para os demais tipos de requisição de exame por herança
+#
 import logging
 from abc import abstractmethod
 from pydantic import BaseModel

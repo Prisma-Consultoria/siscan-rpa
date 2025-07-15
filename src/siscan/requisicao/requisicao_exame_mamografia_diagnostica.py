@@ -1,3 +1,11 @@
+#
+# Subclasse de RequisicaoExameMamografia, focada na lógica para mamografia
+# diagnóstica.
+#
+# Implementa métodos próprios para preenchimento de campos/grupos de achados
+# clínicos, controle radiológico, avaliação de resposta a tratamentos,
+# revisão de outras instituições etc.
+#
 import logging
 from pydantic import BaseModel
 from typing import Type, Any

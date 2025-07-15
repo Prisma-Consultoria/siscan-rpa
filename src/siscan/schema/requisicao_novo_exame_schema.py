@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Annotated, Optional
-
 from pydantic import BaseModel, ConfigDict, Field
+from typing import Annotated, Optional
 
 
 class Sexo(Enum):
@@ -38,125 +37,6 @@ class RequisicaoNovoExameSchema(BaseModel):
             max_length=15,
             min_length=15,
             title="Cartão SUS",
-        ),
-    ]
-    cpf: Annotated[
-        Optional[str],
-        Field(
-            description="CPF do paciente (apenas números, 11 dígitos) - opcional",
-            json_schema_extra={"x-widget": "text", "x-xpath": ""},
-            pattern="^\\d{11}$",
-            title="CPF",
-        ),
-    ] = None
-    nome: Annotated[
-        str,
-        Field(
-            description="Nome completo do paciente",
-            json_schema_extra={"x-widget": "text", "x-xpath": ""},
-            min_length=1,
-            title="Nome",
-        ),
-    ]
-    nome_da_mae: Annotated[
-        str,
-        Field(
-            description="Nome completo da mãe do paciente",
-            json_schema_extra={"x-widget": "text", "x-xpath": ""},
-            min_length=1,
-            title="Nome da Mãe",
-        ),
-    ]
-    data_de_nascimento: Annotated[
-        str,
-        Field(
-            description="Data de nascimento no formato DD/MM/AAAA",
-            json_schema_extra={"x-widget": "date", "x-xpath": ""},
-            pattern="^\\d{2}/\\d{2}/\\d{4}$",
-            title="Data de Nascimento",
-        ),
-    ]
-    nacionalidade: Annotated[
-        str,
-        Field(
-            description="Nacionalidade do paciente",
-            json_schema_extra={"x-widget": "select", "x-xpath": ""},
-            title="Nacionalidade",
-        ),
-    ]
-    sexo: Annotated[
-        Sexo,
-        Field(
-            description="Sexo biológico do paciente (M=Masculino, F=Feminino)",
-            json_schema_extra={"x-widget": "checkbox", "x-xpath": ""},
-            title="Sexo",
-        ),
-    ]
-    raca_cor: Annotated[
-        str,
-        Field(
-            description="Raça/Cor declarada pelo paciente",
-            json_schema_extra={"x-widget": "text", "x-xpath": ""},
-            title="Raça/Cor",
-        ),
-    ]
-    uf: Annotated[
-        str,
-        Field(
-            description="Unidade Federativa (UF) com 2 letras",
-            json_schema_extra={"x-widget": "text", "x-xpath": ""},
-            max_length=2,
-            min_length=2,
-            title="UF",
-        ),
-    ]
-    municipio: Annotated[
-        str,
-        Field(
-            description="Nome do município de residência",
-            json_schema_extra={"x-widget": "text", "x-xpath": ""},
-            title="Município",
-        ),
-    ]
-    tipo_logradouro: Annotated[
-        str,
-        Field(
-            description="Tipo de logradouro (ex: Rua, Avenida)",
-            json_schema_extra={"x-widget": "text", "x-xpath": ""},
-            title="Tipo Logradouro",
-        ),
-    ]
-    nome_logradouro: Annotated[
-        str,
-        Field(
-            description="Nome do logradouro",
-            json_schema_extra={"x-widget": "text", "x-xpath": ""},
-            title="Nome Logradouro",
-        ),
-    ]
-    numero: Annotated[
-        str,
-        Field(
-            description="Número do endereço",
-            json_schema_extra={"x-widget": "text", "x-xpath": ""},
-            title="Numero",
-        ),
-    ]
-    bairro: Annotated[
-        str,
-        Field(
-            description="Bairro de residência",
-            json_schema_extra={"x-widget": "text", "x-xpath": ""},
-            title="Bairro",
-        ),
-    ]
-    cep: Annotated[
-        str,
-        Field(
-            description="CEP (apenas números, 8 dígitos)",
-            json_schema_extra={"x-widget": "text", "x-xpath": ""},
-            pattern="^\\d{8}$",
-            title="Cep",
         ),
     ]
     apelido: Annotated[

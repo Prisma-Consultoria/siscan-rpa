@@ -3,10 +3,11 @@ from sqlalchemy.exc import IntegrityError
 
 from src.env import get_db
 from src.models import User
-from src.utils.helpers import encrypt_password, decode_access_token, oauth2_scheme
+from src.siscan.schema.auth_schema import LoginInput
 from src.utils import messages as msg
-from src.utils.schema import LoginInput
 from src.utils.dependencies import api_key_required
+from src.utils.helpers import encrypt_password, decode_access_token, \
+    oauth2_scheme
 
 router = APIRouter(prefix="/user", tags=["user"])
 

@@ -1,3 +1,10 @@
+#
+# Especializa a RequisicaoExame para o exame de mamografia, implementando
+# regras, validações e métodos específicos da mamografia (como seleção de
+# tipo, dependências condicionais, campos adicionais do formulário).
+#
+# Organiza lógica própria de campos e mapeamento do formulário de mamografia
+#
 import logging
 import re
 from pydantic import BaseModel

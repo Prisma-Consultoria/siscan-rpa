@@ -1,19 +1,19 @@
 import enum
-
 import logging
-
 from enum import Enum
-from typing import Annotated, List, Optional, get_origin, get_args, Union, \
-    Literal
 from pydantic import Field
 from pydantic.functional_validators import model_validator
-from src.siscan.schema.requisicao_novo_exame_schema import RequisicaoNovoExameSchema
+from typing import Annotated, List, Optional, get_origin, get_args, Union, \
+    Literal
+
 from src.siscan.schema import (
     YNIDK,
     Lateralidade,
     TipoDeMamografia,
     YN
 )
+from src.siscan.schema.requisicao_novo_exame_schema import \
+    RequisicaoNovoExameSchema
 
 logger = logging.getLogger(__name__)
 

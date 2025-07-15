@@ -1,13 +1,12 @@
-from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
-
 import jwt
-from playwright.async_api import async_playwright
-
-from src.env import PRODUCTION, TAKE_SCREENSHOT, private_key, public_key
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
+from datetime import datetime, timedelta
 from fastapi.security import OAuth2PasswordBearer
+from playwright.async_api import async_playwright
+from typing import Any, Dict, Optional
+
+from src.env import PRODUCTION, TAKE_SCREENSHOT, private_key, public_key
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="security/token")
 

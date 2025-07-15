@@ -1,11 +1,9 @@
 from datetime import datetime
-
 from fastapi import HTTPException, Security
 from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
 
 from src.env import get_db
 from src.models import ApiKey
-
 from src.utils.helpers import decode_access_token
 
 api_key_scheme = APIKeyHeader(name="Api-Key", auto_error=False)

@@ -1,3 +1,14 @@
+#
+# Define a classe abstrata WebPage e a implementação concreta SiscanWebPage.
+#
+# Centraliza toda a lógica de navegação, autenticação, preenchimento de
+# formulários, manipulação de campos, screenshot, validação de dados,
+# navegação de menus e interação de alto nível com a interface web do SISCAN.
+#
+# Depende diretamente do contexto de navegador
+# Playwright (SiscanBrowserContext) e do construtor de XPath, compondo a
+# camada de abstração de página.
+#
 import asyncio
 import logging
 from abc import abstractmethod, ABC
@@ -8,7 +19,6 @@ from typing import Callable
 from typing import Optional, Type, Any
 
 from src.env import PRODUCTION
-from src.siscan.webpage.context import SiscanBrowserContext
 from src.siscan.exception import FieldValueNotFoundError
 from src.siscan.exception import (
     SiscanLoginError,
@@ -18,11 +28,13 @@ from src.siscan.exception import (
     CartaoSusNotFoundError,
     SiscanInvalidFieldValueError, SiscanTimeoutError,
 )
+from src.siscan.webpage.context import SiscanBrowserContext
+from src.siscan.webpage.xpath_constructor import XPathConstructor
+from src.siscan.webpage.xpath_constructor import XPathConstructor as XPE, \
+    InputType
 from src.utils import messages as msg
 from src.utils.SchemaMapExtractor import SchemaMapExtractor
 from src.utils.validator import Validator, SchemaValidationError
-from src.siscan.webpage.xpath_constructor import XPathConstructor
-from src.siscan.webpage.xpath_constructor import XPathConstructor as XPE, InputType
 
 logger = logging.getLogger(__name__)
 

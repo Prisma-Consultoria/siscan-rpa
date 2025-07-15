@@ -1,3 +1,10 @@
+#
+# Subclasse de RequisicaoExameMamografia, focada na lógica para mamografia de
+# rastreamento.
+#
+# Define campos e métodos específicos desse subtipo de requisição
+# (preenchimento de tipo, rastreio, responsável pela coleta etc.)
+#
 import logging
 from pydantic import BaseModel
 from typing import Type, Any
