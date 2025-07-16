@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
+from pydantic import BaseModel, ValidationError
 from typing import Any, Dict, List, Union, Type
 
-from pydantic import BaseModel, ValidationError
-
+logger = logging.getLogger(__name__)
 
 class SchemaValidationError(Exception):
     """Collects validation errors returned by Pydantic."""
@@ -31,6 +32,8 @@ class Validator:
     @classmethod
     def validate_data(cls, data: Dict[str, Any], model: Type[BaseModel]) -> BaseModel:
         try:
+            logger.debug("Validando dados através do modelo: %s", model.__name__)
             return model.model_validate(data)
         except ValidationError as exc:  # pragma: no cover - raised during tests
-            raise SchemaValidationError(exc.errors()) from exc
+            errors = exc.errors()
+            raise SchemaValidationError(errors) from exc

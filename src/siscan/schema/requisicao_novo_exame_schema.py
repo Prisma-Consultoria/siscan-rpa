@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Annotated, Optional
-
 from pydantic import BaseModel, ConfigDict, Field
+from typing import Annotated, Optional
 
 
 class Sexo(Enum):
@@ -34,136 +33,17 @@ class RequisicaoNovoExameSchema(BaseModel):
         str,
         Field(
             description="Número do Cartão SUS (15 dígitos)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             max_length=15,
             min_length=15,
             title="Cartão SUS",
-        ),
-    ]
-    cpf: Annotated[
-        Optional[str],
-        Field(
-            description="CPF do paciente (apenas números, 11 dígitos) - opcional",
-            json_schema_extra={"x-widget": "text"},
-            pattern="^\\d{11}$",
-            title="CPF",
-        ),
-    ] = None
-    nome: Annotated[
-        str,
-        Field(
-            description="Nome completo do paciente",
-            json_schema_extra={"x-widget": "text"},
-            min_length=1,
-            title="Nome",
-        ),
-    ]
-    nome_da_mae: Annotated[
-        str,
-        Field(
-            description="Nome completo da mãe do paciente",
-            json_schema_extra={"x-widget": "text"},
-            min_length=1,
-            title="Nome da Mãe",
-        ),
-    ]
-    data_de_nascimento: Annotated[
-        str,
-        Field(
-            description="Data de nascimento no formato DD/MM/AAAA",
-            json_schema_extra={"x-widget": "date"},
-            pattern="^\\d{2}/\\d{2}/\\d{4}$",
-            title="Data de Nascimento",
-        ),
-    ]
-    nacionalidade: Annotated[
-        str,
-        Field(
-            description="Nacionalidade do paciente",
-            json_schema_extra={"x-widget": "select"},
-            title="Nacionalidade",
-        ),
-    ]
-    sexo: Annotated[
-        Sexo,
-        Field(
-            description="Sexo biológico do paciente (M=Masculino, F=Feminino)",
-            json_schema_extra={"x-widget": "checkbox"},
-            title="Sexo",
-        ),
-    ]
-    raca_cor: Annotated[
-        str,
-        Field(
-            description="Raça/Cor declarada pelo paciente",
-            json_schema_extra={"x-widget": "text"},
-            title="Raça/Cor",
-        ),
-    ]
-    uf: Annotated[
-        str,
-        Field(
-            description="Unidade Federativa (UF) com 2 letras",
-            json_schema_extra={"x-widget": "text"},
-            max_length=2,
-            min_length=2,
-            title="UF",
-        ),
-    ]
-    municipio: Annotated[
-        str,
-        Field(
-            description="Nome do município de residência",
-            json_schema_extra={"x-widget": "text"},
-            title="Município",
-        ),
-    ]
-    tipo_logradouro: Annotated[
-        str,
-        Field(
-            description="Tipo de logradouro (ex: Rua, Avenida)",
-            json_schema_extra={"x-widget": "text"},
-            title="Tipo Logradouro",
-        ),
-    ]
-    nome_logradouro: Annotated[
-        str,
-        Field(
-            description="Nome do logradouro",
-            json_schema_extra={"x-widget": "text"},
-            title="Nome Logradouro",
-        ),
-    ]
-    numero: Annotated[
-        str,
-        Field(
-            description="Número do endereço",
-            json_schema_extra={"x-widget": "text"},
-            title="Numero",
-        ),
-    ]
-    bairro: Annotated[
-        str,
-        Field(
-            description="Bairro de residência",
-            json_schema_extra={"x-widget": "text"},
-            title="Bairro",
-        ),
-    ]
-    cep: Annotated[
-        str,
-        Field(
-            description="CEP (apenas números, 8 dígitos)",
-            json_schema_extra={"x-widget": "text"},
-            pattern="^\\d{8}$",
-            title="Cep",
         ),
     ]
     apelido: Annotated[
         Optional[str],
         Field(
             description="Apelido do paciente (opcional)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             title="Apelido",
         ),
     ] = None
@@ -171,7 +51,7 @@ class RequisicaoNovoExameSchema(BaseModel):
         Optional[Escolaridade],
         Field(
             description="Nível de escolaridade (0=Selecione, 1=Analfabeto, 2=Ensino Fundamental Incompleto, 3=Ensino Fundamental Completo, 4=Ensino Médio Completo, 5=Ensino Superior Completo)",
-            json_schema_extra={"x-widget": "select"},
+            json_schema_extra={"x-widget": "select", "x-xpath": ""},
             title="Escolaridade:",
         ),
     ] = None
@@ -179,7 +59,7 @@ class RequisicaoNovoExameSchema(BaseModel):
         Optional[str],
         Field(
             description="Ponto de referência (opcional)",
-            json_schema_extra={"x-widget": "text"},
+            json_schema_extra={"x-widget": "text", "x-xpath": ""},
             title="Ponto de Referência",
         ),
     ] = None
@@ -187,15 +67,18 @@ class RequisicaoNovoExameSchema(BaseModel):
         Optional[TipoExameMama],
         Field(
             description="Tipo de exame de mama: 01=Mamografia, 03=Cito de Mama, 05=Histo de Mama",
-            json_schema_extra={"x-widget": "radio"},
+            json_schema_extra={"x-widget": "radio", "x-xpath": ""},
             title="Mama",
         ),
     ] = None
-    unidade_requisitante: Annotated[
+    cnes_unidade_requisitante: Annotated[
         str,
         Field(
             description="CNES da unidade requisitante",
-            json_schema_extra={"x-widget": "select"},
+            json_schema_extra={
+                "x-widget": "select",
+                "x-xpath": "//select[@name='frm:unidadeSaudeCoordenacaoMunicipal']"
+            },
             title="Unidade Requisitante",
         ),
     ]
@@ -203,7 +86,10 @@ class RequisicaoNovoExameSchema(BaseModel):
         str,
         Field(
             description="Nome do prestador de serviço",
-            json_schema_extra={"x-widget": "select"},
+            json_schema_extra={
+                "x-widget": "select",
+                "x-xpath": "//select[@name='frm:prestadorServicoCoordenacaoMunicipal']"
+            },
             title="Prestador",
         ),
     ]

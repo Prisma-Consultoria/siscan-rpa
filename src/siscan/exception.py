@@ -1,5 +1,7 @@
+from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 from typing import Iterable
-from src.utils import messages as msg
+
+from src.siscan import messages as msg
 
 
 class SiscanException(Exception):
@@ -18,7 +20,6 @@ class SiscanException(Exception):
         # de buscar essas mensagens passa a ser do código chamador, que pode
         # utilizar ``await SiscanException.get_error_messages(ctx)`` quando
         # necessário.
-
         super().__init__(self.msg)
 
     @classmethod
@@ -131,7 +132,7 @@ class FieldValueNotFoundError(SiscanException):
     """
     Exceção lançada quando o valor preenchido/selecionado em um campo de
     formulário não corresponde a nenhuma opção válida definida no mapeamento
-    FIELDS_MAP. Isto é, o valor fornecido para um select, radio ou checkbox
+    FIELDS_VALUE_MAP. Isto é, o valor fornecido para um select, radio ou checkbox
     não consta entre as opções disponíveis.
     """
 
@@ -152,7 +153,7 @@ class SiscanInvalidFieldValueError(SiscanException):
     ----------------------------------------
 
     1. Quando o valor informado em `data` para um campo não consta na lista
-       de opções válidas definidas em `FIELDS_MAP` (exemplo: campo select,
+       de opções válidas definidas em `FIELDS_VALUE_MAP` (exemplo: campo select,
        radio ou checkbox recebeu valor inexistente nas opções do campo).
        - Exemplo: Selecionar uma unidade requisitante cujo código não
             exista no select.
@@ -222,3 +223,12 @@ class SiscanInvalidFieldValueError(SiscanException):
 
         super().__init__(context, m)
         self.field_name = field_name
+
+
+class SiscanTimeoutError(SiscanException, PlaywrightTimeoutError):
+    """
+    Exceção lançada quando ocorre um timeout em operações assíncronas do Playwright no SIScan.
+    Herda de SiscanException e playwright.async_api.TimeoutError.
+    """
+    def __init__(self, ctx, m: str | None = None):
+        super().__init__(ctx, m or "Elemento não ficou habilitado a tempo.")

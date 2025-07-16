@@ -1,25 +1,68 @@
-import time
-
+#
+# Define a classe abstrata WebPage e a implementação concreta SiscanWebPage.
+#
+# Centraliza toda a lógica de navegação, autenticação, preenchimento de
+# formulários, manipulação de campos, screenshot, validação de dados,
+# navegação de menus e interação de alto nível com a interface web do SISCAN.
+#
+# Depende diretamente do contexto de navegador
+# Playwright (SiscanBrowserContext) e do construtor de XPath, compondo a
+# camada de abstração de página.
+#
+import asyncio
 import logging
-from typing import Callable, Any, Type
-
+from abc import abstractmethod, ABC
+from datetime import datetime
+from pathlib import Path
 from pydantic import BaseModel
+from typing import Callable, List, Dict
+from typing import Optional, Type, Any
 
+from src.env import PRODUCTION
+from src.siscan.exception import FieldValueNotFoundError
 from src.siscan.exception import (
     SiscanLoginError,
     SiscanMenuNotFoundError,
     PacienteDuplicadoException,
     SiscanException,
     CartaoSusNotFoundError,
-    SiscanInvalidFieldValueError,
+    SiscanInvalidFieldValueError, SiscanTimeoutError,
 )
-from src.utils.SchemaMapExtractor import SchemaMapExtractor
+from src.siscan.webpage import WebPage
+from src.siscan.webpage.context import SiscanBrowserContext
+from src.siscan.webpage.xpath_constructor import XPathConstructor
+from src.siscan.webpage.xpath_constructor import XPathConstructor as XPE, \
+    InputType
+from src.siscan import messages as msg
+from src.siscan.schema.SchemaMapExtractor import SchemaMapExtractor
 from src.utils.validator import Validator, SchemaValidationError
-from src.utils.webpage import WebPage
-from src.utils.xpath_constructor import XPathConstructor as XPE
-from src.utils import messages as msg
 
 logger = logging.getLogger(__name__)
+
+
+def ensure_metadata_schema_fields(cls: Type[WebPage]) -> List[str]:
+    # Pega a superclasse base
+    bases = cls.__bases__
+    base_fields= set()
+
+    if not bases:
+        return list(cls._schema_model.model_fields.keys())
+    # Supondo herança simples:
+    class_base = bases[0]
+    if hasattr(class_base._schema_model, "model_fields"):
+        base_fields = set(class_base._schema_model.model_fields.keys())
+    own_fields = set(cls._schema_model.model_fields.keys()) - base_fields
+
+
+    cls.FORM_SCHEMA_FIELDS = sorted(own_fields)
+
+    fields_metadata, field_value_map = SchemaMapExtractor.schema_to_maps(
+        cls._schema_model, cls.FORM_SCHEMA_FIELDS)
+    cls.FIELDS_METADATA = fields_metadata
+    cls.FIELDS_VALUE_MAP = field_value_map
+    breakpoint()
+
+    print('\n11111111', cls.FORM_SCHEMA_FIELDS )
 
 
 class SiscanWebPage(WebPage):
@@ -42,17 +85,37 @@ class SiscanWebPage(WebPage):
         "bairro",
         "cep",
     ]
-    MAP_SCHEMA_FIELDS = MAP_DATA_FIND_CARTAO_SUS + MAP_DATA_CARTAO_SUS
+    FORM_SCHEMA_FIELDS = MAP_DATA_FIND_CARTAO_SUS + MAP_DATA_CARTAO_SUS
 
-    def __init__(
-        self, base_url: str, user: str, password: str, schema_model: Type[BaseModel]
-    ):
-        super().__init__(base_url, user, password, schema_model)
-        map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
-            self.schema_model, fields=SiscanWebPage.MAP_SCHEMA_FIELDS
-        )
-        SiscanWebPage.MAP_DATA_LABEL = map_data_label
-        self.FIELDS_MAP.update(fields_map)
+    #Dicionário contendo metadados de cada campo do formulário, como rótulo,
+    # tipo de entrada, obrigatoriedade e xpath.
+    FIELDS_METADATA: Dict[str, Dict[str, Any]] = None
+
+    # Dicionário de mapeamento dos valores aceitos em cada campo para o
+    # valor esperado pelo backend ou frontend.
+    FIELDS_VALUE_MAP: Dict[str, Dict[str, Any]] = None
+
+    def __init__(self, base_url: str, user: str, password: str):
+        super().__init__(base_url, user, password)
+        self._is_authenticated = False
+
+    @classmethod
+    def get_form_schema_fields(cls) -> List[str]:
+        return cls.FORM_SCHEMA_FIELDS
+
+    @classmethod
+    def get_fields_mapping(cls) -> Dict[str, Dict[str, Any]]:
+        """
+        Retorna o dicionário de metadados dos campos do formulário.
+        """
+        return cls.FIELDS_METADATA
+
+    @classmethod
+    def get_fields_values_mapping(cls) -> Dict[str, Dict[str, Any]]:
+        """
+        Retorna o dicionário de mapeamento de valores para os campos do formulário.
+        """
+        return cls.FIELDS_VALUE_MAP
 
     def validation(self, data: dict):
         try:
@@ -61,9 +124,21 @@ class SiscanWebPage(WebPage):
         except SchemaValidationError as ve:
             for err in ve.errors:
                 logger.error(err)
-            raise SiscanInvalidFieldValueError(context=None, data=data, message=str(ve))
+            raise SiscanInvalidFieldValueError(context=None, data=data,
+                                               message=str(ve))
 
-    async def authenticate(self):
+    def is_authenticated(self) -> bool:
+        """
+        Verifica se o usuário está autenticado no SIScan.
+
+        Retorna
+        -------
+        bool
+            True se o usuário estiver autenticado, False caso contrário.
+        """
+        return self._is_authenticated
+
+    async def _authenticate(self):
         """
         Realiza login no SIScan utilizando um contexto.
 
@@ -72,35 +147,135 @@ class SiscanWebPage(WebPage):
         Exception se autenticação falhar.
         """
 
-        logger.debug("Autenticando usuario %s", self._user)
-        await self.context.handle_goto("/login.jsf")
-        logger.debug("Pagina de login carregada")
+        if not self._is_authenticated:
+            logger.debug("Autenticando usuario %s", self._user)
+            await self.context.handle_goto("/login.jsf")
+            logger.debug("Pagina de login carregada")
 
-        # Aguarda possível popup abrir e fecha se necessário
-        await self.context.collect_information_popup()
-        logger.debug("Popup de informacao tratada")
+            # Aguarda possível popup abrir e fecha se necessário
+            await self.context.collect_information_popup()
+            logger.debug("Popup de informacao tratada")
 
-        xpath = await XPE.create(self.context)
+            xpath = await XPE.create(self.context)
 
-        logger.debug("Preenchendo formulario de login")
-        user_input = await xpath.find_form_input("E-mail:")
-        await user_input.handle_fill(self._user)
-        pass_input = await xpath.find_form_input("Senha:")
-        await pass_input.handle_fill(self._password)
-        await self.take_screenshot("screenshot_01_autenticar.png")
-        acessar_btn = await xpath.find_form_button("Acessar")
-        await acessar_btn.handle_click()
-        logger.debug("Botao acessar clicado")
+            logger.debug("Preenchendo formulario de login")
+            user_input = await xpath.find_form_input("E-mail:")
+            await user_input.handle_fill(self._user)
 
-        # Aguarda confirmação de login bem-sucedido
+            pass_input = await xpath.find_form_input("Senha:")
+            await pass_input.handle_fill(self._password)
+
+            await self.take_screenshot("screenshot_01_autenticar.png")
+
+            acessar_btn = await xpath.find_form_button("Acessar")
+            await acessar_btn.handle_click()
+            logger.debug("Botao acessar clicado")
+
+            # Aguarda confirmação de login bem-sucedido
+            try:
+                await (await self.context.page).wait_for_selector(
+                    'h1:text("SEJA BEM VINDO AO SISCAN")', timeout=10000
+                )
+            except Exception:
+                raise SiscanLoginError(self.context)
+
+            self._is_authenticated = True
+            logger.debug("Login realizado com sucesso")
+            await self.take_screenshot("screenshot_02_tela_principal.png")
+
+    async def wait_page_ready(
+        self, timeout: float = XPE.DEFAULT_TIMEOUT
+    ) -> "XPathConstructor":
+        """
+        Aguarda até que a página esteja completamente carregada e o jQuery
+        (se usado) esteja disponível.
+
+        Este método espera pelo estado 'networkidle', indicando que não
+        há mais requisições de rede em andamento, e garante que o jQuery
+        já foi carregado e está acessível na página.
+
+        Parâmetros
+        ----------
+        timeout : int, opcional
+            Tempo máximo de espera, em segundos. O padrão é 10 segundos.
+
+        Retorno
+        -------
+        self : XPathConstructor
+            Permite o encadeamento de métodos.
+
+        Exceções
+        --------
+        SiscanException
+            Se a página não carregar completamente ou o jQuery não estiver
+            disponível dentro do tempo limite.
+        """
         try:
-            await (await self.context.page).wait_for_selector(
-                'h1:text("SEJA BEM VINDO AO SISCAN")', timeout=10000
+            logger.debug(
+                f"Aguardando o estado 'networkidle' da página. "
+                f"Timeout: {timeout * XPE.TIMEOUT_MS_FACTOR} "
+                f"milessegundos."
             )
-        except Exception:
-            raise SiscanLoginError(self.context)
-        logger.debug("Login realizado com sucesso")
-        await self.take_screenshot("screenshot_02_tela_principal.png")
+            await (await self.context.page).wait_for_load_state(
+                "networkidle", timeout=timeout * XPE.TIMEOUT_MS_FACTOR
+            )
+            logger.debug("Estado 'networkidle' alcançado.")
+
+            # Espera pelo jQuery, caso a aplicação o utilize.
+            # Esta verificação é opcional; remova-a se sua aplicação não usa
+            # jQuery.
+            logger.debug(
+                f"Verificando a disponibilidade do jQuery na página. "
+                f"Timeout: {timeout * XPE.TIMEOUT_MS_FACTOR} "
+                f"milessegundos."
+            )
+            await (await self.context.page).wait_for_function(
+                "window.jQuery !== undefined && typeof jQuery === 'function'",
+                timeout=timeout * XPE.TIMEOUT_MS_FACTOR,
+            )
+            logger.info("Página pronta e jQuery disponível.")
+
+            return self
+
+        except TimeoutError as e:
+            # Captura timeouts do wait_for_load_state ou wait_for_function
+            logger.error(
+                f"Timeout: A página não ficou pronta ou o jQuery não "
+                f"carregou dentro de . Erro: {e}"
+            )
+            raise SiscanTimeoutError(
+                self._context,
+                m=f"Página não carregada ou jQuery indisponível dentro do "
+                f"tempo limite: {e}",
+            )
+        except Exception as e:
+            # Captura quaisquer outras exceções inesperadas
+            logger.error(f"Erro inesperado ao aguardar a prontidão da "
+                         f"página: {e}")
+            raise SiscanException(
+                self._context,
+                m=f"Erro inesperado ao aguardar a prontidão da página: {e}",
+            )
+
+    async def pagina_status_pronto(self, timeout: float = 10.0) -> bool:
+        """
+        Verifica se a página foi carregada, ou seja, se não existe a palavra
+        'Carregando...' visível no status do sistema.
+
+        Retorna True se a página foi carregada, False caso contrário.
+        """
+        await self.wait_page_ready()
+        elapsed = 0
+        interval = 0.2
+        while elapsed < timeout:
+            status = await (await self.context.page).locator(
+                "span#_viewRoot\\:status"
+            ).first.inner_text()
+            if "Carregando" not in status:
+                return True
+            await asyncio.sleep(interval)
+            elapsed += interval
+        return False
 
     async def acessar_menu(
         self,
@@ -136,6 +311,7 @@ class SiscanWebPage(WebPage):
                     f"Acesso ao menu '{menu_name} > {menu_action_text}' "
                     "realizado com sucesso."
                 )
+                await self.wait_page_ready()
                 return  # Sucesso
             except Exception as e:
                 last_exception = e
@@ -144,7 +320,7 @@ class SiscanWebPage(WebPage):
                     f"{menu_action_text}' falhou ({elapsed:.1f}s). "
                     f"Retentando..."
                 )
-                time.sleep(interval)
+                await asyncio.sleep(interval)
                 elapsed += interval
 
         # Todas as tentativas falharam
@@ -204,15 +380,16 @@ class SiscanWebPage(WebPage):
         """
         xpath = menu_action()
         await (
-            await xpath.find_search_link_after_input(self.get_field_label("cartao_sus"))
+            await xpath.find_search_link_after_input(
+                self.get_field_label("cartao_sus"))
         ).handle_click()
-        await xpath.wait_page_ready()
+
+        await self.wait_page_ready()
 
         # Preenche os campos de busca do Cartão SUS
-        fields_map, data_final = self.mount_fields_map_and_data(
+        await self.fill_form_fields(
             data, self.MAP_DATA_FIND_CARTAO_SUS
         )
-        await xpath.fill_form_fields(data_final, fields_map)
 
         # Clica no botão de buscar
         await (await xpath.find_form_button("Pesquisar")).handle_click(
@@ -243,7 +420,6 @@ class SiscanWebPage(WebPage):
             Intervalo, em segundos, entre tentativas.
         """
         xpath = await XPE.create(self.context)
-        await xpath.wait_page_ready()
         elapsed = 0
 
         interval = interval or (XPE.ELAPSED_INTERVAL)
@@ -256,10 +432,12 @@ class SiscanWebPage(WebPage):
             await cartao_sus_ele.handle_fill(numero, reset=False)
             await cartao_sus_ele.on_blur()
             cartao_sus_ele.reset()
-            await xpath.wait_page_ready()
+
+            await self.wait_page_ready()
 
             # 1. Verifica se há mensagem de erro na página
-            message_erros = await SiscanException.get_error_messages(self.context)
+            message_erros = await SiscanException.get_error_messages(
+                self.context)
             if message_erros:
                 raise CartaoSusNotFoundError(self.context, cartao_sus=numero)
 
@@ -267,7 +445,8 @@ class SiscanWebPage(WebPage):
             try:
                 xpath.reset()
                 nome_ele = await xpath.find_form_input("Nome")
-                await nome_ele.wait_until_filled(timeout=timeout)
+
+                await nome_ele.wait_until_filled(timeout=timeout * 5) # 0.5 segundos
                 nome, _ = await nome_ele.get_value()
                 if nome:
                     return  # Sucesso!
@@ -286,7 +465,7 @@ class SiscanWebPage(WebPage):
                     )
 
             # 3. Aguarda o intervalo antes da próxima tentativa
-            time.sleep(interval)
+            await asyncio.sleep(interval)
             elapsed += interval
 
     async def fill_field_in_card(self, card_name: str, field_name: str, value: str):

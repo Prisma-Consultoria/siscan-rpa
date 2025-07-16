@@ -2,7 +2,7 @@ import pytest
 
 
 def test_requiscao_mamografia_map_schema_fields():
-    from src.siscan.classes.requisicao_exame_mamografia import RequisicaoExameMamografia
+    from src.siscan.requisicao.requisicao_exame_mamografia import RequisicaoExameMamografia
 
     assert set(RequisicaoExameMamografia.MAP_SCHEMA_FIELDS) == {
         "num_prontuario",
@@ -43,11 +43,12 @@ def test_requiscao_mamografia_map_schema_fields():
         "ano_inclusao_implantes_direita",
         "ano_inclusao_implantes_esquerda",
         "tipo_de_mamografia",
-        "data_da_solicitacao"
+        "data_da_solicitacao",
+        "cns_responsavel_coleta"
     }
 
 def test_requiscao_mamografia_rastreamento_map_schema_fields():
-    from src.siscan.classes.requisicao_exame_mamografia_rastreio import RequisicaoExameMamografiaRastreio
+    from src.siscan.requisicao.requisicao_exame_mamografia_rastreio import RequisicaoExameMamografiaRastreio
 
     assert set(RequisicaoExameMamografiaRastreio.MAP_SCHEMA_FIELDS) == {
         "tipo_mamografia_de_rastreamento",

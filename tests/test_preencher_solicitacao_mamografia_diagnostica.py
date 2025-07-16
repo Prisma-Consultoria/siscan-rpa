@@ -2,12 +2,12 @@ import pytest
 import logging
 from pathlib import Path
 
-from src.siscan.classes.requisicao_exame_mamografia_diagnostica import (
+from src.siscan.requisicao.requisicao_exame_mamografia_diagnostica import (
     RequisicaoExameMamografiaDiagnostica,
 )
 from src.env import SISCAN_URL, SISCAN_USER, SISCAN_PASSWORD
 from src.utils.validator import Validator
-from src.siscan.context import SiscanBrowserContext
+from src.siscan.webpage.context import SiscanBrowserContext
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,9 @@ async def test_preencher_requisicao_mamografia_diagnostica(headless: bool):
 
     req._context = SiscanBrowserContext(headless=headless)
 
-    await req.authenticate()
+    # Preencher chama o método de autenticação, pois antes faz-se necessário
+    # verificar se os dados recebidos são válidos antes de inicializar o
+    # navegador e preencher a requisição.
     await req.preencher(json_data)
 
     await req.context.close()

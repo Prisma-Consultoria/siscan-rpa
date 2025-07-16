@@ -1,7 +1,7 @@
-from src.siscan.classes.requisicao_exame_mamografia_rastreio import (
+from src.siscan.requisicao.requisicao_exame_mamografia_rastreio import (
     RequisicaoExameMamografiaRastreio,
 )
-from src.siscan.context import SiscanBrowserContext
+from src.siscan.webpage.context import SiscanBrowserContext
 from src.env import SISCAN_USER, SISCAN_PASSWORD, SISCAN_URL
 import logging
 import pytest
@@ -23,7 +23,7 @@ async def test_authenticate(headless: bool):
         timeout=15000,
     )
 
-    await req.authenticate()
+    await req._authenticate()
 
     assert (
         await (await req.context.page)

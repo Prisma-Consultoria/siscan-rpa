@@ -1,66 +1,38 @@
+#
+# Subclasse de RequisicaoExameMamografia, focada na lógica para mamografia
+# diagnóstica.
+#
+# Implementa métodos próprios para preenchimento de campos/grupos de achados
+# clínicos, controle radiológico, avaliação de resposta a tratamentos,
+# revisão de outras instituições etc.
+#
 import logging
+from typing import List
 
-from typing import Type
-from pydantic import BaseModel
-
-from src.siscan.classes.requisicao_exame import RequisicaoExame
-from src.siscan.classes.requisicao_exame_mamografia import (
+from src.siscan.requisicao.requisicao_exame_mamografia import (
     RequisicaoExameMamografia,
 )
-from src.utils.SchemaMapExtractor import SchemaMapExtractor
-from src.utils.xpath_constructor import XPathConstructor as XPE  # XPathElement
-
-
 from src.siscan.schema.requisicao_mamografia_diagnostica_schema import (
     RequisicaoMamografiaDiagnosticaSchema,
 )
-from src.siscan.schema.requisicao_mamografia_schema import RequisicaoMamografiaSchema
+from src.siscan.schema.types import YesNo
+from src.siscan.webpage.base import ensure_metadata_schema_fields
+from src.siscan.webpage.xpath_constructor import \
+    XPathConstructor as XPE  # XPathElement
 
 logger = logging.getLogger(__name__)
 
 
 class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
     """Preenche a solicitação de mamografia do tipo diagnóstica."""
+    _schema_model = RequisicaoMamografiaDiagnosticaSchema
 
-    def __init__(self, base_url: str, user: str, password: str, schema_model: Type[BaseModel] = RequisicaoMamografiaDiagnosticaSchema):
-        # Inicializa com o schema específico para mamografia diagnóstica
-        super().__init__(
-            base_url,
-            user,
-            password,
-            schema_model,
-        )
-
-        base_fields = set(RequisicaoMamografiaSchema.model_fields.keys())
-        diag_fields = set(RequisicaoMamografiaDiagnosticaSchema.model_fields.keys())
-        RequisicaoExameMamografiaDiagnostica.MAP_SCHEMA_FIELDS = sorted(
-            diag_fields - base_fields
-        )
-
-        map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
-            self.schema_model, fields=self.MAP_SCHEMA_FIELDS
-        )
-
-        RequisicaoExameMamografiaDiagnostica.MAP_DATA_LABEL = map_data_label
-        fields_map.update(self.FIELDS_MAP)
-        self.FIELDS_MAP = fields_map
-
-    def get_map_label(self) -> dict[str, tuple[str, str, str]]:
-        """Retorna o mapeamento de campos específico deste exame."""
-        map_label = {
-            **RequisicaoExameMamografiaDiagnostica.MAP_DATA_LABEL,
-        }
-        map_label.update(super().get_map_label())
-        return map_label
+    def __init__(self, base_url: str, user: str, password: str):
+        super().__init__(base_url, user, password)
+        ensure_metadata_schema_fields(RequisicaoExameMamografiaDiagnostica)
 
     def validation(self, data: dict):
-        # Define o tipo de exame como Mamografia Diagnóstica
-        data["tipo_exame_mama"] = "01"
-        data["tipo_de_mamografia"] = "Diagnóstica"
-
-        # Chama validação da classe base "RequisicaoExame"
-        # RequisicaoExame.validation(self, data)
-
+        super().validation(data)
         return data
 
     async def preencher(self, data: dict):
@@ -77,9 +49,10 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
 
         await super().preencher(data)
 
-        xpath_ctx = await XPE.create(
-            self.context
-        )
+        # 3o passo: preencher os campos específicos de diagnóstico
+        await self.fill_form_field("tipo_de_mamografia",
+                                   data, suffix="")
+
         print("Preenchendo achados de exame clínico")
         await self.preencher_achados_exame_clinico(data)
         logger.debug("Preenchendo controle radiológico de lesão categoria 3")
@@ -93,9 +66,13 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         logger.debug("Preenchendo controle de lesão pós-biópsia PAAF benigna")
         await self.preencher_controle_lesao_pos_biopsia_paaf_benigna(data)
 
-    async def _check_checkbox_by_id(self, element_id: str):
-        """Marca um checkbox identificando pelo atributo id."""
-        xpath = await XPE.create(self.context, xpath=f"//input[@id='{element_id}']")
+        await self._seleciona_responsavel_coleta(data)
+
+        await self.take_screenshot("screenshot_05_mamografia_diagnostica.png")
+
+    async def _check_checkbox_by_XP(self, x_xpath: str):
+        """Marca um checkbox identificando pelo xpath."""
+        xpath = await XPE.create(self.context, xpath=x_xpath)
         locator = await xpath.wait_and_get()
         if not await locator.is_checked():
             await locator.check(force=True)
@@ -106,25 +83,24 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         data: dict,
         campo_grupo: str,
         prefixo: str,
-        element_id: str,
     ):
         """Preenche um grupo de campos ativado por checkbox."""
         sub_campos = [k for k in list(data.keys()) if k.startswith(prefixo)]
-        if not data.get(campo_grupo) and not sub_campos:
+        value = data.get(campo_grupo, YesNo.NAO.value)
+        if value == YesNo.NAO.value and not sub_campos:
             return
 
-        await self._check_checkbox_by_id(element_id)
+        await self._check_checkbox_by_XP(
+            self.get_field_metadata(campo_grupo).get('xpath'))
         data.pop(campo_grupo, None)
 
         if sub_campos:
             sub_data = {k: data[k] for k in sub_campos}
-            fields_map, data_final = self.mount_fields_map_and_data(
+            await self.fill_form_fields(
                 sub_data,
-                RequisicaoExameMamografiaDiagnostica.MAP_DATA_LABEL,
-                suffix="",
+                RequisicaoExameMamografiaDiagnostica.get_fields_mapping(),
+                suffix=""
             )
-            xpath_ctx = await XPE.create(self.context)
-            await xpath_ctx.fill_form_fields(data_final, fields_map)
             for k in sub_campos:
                 data.pop(k, None)
 
@@ -134,9 +110,8 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         """
         await self._preencher_grupo(
             data,
-            campo_grupo="achados_exame_clinico",
+            campo_grupo="grupo_achados_exame_clinico",
             prefixo="exame_clinico_mama",
-            element_id="frm:achadosExameClinico",
         )
 
     async def preencher_controle_radiologico_lesao_categoria_3(self, data: dict):
@@ -145,9 +120,8 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         """
         await self._preencher_grupo(
             data,
-            campo_grupo="controle_radiologico_lesao_categoria_3",
+            campo_grupo="grupo_controle_radiologico_lesao_categoria_3",
             prefixo="controle_radiologico_lesao_categoria_3",
-            element_id="frm:controleRadiologicoLesao",
         )
 
     async def preencher_lesao_diagnostico_cancer(self, data: dict):
@@ -156,9 +130,8 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         """
         await self._preencher_grupo(
             data,
-            campo_grupo="lesao_diagnostico_cancer",
+            campo_grupo="grupo_lesao_diagnostico_cancer",
             prefixo="lesao_diagnostico_cancer",
-            element_id="frm:lesaoDiagnosticoCancer",
         )
 
     async def preencher_avaliacao_resposta_quimioterapia(self, data: dict):
@@ -167,9 +140,8 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         """
         await self._preencher_grupo(
             data,
-            campo_grupo="avaliacao_resposta_quimioterapia_neoadjuvante",
+            campo_grupo="grupo_avaliacao_resposta_quimioterapia_neoadjuvante",
             prefixo="avaliacao_resposta_quimioterapia",
-            element_id="frm:avaliacaoRespostaQuimioterapia",
         )
 
     async def preencher_revisao_mamografia_outra_instituicao(self, data: dict):
@@ -178,9 +150,8 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         """
         await self._preencher_grupo(
             data,
-            campo_grupo="revisao_mamografia_outra_instituicao",
+            campo_grupo="grupo_revisao_mamografia_outra_instituicao",
             prefixo="revisao_mamografia_outra_instituicao",
-            element_id="frm:revisaoMamografia",
         )
 
     async def preencher_controle_lesao_pos_biopsia_paaf_benigna(self, data: dict):
@@ -189,7 +160,6 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         """
         await self._preencher_grupo(
             data,
-            campo_grupo="controle_lesao_pos_biopsia_paaf_benigna",
+            campo_grupo="grupo_controle_lesao_pos_biopsia_paaf_benigna",
             prefixo="controle_lesao_pos_biopsia_paaf_benigna",
-            element_id="frm:controleLesao",
         )

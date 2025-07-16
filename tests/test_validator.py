@@ -8,7 +8,7 @@ from src.siscan.schema.requisicao_mamografia_rastreamento_schema import (
     RequisicaoMamografiaRastreamentoSchema,
     TipoMamografiaRastreamento,
 )
-from src.siscan.schema import YNIDK, Lateralidade, TipoDeMamografia
+from src.siscan.schema import YesNoUnknownCode, Lateralidade, TipoDeMamografia
 
 
 def _load_data(json_path: Path) -> dict:
@@ -22,7 +22,7 @@ def _load_data(json_path: Path) -> dict:
     )
     # definir valor neutro para radioterapia e remover campos dependentes,
     # permitindo que cada teste configure os valores necessários
-    data["fez_radioterapia_na_mama_ou_no_plastrao"] = YNIDK.NAO.value
+    data["fez_radioterapia_na_mama_ou_no_plastrao"] = YesNoUnknownCode.NAO.value
     data.pop("radioterapia_localizacao", None)
     data.pop("ano_da_radioterapia_direita", None)
     data.pop("ano_da_radioterapia_esquerda", None)
@@ -57,7 +57,7 @@ def test_tem_nodulo_combinacoes_invalidas(base_data, valores):
 
 def test_fez_mamografia_sem_ano(base_data):
     data = base_data.copy()
-    data["fez_mamografia_alguma_vez"] = YNIDK.SIM.value
+    data["fez_mamografia_alguma_vez"] = YesNoUnknownCode.SIM.value
     data.pop("ano_que_fez_a_ultima_mamografia", None)
     with pytest.raises(ValidationError):
         RequisicaoMamografiaRastreamentoSchema.model_validate(data)
@@ -65,7 +65,7 @@ def test_fez_mamografia_sem_ano(base_data):
 
 def test_nao_fez_mamografia_com_ano(base_data):
     data = base_data.copy()
-    data["fez_mamografia_alguma_vez"] = YNIDK.NAO.value
+    data["fez_mamografia_alguma_vez"] = YesNoUnknownCode.NAO.value
     data["ano_que_fez_a_ultima_mamografia"] = "2025"
     with pytest.raises(ValidationError):
         RequisicaoMamografiaRastreamentoSchema.model_validate(data)
@@ -73,7 +73,7 @@ def test_nao_fez_mamografia_com_ano(base_data):
 
 def test_mamografia_valida_com_ano(base_data):
     data = base_data.copy()
-    data["fez_mamografia_alguma_vez"] = YNIDK.SIM.value
+    data["fez_mamografia_alguma_vez"] = YesNoUnknownCode.SIM.value
     data["ano_que_fez_a_ultima_mamografia"] = "2025"
     model = RequisicaoMamografiaRastreamentoSchema.model_validate(data)
     assert model.ano_que_fez_a_ultima_mamografia == "2025"
@@ -84,7 +84,7 @@ def test_mamografia_valida_com_ano(base_data):
 
 def test_fez_radioterapia_sem_localizacao(base_data):
     data = base_data.copy()
-    data["fez_radioterapia_na_mama_ou_no_plastrao"] = YNIDK.SIM.value
+    data["fez_radioterapia_na_mama_ou_no_plastrao"] = YesNoUnknownCode.SIM.value
     data.pop("radioterapia_localizacao", None)
     with pytest.raises(ValidationError):
         RequisicaoMamografiaRastreamentoSchema.model_validate(data)
@@ -92,7 +92,7 @@ def test_fez_radioterapia_sem_localizacao(base_data):
 
 def test_nao_fez_radioterapia_com_localizacao(base_data):
     data = base_data.copy()
-    data["fez_radioterapia_na_mama_ou_no_plastrao"] = YNIDK.NAO.value
+    data["fez_radioterapia_na_mama_ou_no_plastrao"] = YesNoUnknownCode.NAO.value
     data["radioterapia_localizacao"] = Lateralidade.DIREITA.value
     with pytest.raises(ValidationError):
         RequisicaoMamografiaRastreamentoSchema.model_validate(data)
@@ -100,7 +100,7 @@ def test_nao_fez_radioterapia_com_localizacao(base_data):
 
 def test_radioterapia_valida_com_localizacao(base_data):
     data = base_data.copy()
-    data["fez_radioterapia_na_mama_ou_no_plastrao"] = YNIDK.SIM.value
+    data["fez_radioterapia_na_mama_ou_no_plastrao"] = YesNoUnknownCode.SIM.value
     data["radioterapia_localizacao"] = Lateralidade.ESQUERDA.value
     data["ano_da_radioterapia_direita"] = "2023"
     model = RequisicaoMamografiaRastreamentoSchema.model_validate(data)
@@ -117,7 +117,7 @@ def test_radioterapia_valida_com_localizacao(base_data):
 )
 def test_radioterapia_localizacao_dependencia(base_data, loc, campo):
     data = base_data.copy()
-    data["fez_radioterapia_na_mama_ou_no_plastrao"] = YNIDK.SIM.value
+    data["fez_radioterapia_na_mama_ou_no_plastrao"] = YesNoUnknownCode.SIM.value
     data["radioterapia_localizacao"] = loc.value
     # campo obrigatório ausente
     with pytest.raises(ValidationError):
@@ -126,7 +126,7 @@ def test_radioterapia_localizacao_dependencia(base_data, loc, campo):
 
 def test_radioterapia_ambas_direita_esquerda(base_data):
     data = base_data.copy()
-    data["fez_radioterapia_na_mama_ou_no_plastrao"] = YNIDK.SIM.value
+    data["fez_radioterapia_na_mama_ou_no_plastrao"] = YesNoUnknownCode.SIM.value
     data["radioterapia_localizacao"] = Lateralidade.AMBAS.value
     # falta ambos
     with pytest.raises(ValidationError):

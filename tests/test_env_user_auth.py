@@ -5,10 +5,10 @@ import secrets
 from src.main import app
 from src.env import SISCAN_USER, SISCAN_PASSWORD, SISCAN_URL, get_db
 from src.models import User, ApiKey
-from src.siscan.classes.requisicao_exame_mamografia_rastreio import (
+from src.siscan.requisicao.requisicao_exame_mamografia_rastreio import (
     RequisicaoExameMamografiaRastreio,
 )
-from src.siscan.context import SiscanBrowserContext
+from src.siscan.webpage.context import SiscanBrowserContext
 
 
 @pytest.fixture(scope="module")
@@ -73,7 +73,7 @@ async def test_authenticate_env_user(headless: bool):
         timeout=15000,
     )
 
-    await req.authenticate()
+    await req._authenticate()
 
     assert await (
         (await req.context.page).locator('h1:text("SEJA BEM VINDO AO SISCAN")')
