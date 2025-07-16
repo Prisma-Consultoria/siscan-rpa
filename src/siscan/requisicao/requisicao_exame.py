@@ -133,7 +133,6 @@ class RequisicaoExame(SiscanWebPage):
         """
         Preenche o formulário de novo exame de acordo com os campos informados.
         """
-
         await self._authenticate()
 
         self.validation(data)

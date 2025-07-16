@@ -5,8 +5,9 @@ from enum import Enum
 from pydantic import Field
 from pydantic.functional_validators import model_validator
 from typing import Annotated, Optional, List, ClassVar
+from typing_extensions import Self
 
-from src.siscan.schema import Lateralidade
+from src.siscan.schema import Lateralidade, TipoDeMamografia
 from src.siscan.schema.requisicao_mamografia_schema import \
     RequisicaoMamografiaSchema
 
@@ -133,8 +134,8 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     # (os sinais e sintomas contemplados no formulário são: lesão papilar,
     # descarga papilar espontânea, nódulo, espessamento e linfonodo axilar e
     # supraclavicular)
-    achados_exame_clinico: Annotated[
-        bool,
+    grupo_achados_exame_clinico: Annotated[
+        YesOrNone,
         Field(
             description="Achados no exame clínico: True=Sim, False=Não",
             json_schema_extra={
@@ -143,7 +144,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
             },
             title="ACHADOS NO EXAME CLÍNICO",
         ),
-    ] = False
+    ] = None
     # MAMA DIREITA
     exame_clinico_mama_direita_lesao_papilar: Annotated[
         Optional[YesOrNone],
@@ -259,8 +260,8 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     # Controle radiológico de lesão Categoria 3 (BI-RADS )
     # Mamografia realizada em paciente com laudo anterior de lesão
     # provavelmente benigna
-    controle_radiologico_lesao_categoria_3: Annotated[
-        bool,
+    grupo_controle_radiologico_lesao_categoria_3: Annotated[
+        YesOrNone,
         Field(
             description="Controle radiológico de lesão categoria 3: True=Sim, False=Não",
             json_schema_extra={
@@ -269,7 +270,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
             },
             title="CONTROLE RADIOLOGICO DE LESÃO CATEGORIA 3",
         ),
-    ] = False
+    ] = None
     # MAMA DIREITA
     controle_radiologico_lesao_categoria_3_mama_direita_nodulo: Annotated[
         Optional[YesOrNone],
@@ -430,15 +431,15 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     # Lesão diagnóstico de câncer
     # Mamografia realizada em paciente já com diagnóstico de câncer de mama,
     # por histopatológico, mas antes do tratamento
-    lesao_diagnostico_cancer: Annotated[
-        bool,
+    grupo_lesao_diagnostico_cancer: Annotated[
+        YesOrNone,
         Field(
             description="Lesão diagnóstico de câncer: True=Sim, False=Não",
             json_schema_extra={"x-widget": "checkbox",
                                "x-xpath": "//input[@name='frm:lesaoDiagnosticoCancer']"},
             title="LESÃO COM DIAGNÓSTICO DE CÂNCER",
         ),
-    ] = False
+    ] = None
     # MAMA DIREITA
     lesao_diagnostico_cancer_mama_direita_nodulo: Annotated[
         Optional[YesOrNone],
@@ -571,8 +572,8 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     # Avaliação de resposta à quimioterapia neoadjuvante
     # Mamografia realizada após a quimioterapia neoadjuvante, para avaliação
     # da resposta
-    avaliacao_resposta_quimioterapia_neoadjuvante: Annotated[
-        bool,
+    grupo_avaliacao_resposta_quimioterapia_neoadjuvante: Annotated[
+        YesOrNone,
         Field(
             description="Avaliação da resposta à quimioterapia neoadjuvante: True=Sim, False=Não",
             json_schema_extra={
@@ -581,7 +582,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
             },
             title="AVALIAÇÃO DA RESPOSTA À QUIMIOTERAPIA NEADJUVANTE",
         ),
-    ] = False
+    ] = None
     avaliacao_resposta_quimioterapia_lateralidade: Annotated[
         Optional[Lateralidade],
         Field(
@@ -597,8 +598,8 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     # Revisão de mamografia com lesão, realizada em outra instituição
     # Mamografia realizada em paciente com laudo anterior de outra
     # instituição nas categorias 0,3,4 e 5 para revisão de resultado
-    revisao_mamografia_outra_instituicao: Annotated[
-        bool,
+    grupo_revisao_mamografia_outra_instituicao: Annotated[
+        YesOrNone,
         Field(
             description="Revisão de mamografia em outra instituição: True=Sim, False=Não",
             json_schema_extra={
@@ -607,7 +608,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
             },
             title="REVISÃO DE MAMOGRAFIA REALIZADA EM OUTRA INSTITUIÇÃO",
         ),
-    ] = False
+    ] = None
     # MAMA DIREITA
     revisao_mamografia_outra_instituicao_mama_direita_categoria_0: Annotated[
         Optional[YesOrNone],
@@ -702,8 +703,8 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     # Controle de lesão após biópsia ou PAAF com resultado benigno
     # Mamografia realizada em paciente com laudo anterior de biópsia de
     # fragmento ou PAAF de lesões benignas
-    controle_lesao_pos_biopsia_paaf_benigna: Annotated[
-        bool,
+    grupo_controle_lesao_pos_biopsia_paaf_benigna: Annotated[
+        YesOrNone,
         Field(
             description="Controle de lesão pós-biópsia PAAF benigna: True=Sim, False=Não",
             json_schema_extra={
@@ -712,7 +713,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
             },
             title="CONTROLE DE LESÃO PÓS-BIÓPSIA PAAF BENIGNA",
         ),
-    ] = False
+    ] = None
     # MAMA DIREITA
     controle_lesao_pos_biopsia_paaf_benigna_mama_direita_nodulo: Annotated[
         Optional[YesOrNone],
@@ -1002,110 +1003,181 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         return data
 
     @model_validator(mode="after")
-    def valida_grupos(cls, values):
-        # Início do processo de validação dos grupos semânticos de campos
-        logger.debug("Executando valida_grupos ...")
+    def valida_tipo_de_mamografia(self) -> Self:
+        logger.debug(
+            f"Executando valida_tipo_de_mamografia, valores: {self}")
 
-        # === Grupo: Achados ao exame clínico das mamas ===
-        # Se qualquer campo deste grupo estiver preenchido, define-se o campo de controle 'achados_exame_clinico' como True
-        if any(getattr(values, f) is not None for f in cls.FIELDS_ACHADOS_EXAME_CLINICO):
-            values.achados_exame_clinico = True
+        tipo = self.tipo_de_mamografia
+        if tipo == TipoDeMamografia.RASTREAMENTO:
+            raise ValueError(
+                f"Não é possível solicitar mamografia de diagnóstica com "
+                f"tipo_de_mamografia = '{tipo.value}'."
+            )
+        return self
 
-        # === Grupo: Controle radiológico de lesões categoria BI-RADS 3 ===
+    # @model_validator(mode="before")
+    # @classmethod
+    # def valida_grupos(cls, data: dict) -> dict:
+    #     # Início do processo de validação dos grupos semânticos de campos
+    #     logger.debug("Executando valida_grupos ...")
+    #
+    #     # === Grupo: Achados ao exame clínico das mamas ===
+    #     if any(data.get(f) is not None for f in
+    #            cls.FIELDS_ACHADOS_EXAME_CLINICO):
+    #         data["grupo_achados_exame_clinico"] = True
+    #
+    #     # === Grupo: Controle radiológico de lesões categoria BI-RADS 3 ===
+    #     if any(data.get(f) is not None for f in
+    #            cls.FIELDS_CONTROLE_RADIOLOGICO):
+    #         data["grupo_controle_radiologico_lesao_categoria_3"] = True
+    #
+    #     # === Grupo: Lesões com diagnóstico de câncer ===
+    #     if any(data.get(f) is not None for f in cls.FIELDS_LESAO_CANCER):
+    #         data["grupo_lesao_diagnostico_cancer"] = True
+    #
+    #     # === Grupo: Avaliação da resposta à quimioterapia neoadjuvante ===
+    #     if data.get(
+    #             "avaliacao_resposta_quimioterapia_lateralidade") is not None:
+    #         data[
+    #             "grupo_avaliacao_resposta_quimioterapia_neoadjuvante"] = True
+    #
+    #     # === Grupo: Revisão de mamografia de outra instituição ===
+    #     if any(data.get(f) is not None for f in
+    #            cls.FIELDS_REVISAO_MAMOGRAFIA):
+    #         data["grupo_revisao_mamografia_outra_instituicao"] = True
+    #
+    #     # === Grupo: Controle de lesão pós-biópsia (PAFF) benigna ===
+    #     if any(data.get(f) is not None for f in cls.FIELDS_CONTROLE_PAAF):
+    #         data["grupo_controle_lesao_pos_biopsia_paaf_benigna"] = True
+    #
+    #     # Retorna o dicionário modificado
+    #     return data
 
-        if any(getattr(values, f) is not None for f in cls.FIELDS_CONTROLE_RADIOLOGICO):
-            values.controle_radiologico_lesao_categoria_3 = True
+    @model_validator(mode="after")
+    def valida_campos_diagnostica(self):
+        campos_diagnostica = [
+            "grupo_achados_exame_clinico",
+            "grupo_controle_radiologico_lesao_categoria_3",
+            "grupo_lesao_diagnostico_cancer",
+            "grupo_avaliacao_resposta_quimioterapia_neoadjuvante",
+            "grupo_revisao_mamografia_outra_instituicao",
+            "grupo_controle_lesao_pos_biopsia_paaf_benigna",
+        ]
 
-        # === Grupo: Lesões com diagnóstico de câncer ===
+        valores = [getattr(self, campo) for campo in campos_diagnostica]
 
-        if any(getattr(values, f) is not None for f in cls.FIELDS_LESAO_CANCER):
-            values.lesao_diagnostico_cancer = True
+        # Se todos são None, exceção geral
+        if all(v == YesOrNone.NONE for v in valores):
+            raise ValueError(
+                f"Pelo menos um dos grupos de campos diagnósticos deve ser "
+                f"informados com 'S' (Sim Selecionado): "
+                f"{', '.join(campos_diagnostica)}."
+            )
 
-        # === Grupo: Avaliação da resposta à quimioterapia neoadjuvante ===
-        # O preenchimento do campo de lateralidade é suficiente para indicar a existência dessa avaliação
-        if values.avaliacao_resposta_quimioterapia_lateralidade is not None:
-            values.avaliacao_resposta_quimioterapia_neoadjuvante = True
+        # Se algum campo é None, exceção específica
+        campos_faltando = [campo for campo, v in zip(campos_diagnostica, valores) if v is None]
+        if campos_faltando:
+            raise ValueError(
+                f"Os campos {', '.join(campos_faltando)} são obrigatórios e "
+                f"devem ser informados como 'S' (Sim Selecionado) ou null "
+                f"(Não Selecionado)."
+            )
 
-        # === Grupo: Revisão de mamografia de outra instituição ===
-        if any(getattr(values, f) is not None for f in cls.FIELDS_REVISAO_MAMOGRAFIA):
-            values.revisao_mamografia_outra_instituicao = True
+        return self
 
-        # === Grupo: Controle de lesão pós-biópsia (PAFF) benigna ===
-        if any(getattr(values, f) is not None for f in cls.FIELDS_CONTROLE_PAAF):
-            values.controle_lesao_pos_biopsia_paaf_benigna = True
+    @model_validator(mode="after")
+    def valida_obrigatoriedade_camopos_condicionais(self):
+        logger.debug("Executando valida_obrigatoriedade_camopos_condicionais ...")
 
-        # Retorna a instância modificada com os campos de controle atualizados
-        return values
+        self._valida_campos_condicionais_ativos(
+            "grupo_achados_exame_clinico",
+            self.FIELDS_ACHADOS_EXAME_CLINICO)
 
-    @classmethod
+        self._valida_campos_condicionais_ativos(
+            "grupo_controle_radiologico_lesao_categoria_3",
+            self.FIELDS_CONTROLE_RADIOLOGICO)
+
+        self._valida_campos_condicionais_ativos(
+            "grupo_lesao_diagnostico_cancer",
+            self.FIELDS_LESAO_CANCER)
+
+        self._valida_campos_condicionais_ativos(
+            "grupo_avaliacao_resposta_quimioterapia_neoadjuvante",
+            ["avaliacao_resposta_quimioterapia_lateralidade"])
+
+        self._valida_campos_condicionais_ativos(
+            "grupo_revisao_mamografia_outra_instituicao",
+            self.FIELDS_REVISAO_MAMOGRAFIA)
+
+        self._valida_campos_condicionais_ativos(
+            "grupo_controle_lesao_pos_biopsia_paaf_benigna",
+            self.FIELDS_CONTROLE_PAAF)
+
+        return self
+
     def _valida_campos_condicionais_ativos(
-        cls,
-        values: "RequisicaoMamografiaDiagnosticaSchema",
+        self,
         grupo: str,
         campos_obrigatorios: list[str]
     ) -> None:
         """
-        Verifica se os campos de um grupo foram preenchidos quando o grupo está ativo.
-        Lança ValueError com descrição esperada se algum campo estiver ausente.
+        Verifica se os campos de um grupo foram preenchidos quando o grupo
+        está ativo.
+
+        Também impede campos de grupo preenchidos se o grupo está inativo/nulo.
+        Lança ValueError com descrição esperada se houver inconsistência.
         """
-        if getattr(values, grupo, False):
+        grupo_value = getattr(self, grupo, False)
+        campos_preenchidos = [
+            field_name for field_name in campos_obrigatorios
+            if getattr(self, field_name) not in (None, "", [], False)
+        ]
+
+        # Impede inconsistência lógica
+        if grupo_value == YesOrNone.NONE and campos_preenchidos:
+            raise ValueError(
+                f"Foram informados os campos {', '.join(campos_preenchidos)}"
+                f"do grupo '{grupo}', mas o grupo está inativo (null). "
+                f"Defina o grupo como ativo ('S') ou remova os campos preenchidos.")
+
+        # se grupo ativo, todos obrigatórios
+        if grupo_value == YesOrNone.SIM:
+            fields_required = []
             for field_name in campos_obrigatorios:
-                value = getattr(values, field_name)
-                field_info = cls.model_fields[field_name]
+                grupo_value = getattr(self, field_name)
+                field_info = self.model_fields[field_name]
 
                 # Log para depuração
-                logger.debug(f"Campo {field_name}: value={value}, type={type(value)}")
+                logger.debug(f"Campo {field_name}: value={grupo_value}, type={type(grupo_value)}")
 
-                if value is None:
-                    valores_possiveis = cls._extrai_valores_possiveis(field_info.annotation)
-                    msg_valores = ", ".join(repr(v) for v in valores_possiveis if v is not None)
-                    if None in valores_possiveis:
-                        msg_valores += " ou null"
-                    raise ValueError(
-                        f"O campo '{field_name}' é obrigatório quando '{grupo}' está ativo. "
-                        f"Esperado um dos valores: {msg_valores}."
+                if grupo_value is None:
+                    valores_possiveis = self._extrai_valores_possiveis(
+                        field_info.annotation)
+                    msg_valores = ", ".join(
+                        repr(v) for v in valores_possiveis if v is not None
                     )
+                    msg_valores = msg_valores.replace(
+                        "'null'", "ou null")
+                    fields_required.append((field_name, msg_valores))
 
-
-    @model_validator(mode="after")
-    def valida_obrigatoriedade_camopos_condicionais(cls, values):
-        logger.debug("Executando valida_obrigatoriedade_camopos_condicionais ...")
-
-        cls._valida_campos_condicionais_ativos(
-            values,
-            "achados_exame_clinico",
-            cls.FIELDS_ACHADOS_EXAME_CLINICO)
-
-        cls._valida_campos_condicionais_ativos(
-            values,
-            "controle_radiologico_lesao_categoria_3",
-            cls.FIELDS_CONTROLE_RADIOLOGICO)
-
-        cls._valida_campos_condicionais_ativos(
-            values,
-            "lesao_diagnostico_cancer",
-            cls.FIELDS_LESAO_CANCER)
-
-        cls._valida_campos_condicionais_ativos(
-            values,
-            "revisao_mamografia_outra_instituicao",
-            cls.FIELDS_REVISAO_MAMOGRAFIA)
-
-        cls._valida_campos_condicionais_ativos(
-            values,
-            "controle_lesao_pos_biopsia_paaf_benigna",
-            cls.FIELDS_CONTROLE_PAAF)
-
-        return values
+            if fields_required:
+                campos = ", ".join(
+                    f"{name} ({valores})" for name, valores in fields_required
+                )
+                raise ValueError(
+                    f"Os campos do grupo '{grupo}' estão ativos, mas os "
+                    f"seguintes campos obrigatórios não foram "
+                    f"preenchidos: {campos}."
+                )
 
     @model_validator(mode="after")
-    def valida_categoria_revisao_mamografia_unica_por_mama(cls, values):
+    def valida_categoria_revisao_mamografia_unica_por_mama(self) -> Self:
         """
         Garante que no máximo uma categoria (0, 3, 4 ou 5) esteja marcada como 'S' para cada mama.
         """
         def contar_marcados(campos: list[str]) -> list[str]:
             """Retorna a lista de campos marcados como 'S'."""
-            return [campo for campo in campos if getattr(values, campo, None) == YesOrNone.SIM]
+            return [campo for campo in campos if getattr(self, campo, None) == YesOrNone.SIM]
 
         campos_direita = [
             "revisao_mamografia_outra_instituicao_mama_direita_categoria_0",
@@ -1134,4 +1206,4 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
                 f"Apenas um dos campos {campos_esquerda} pode estar marcado como 'S'. "
                 f"Atualmente marcados: {marcados_esquerda}."
             )
-        return values
+        return self

@@ -5,6 +5,7 @@ from pydantic import Field
 from pydantic.functional_validators import model_validator
 from typing import Annotated, List, Optional, get_origin, get_args, Union, \
     Literal
+from typing_extensions import Self
 
 from src.siscan.schema import (
     YNIDK,
@@ -382,7 +383,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
     ]
 
     @model_validator(mode="after")
-    def valida_regras_condicionais(cls, values):
+    def valida_regras_condicionais(self) -> Self:
         logger.debug("Executando valida_regras_condicionais...")
 
         # Cirurgias: se não fez, nenhum campo de cirurgia pode ser informado
@@ -416,22 +417,22 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
             "ano_inclusao_implantes_esquerda",
         ]
 
-        if values.fez_cirurgia_de_mama == YN.SIM:
+        if self.fez_cirurgia_de_mama == YN.SIM:
             # Ao menos um dos campos de cirurgia deve ser informado
-            if not any(getattr(values, campo, None) for campo in
+            if not any(getattr(self, campo, None) for campo in
                        campos_cirurgias):
                 raise ValueError(f"Se fez cirurgia de mama, "
                                  f"deve informar pelo menos um dos campos: {campos_cirurgias}.")
         else:
             # Nenhum campo de cirurgia deve ser informado
             for campo in campos_cirurgias:
-                if getattr(values, campo, None):
+                if getattr(self, campo, None):
                     raise ValueError(
                         f"Se não fez cirurgia de mama, não pode informar '{campo}'."
                     )
 
         # 1) Se existe '04' em tem_nodulo_ou_caroco_na_mama, então só pode haver esse item
-        nodulos = values.tem_nodulo_ou_caroco_na_mama or []
+        nodulos = self.tem_nodulo_ou_caroco_na_mama or []
         if any(n.value == "04" for n in nodulos):
             if len(nodulos) != 1 or nodulos[0].value != "04":
                 raise ValueError(
@@ -440,8 +441,8 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
                 )
 
         # 2) Se fez_mamografia_alguma_vez == '01', ano_que_fez_a_ultima_mamografia é obrigatório
-        fez = values.fez_mamografia_alguma_vez
-        ano_ultima = values.ano_que_fez_a_ultima_mamografia
+        fez = self.fez_mamografia_alguma_vez
+        ano_ultima = self.ano_que_fez_a_ultima_mamografia
         if fez == YNIDK.SIM and not ano_ultima:
             raise ValueError(
                 "Se fez mamografia (01), precisa informar 'ano_que_fez_a_ultima_mamografia'."
@@ -454,8 +455,8 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
 
         # 3) Se fez_radioterapia_na_mama_ou_no_plastrao == '01',
         # radioterapia_localizacao é obrigatório
-        fez_radio = values.fez_radioterapia_na_mama_ou_no_plastrao
-        loc = values.radioterapia_localizacao
+        fez_radio = self.fez_radioterapia_na_mama_ou_no_plastrao
+        loc = self.radioterapia_localizacao
         if fez_radio == YNIDK.SIM and not loc:
             raise ValueError(
                 "Se fez radioterapia (01), precisa informar 'radioterapia_localizacao'."
@@ -466,28 +467,27 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
             )
 
         # 4) Dependências dentro de radioterapia_localizacao
-        if loc == Lateralidade.ESQUERDA and not values.ano_da_radioterapia_esquerda:
+        if loc == Lateralidade.ESQUERDA and not self.ano_da_radioterapia_esquerda:
             raise ValueError(
                 "Se 'radioterapia_localizacao' = 02, precisa 'ano_da_radioterapia_esquerda'."
             )
-        if loc == Lateralidade.DIREITA and not values.ano_da_radioterapia_direita:
+        if loc == Lateralidade.DIREITA and not self.ano_da_radioterapia_direita:
             raise ValueError(
                 "Se 'radioterapia_localizacao' = 01, precisa 'ano_da_radioterapia_direita'."
             )
         if loc == Lateralidade.AMBAS:
             if (
-                not values.ano_da_radioterapia_direita
-                or not values.ano_da_radioterapia_esquerda
+                not self.ano_da_radioterapia_direita
+                or not self.ano_da_radioterapia_esquerda
             ):
                 raise ValueError(
                     "Se 'radioterapia_localizacao' = 03, precisa informar ambos "
                     "'ano_da_radioterapia_direita' e 'ano_da_radioterapia_esquerda'."
                 )
 
-        return values
+        return self
 
-    @classmethod
-    def _extrai_valores_possiveis(cls, annotation):
+    def _extrai_valores_possiveis(self, annotation):
         """
         Extrai valores possíveis do tipo anotado:
         - Optional[...] → extrai tipo base e ignora None (mas pode incluir
@@ -508,7 +508,7 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
 
         # Trata Annotated[T, ...]
         if origin is Annotated:
-            return cls._extrai_valores_possiveis(args[0])
+            return self._extrai_valores_possiveis(args[0])
 
         # Trata Union[T1, T2, ...] (inclui Optional[T])
         if origin is Union:
@@ -517,13 +517,13 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
                 if arg is type(None):
                     valores.append(None)
                 else:
-                    valores += cls._extrai_valores_possiveis(arg)
+                    valores += self._extrai_valores_possiveis(arg)
             return valores
 
         # Trata List[T]
         if origin in (list, List):
             if args:
-                return cls._extrai_valores_possiveis(args[0])
+                return self._extrai_valores_possiveis(args[0])
             return []
 
         # Trata Literal["S", "N", ...]
@@ -539,3 +539,5 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
                 pass
 
         return []
+
+

@@ -5,6 +5,7 @@ from enum import Enum
 from pydantic import Field
 from pydantic.functional_validators import model_validator
 from typing import Annotated, Optional
+from typing_extensions import Self
 
 from src.siscan.schema import TipoDeMamografia
 from src.siscan.schema.requisicao_mamografia_schema import \
@@ -37,7 +38,7 @@ class RequisicaoMamografiaRastreamentoSchema(RequisicaoMamografiaSchema):
             json_schema_extra={"x-widget": "radio", "x-xpath": ""},
             title="MAMOGRAFIA DE RASTREAMENTO",
         ),
-    ] = None
+    ]
 
     model_config = {
         "json_schema_extra": {
@@ -91,21 +92,17 @@ class RequisicaoMamografiaRastreamentoSchema(RequisicaoMamografiaSchema):
             }
         }
     }
+
     @model_validator(mode="after")
-    def valida_tipo_de_mamografia(cls, values):
+    def valida_tipo_de_mamografia(self) -> Self:
         logger.debug(
-            f"Executando valida_tipo_de_mamografia, valores: {values}")
+            f"Executando valida_tipo_de_mamografia, valores: {self}")
 
-        # 5) Se tipo_de_mamografia == 'Rastreamento', tipo_mamografia_de_rastreamento é obrigatório
-        tipo = values.tipo_de_mamografia
-        mamo = values.tipo_mamografia_de_rastreamento
-        if tipo == TipoDeMamografia.RASTREAMENTO and not mamo:
+        tipo = self.tipo_de_mamografia
+        if tipo == TipoDeMamografia.DIAGNOSTICA:
             raise ValueError(
-                "Se tipo_de_mamografia = Rastreamento, precisa informar 'tipo_mamografia_de_rastreamento'."
-            )
-        if tipo != TipoDeMamografia.RASTREAMENTO and mamo:
-            raise ValueError(
-                "Se tipo_de_mamografia ≠ Rastreamento, não deve informar 'tipo_mamografia_de_rastreamento'."
+                f"Não é possível solicitar mamografia de rastreamento com "
+                f"tipo_de_mamografia = '{tipo.value}'."
             )
 
-        return values
+        return self

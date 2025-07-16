@@ -35,4 +35,5 @@ class Validator:
             logger.debug("Validando dados através do modelo: %s", model.__name__)
             return model.model_validate(data)
         except ValidationError as exc:  # pragma: no cover - raised during tests
-            raise SchemaValidationError(exc.errors()) from exc
+            errors = exc.errors()
+            raise SchemaValidationError(errors) from exc

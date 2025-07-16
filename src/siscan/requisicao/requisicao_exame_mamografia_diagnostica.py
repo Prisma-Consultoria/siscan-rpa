@@ -82,7 +82,6 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         await self.fill_form_field("tipo_de_mamografia",
                                    data, suffix="")
 
-
         print("Preenchendo achados de exame clínico")
         await self.preencher_achados_exame_clinico(data)
         logger.debug("Preenchendo controle radiológico de lesão categoria 3")
@@ -139,7 +138,7 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         """
         await self._preencher_grupo(
             data,
-            campo_grupo="achados_exame_clinico",
+            campo_grupo="grupo_achados_exame_clinico",
             prefixo="exame_clinico_mama",
         )
 
@@ -149,8 +148,8 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         """
         await self._preencher_grupo(
             data,
-            campo_grupo="controle_radiologico_lesao_categoria_3",
-            prefixo="controle_radiologico_lesao_categoria_3",
+            campo_grupo="grupo_controle_radiologico_lesao_categoria_3",
+            prefixo="grupo_controle_radiologico_lesao_categoria_3",
         )
 
     async def preencher_lesao_diagnostico_cancer(self, data: dict):
@@ -159,8 +158,8 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         """
         await self._preencher_grupo(
             data,
-            campo_grupo="lesao_diagnostico_cancer",
-            prefixo="lesao_diagnostico_cancer",
+            campo_grupo="grupo_lesao_diagnostico_cancer",
+            prefixo="grupo_lesao_diagnostico_cancer",
         )
 
     async def preencher_avaliacao_resposta_quimioterapia(self, data: dict):
@@ -169,7 +168,7 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         """
         await self._preencher_grupo(
             data,
-            campo_grupo="avaliacao_resposta_quimioterapia_neoadjuvante",
+            campo_grupo="grupo_avaliacao_resposta_quimioterapia_neoadjuvante",
             prefixo="avaliacao_resposta_quimioterapia",
         )
 
@@ -179,8 +178,8 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         """
         await self._preencher_grupo(
             data,
-            campo_grupo="revisao_mamografia_outra_instituicao",
-            prefixo="revisao_mamografia_outra_instituicao",
+            campo_grupo="grupo_revisao_mamografia_outra_instituicao",
+            prefixo="grupo_revisao_mamografia_outra_instituicao",
         )
 
     async def preencher_controle_lesao_pos_biopsia_paaf_benigna(self, data: dict):
@@ -189,6 +188,6 @@ class RequisicaoExameMamografiaDiagnostica(RequisicaoExameMamografia):
         """
         await self._preencher_grupo(
             data,
-            campo_grupo="controle_lesao_pos_biopsia_paaf_benigna",
-            prefixo="controle_lesao_pos_biopsia_paaf_benigna",
+            campo_grupo="grupo_controle_lesao_pos_biopsia_paaf_benigna",
+            prefixo="grupo_controle_lesao_pos_biopsia_paaf_benigna",
         )
