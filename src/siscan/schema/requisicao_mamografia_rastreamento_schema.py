@@ -1,23 +1,17 @@
 from __future__ import annotations
 
 import logging
-from enum import Enum
 from pydantic import Field
 from pydantic.functional_validators import model_validator
 from typing import Annotated, Optional
 from typing_extensions import Self
 
-from src.siscan.schema import TipoDeMamografia
+from src.siscan.schema.types import TipoDeMamografia, \
+    TipoMamografiaRastreamento
 from src.siscan.schema.requisicao_mamografia_schema import \
     RequisicaoMamografiaSchema
 
 logger = logging.getLogger(__name__)
-
-
-class TipoMamografiaRastreamento(Enum):
-    POPULACAO_ALVO = "01"
-    RISCO_ELEVADO_FAMILIAR = "02"
-    CANCER_PREVIO = "03"
 
 
 class RequisicaoMamografiaRastreamentoSchema(RequisicaoMamografiaSchema):
@@ -43,6 +37,7 @@ class RequisicaoMamografiaRastreamentoSchema(RequisicaoMamografiaSchema):
     model_config = {
         "json_schema_extra": {
             "example": {
+                "tipo_de_mamografia": "02",
                 "cartao_sus": "898001160104568",
                 "apelido": "",
                 "escolaridade": "4",
@@ -51,15 +46,15 @@ class RequisicaoMamografiaRastreamentoSchema(RequisicaoMamografiaSchema):
                 "prestador": "HOSPITAL ERASTO GAERTNER",
                 "num_prontuario": "99999999",
                 "tem_nodulo_ou_caroco_na_mama": ["01", "02"],
-                "apresenta_risco_elevado_para_cancer_mama": "01",
-                "fez_mamografia_alguma_vez": "01",
+                "apresenta_risco_elevado_para_cancer_mama": "S",
+                "fez_mamografia_alguma_vez": "S",
                 "ano_que_fez_a_ultima_mamografia": "2025",
-                "antes_desta_consulta_teve_as_mamas_examinadas_por_um_profissional": "03",
-                "fez_radioterapia_na_mama_ou_no_plastrao": "01",
+                "antes_desta_consulta_teve_as_mamas_examinadas_por_um_profissional": "S",
+                "fez_radioterapia_na_mama_ou_no_plastrao": "S",
                 "radioterapia_localizacao": "03",
                 "ano_da_radioterapia_direita": "2022",
                 "ano_da_radioterapia_esquerda": "2023",
-                "fez_cirurgia_de_mama": "01",
+                "fez_cirurgia_de_mama": "S",
                 "ano_biopsia_cirurgica_incisional_direita": "2000",
                 "ano_biopsia_cirurgica_incisional_esquerda": "2001",
                 "ano_biopsia_cirurgica_excisional_direita": "2002",

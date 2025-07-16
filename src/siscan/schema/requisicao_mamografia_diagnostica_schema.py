@@ -3,44 +3,16 @@ from __future__ import annotations
 import logging
 from enum import Enum
 from pydantic import Field
-from pydantic.functional_validators import model_validator
-from typing import Annotated, Optional, List, ClassVar
+from pydantic.functional_validators import model_validator, field_validator
+from typing import Annotated, Optional, List, ClassVar, Any
 from typing_extensions import Self
 
-from src.siscan.schema import Lateralidade, TipoDeMamografia
+from src.siscan.schema.types import Lateralidade, TipoDeMamografia, \
+    LocalizacaoMama, TipoDescargaPapilar, YesNone, LocalizacaoLinfonodo, YesNo
 from src.siscan.schema.requisicao_mamografia_schema import \
     RequisicaoMamografiaSchema
 
 logger = logging.getLogger(__name__)
-
-
-class YesOrNone(Enum):
-    SIM = "S"
-    NONE = "null"
-
-
-class TipoDescargaPapilar(Enum):
-    CRISTALINA = "01"
-    HEMORRAGICA = "02"
-    NONE = "null"
-
-
-class LocalizacaoMama(Enum):
-    QSL = "01"      # Quadrante Superior Lateral
-    QIL = "02"      # Quadrante Inferior Lateral
-    QSM = "03"      # Quadrante Superior Medial
-    QIM = "04"      # Quadrante Inferior Medial
-    UQlat = "05"    # União dos quadrantes laterais
-    UQsup = "06"    # União dos quadrantes superiores
-    UQmed = "07"    # União dos quadrantes medianos
-    UQinf = "08"    # União dos quadrantes inferiores
-    RRA = "09"      # Região Retroareolar
-    PA = "10"       # Prolongamento axilar
-
-
-class LocalizacaoLinfonodo(Enum):
-    AXILAR = "01"
-    SUPRACLAVICULAR = "02"
 
 
 class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
@@ -111,7 +83,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         "revisao_mamografia_outra_instituicao_mama_esquerda_categoria_5",
     ]
 
-    # Constante de classe: campos do grupo 'avaliação resposta quimioterapia'
+    # Constante de classe: campos do grupo 'avaligrupo_controle_radiologico_lesao_categoria_3ação resposta quimioterapia'
     FIELDS_CONTROLE_PAAF: ClassVar[list] = [
         "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_nodulo",
         "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_microcalcificacoes",
@@ -135,7 +107,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     # descarga papilar espontânea, nódulo, espessamento e linfonodo axilar e
     # supraclavicular)
     grupo_achados_exame_clinico: Annotated[
-        YesOrNone,
+        YesNo,
         Field(
             description="Achados no exame clínico: True=Sim, False=Não",
             json_schema_extra={
@@ -147,7 +119,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     ] = None
     # MAMA DIREITA
     exame_clinico_mama_direita_lesao_papilar: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Exame clínico da mama direita: Lesão papilar (S=Sim, None=Não)",
             json_schema_extra={
@@ -203,7 +175,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     ] = None
     # MAMA ESQUERDA
     exame_clinico_mama_esquerda_lesao_papilar: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Exame clínico da mama esquerda: Lesão papilar (S=Sim, None=Não)",
             json_schema_extra={
@@ -261,7 +233,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     # Mamografia realizada em paciente com laudo anterior de lesão
     # provavelmente benigna
     grupo_controle_radiologico_lesao_categoria_3: Annotated[
-        YesOrNone,
+        YesNo,
         Field(
             description="Controle radiológico de lesão categoria 3: True=Sim, False=Não",
             json_schema_extra={
@@ -273,7 +245,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     ] = None
     # MAMA DIREITA
     controle_radiologico_lesao_categoria_3_mama_direita_nodulo: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Controle radiológico de lesão categoria 3 na mama direita: Nódulo (S=Sim, None=Não)",
             json_schema_extra={
@@ -284,7 +256,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_radiologico_lesao_categoria_3_mama_direita_microcalcificacoes: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Controle radiológico de lesão categoria 3 na mama direita: Microcalcificações (S=Sim, None=Não)",
             json_schema_extra={
@@ -295,7 +267,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_radiologico_lesao_categoria_3_mama_direita_assimetria_focal: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Controle radiológico de lesão categoria 3 na mama direita: Assimetria focal (S=Sim, None=Não)",
             json_schema_extra={
@@ -306,7 +278,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_radiologico_lesao_categoria_3_mama_direita_assimetria_difusa: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Controle radiológico de lesão categoria 3 na mama direita: Assimetria difusa (S=Sim, None=Não)",
             json_schema_extra={
@@ -317,7 +289,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_radiologico_lesao_categoria_3_mama_direita_area_densa: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Controle radiológico de lesão categoria 3 na mama direita: Área densa (S=Sim, None=Não)",
             json_schema_extra={
@@ -328,7 +300,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_radiologico_lesao_categoria_3_mama_direita_distorcao_focal: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Controle radiológico de lesão categoria 3 na mama direita: Distorção focal (S=Sim, None=Não)",
             json_schema_extra={
@@ -339,7 +311,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_radiologico_lesao_categoria_3_mama_direita_linfonodo_axilar: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Controle radiológico de lesão categoria 3 na mama direita: Linfonodo axilar (S=Sim, None=Não)",
             json_schema_extra={
@@ -351,7 +323,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     ] = None
     # MAMA ESQUERDA
     controle_radiologico_lesao_categoria_3_mama_esquerda_nodulo: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Controle radiológico de lesão categoria 3 na mama esquerda: Nódulo (S=Sim, None=Não)",
             json_schema_extra={
@@ -362,7 +334,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_radiologico_lesao_categoria_3_mama_esquerda_microcalcificacoes: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Controle radiológico de lesão categoria 3 na mama esquerda: Microcalcificações (S=Sim, None=Não)",
             json_schema_extra={
@@ -373,7 +345,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_radiologico_lesao_categoria_3_mama_esquerda_assimetria_focal: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Controle radiológico de lesão categoria 3 na mama esquerda: Assimetria focal (S=Sim, None=Não)",
             json_schema_extra={
@@ -384,7 +356,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_radiologico_lesao_categoria_3_mama_esquerda_assimetria_difusa: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Controle radiológico de lesão categoria 3 na mama esquerda: Assimetria difusa (S=Sim, None=Não)",
             json_schema_extra={
@@ -395,7 +367,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_radiologico_lesao_categoria_3_mama_esquerda_area_densa: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Controle radiológico de lesão categoria 3 na mama esquerda: Área densa (S=Sim, None=Não)",
             json_schema_extra={
@@ -406,7 +378,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_radiologico_lesao_categoria_3_mama_esquerda_distorcao_focal: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Controle radiológico de lesão categoria 3 na mama esquerda: Distorção focal (S=Sim, None=Não)",
             json_schema_extra={
@@ -417,7 +389,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_radiologico_lesao_categoria_3_mama_esquerda_linfonodo_axilar: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Controle radiológico de lesão categoria 3 na mama esquerda: Linfonodo axilar (S=Sim, None=Não)",
             json_schema_extra={
@@ -432,7 +404,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     # Mamografia realizada em paciente já com diagnóstico de câncer de mama,
     # por histopatológico, mas antes do tratamento
     grupo_lesao_diagnostico_cancer: Annotated[
-        YesOrNone,
+        YesNo,
         Field(
             description="Lesão diagnóstico de câncer: True=Sim, False=Não",
             json_schema_extra={"x-widget": "checkbox",
@@ -442,7 +414,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     ] = None
     # MAMA DIREITA
     lesao_diagnostico_cancer_mama_direita_nodulo: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Lesão diagnóstico de câncer na mama direita: Nódulo (S=Sim, None=Não)",
             json_schema_extra={"x-widget": "checkbox",
@@ -451,7 +423,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     lesao_diagnostico_cancer_mama_direita_microcalcificacoes: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Lesão diagnóstico de câncer na mama direita: Microcalcificações (S=Sim, None=Não)",
             json_schema_extra={"x-widget": "checkbox",
@@ -460,7 +432,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     lesao_diagnostico_cancer_mama_direita_assimetria_focal: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Lesão diagnóstico de câncer na mama direita: Assimetria focal (S=Sim, None=Não)",
             json_schema_extra={"x-widget": "checkbox",
@@ -469,7 +441,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     lesao_diagnostico_cancer_mama_direita_assimetria_difusa: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Lesão diagnóstico de câncer na mama direita: Assimetria difusa (S=Sim, None=Não)",
             json_schema_extra={"x-widget": "checkbox",
@@ -478,7 +450,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     lesao_diagnostico_cancer_mama_direita_area_densa: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Lesão diagnóstico de câncer na mama direita: Área densa (S=Sim, None=Não)",
             json_schema_extra={"x-widget": "checkbox",
@@ -487,7 +459,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     lesao_diagnostico_cancer_mama_direita_distorcao_focal: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Lesão diagnóstico de câncer na mama direita: Distorção focal (S=Sim, None=Não)",
             json_schema_extra={"x-widget": "checkbox",
@@ -496,7 +468,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     lesao_diagnostico_cancer_mama_direita_linfonodo_axilar: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Lesão diagnóstico de câncer na mama direita: Linfonodo axilar (S=Sim, None=Não)",
             json_schema_extra={"x-widget": "checkbox",
@@ -506,7 +478,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     ] = None
     # MAMA ESQUERDA
     lesao_diagnostico_cancer_mama_esquerda_nodulo: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Lesão diagnóstico de câncer na mama esquerda: Nódulo (S=Sim, None=Não)",
             json_schema_extra={"x-widget": "checkbox",
@@ -515,7 +487,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     lesao_diagnostico_cancer_mama_esquerda_microcalcificacoes: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Lesão diagnóstico de câncer na mama esquerda: Microcalcificações (S=Sim, None=Não)",
             json_schema_extra={"x-widget": "checkbox",
@@ -524,7 +496,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     lesao_diagnostico_cancer_mama_esquerda_assimetria_focal: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Lesão diagnóstico de câncer na mama esquerda: Assimetria focal (S=Sim, None=Não)",
             json_schema_extra={"x-widget": "checkbox",
@@ -533,7 +505,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     lesao_diagnostico_cancer_mama_esquerda_assimetria_difusa: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Lesão diagnóstico de câncer na mama esquerda: Assimetria difusa (S=Sim, None=Não)",
             json_schema_extra={"x-widget": "checkbox",
@@ -542,7 +514,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     lesao_diagnostico_cancer_mama_esquerda_area_densa: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Lesão diagnóstico de câncer na mama esquerda: Área densa (S=Sim, None=Não)",
             json_schema_extra={"x-widget": "checkbox",
@@ -551,7 +523,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     lesao_diagnostico_cancer_mama_esquerda_distorcao_focal: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Lesão diagnóstico de câncer na mama esquerda: Distorção focal (S=Sim, None=Não)",
             json_schema_extra={"x-widget": "checkbox",
@@ -560,7 +532,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     lesao_diagnostico_cancer_mama_esquerda_linfonodo_axilar: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Lesão diagnóstico de câncer na mama esquerda: Linfonodo axilar (S=Sim, None=Não)",
             json_schema_extra={"x-widget": "checkbox",
@@ -573,7 +545,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     # Mamografia realizada após a quimioterapia neoadjuvante, para avaliação
     # da resposta
     grupo_avaliacao_resposta_quimioterapia_neoadjuvante: Annotated[
-        YesOrNone,
+        YesNo,
         Field(
             description="Avaliação da resposta à quimioterapia neoadjuvante: True=Sim, False=Não",
             json_schema_extra={
@@ -599,7 +571,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     # Mamografia realizada em paciente com laudo anterior de outra
     # instituição nas categorias 0,3,4 e 5 para revisão de resultado
     grupo_revisao_mamografia_outra_instituicao: Annotated[
-        YesOrNone,
+        YesNo,
         Field(
             description="Revisão de mamografia em outra instituição: True=Sim, False=Não",
             json_schema_extra={
@@ -611,7 +583,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     ] = None
     # MAMA DIREITA
     revisao_mamografia_outra_instituicao_mama_direita_categoria_0: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Revisão de mamografia em outra instituição na mama direita: Categoria 0 (S=Sim, None=Não)",
             json_schema_extra={
@@ -622,7 +594,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     revisao_mamografia_outra_instituicao_mama_direita_categoria_3: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Revisão de mamografia em outra instituição na mama direita: Categoria 3 (S=Sim, None=Não)",
             json_schema_extra={
@@ -633,7 +605,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     revisao_mamografia_outra_instituicao_mama_direita_categoria_4: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Revisão de mamografia em outra instituição na mama direita: Categoria 4 (S=Sim, None=Não)",
             json_schema_extra={
@@ -644,7 +616,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     revisao_mamografia_outra_instituicao_mama_direita_categoria_5: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Revisão de mamografia em outra instituição na mama direita: Categoria 5 (S=Sim, None=Não)",
             json_schema_extra={
@@ -656,7 +628,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     ] = None
     # MAMA ESQUERDA
     revisao_mamografia_outra_instituicao_mama_esquerda_categoria_0: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Revisão de mamografia em outra instituição na mama esquerda: Categoria 0 (S=Sim, None=Não)",
             json_schema_extra={
@@ -667,7 +639,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     revisao_mamografia_outra_instituicao_mama_esquerda_categoria_3: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Revisão de mamografia em outra instituição na mama esquerda: Categoria 3 (S=Sim, None=Não)",
             json_schema_extra={
@@ -678,7 +650,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     revisao_mamografia_outra_instituicao_mama_esquerda_categoria_4: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Revisão de mamografia em outra instituição na mama esquerda: Categoria 4 (S=Sim, None=Não)",
             json_schema_extra={
@@ -689,7 +661,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     revisao_mamografia_outra_instituicao_mama_esquerda_categoria_5: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="Revisão de mamografia em outra instituição na mama esquerda: Categoria 5 (S=Sim, None=Não)",
             json_schema_extra={
@@ -704,7 +676,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     # Mamografia realizada em paciente com laudo anterior de biópsia de
     # fragmento ou PAAF de lesões benignas
     grupo_controle_lesao_pos_biopsia_paaf_benigna: Annotated[
-        YesOrNone,
+        YesNo,
         Field(
             description="Controle de lesão pós-biópsia PAAF benigna: True=Sim, False=Não",
             json_schema_extra={
@@ -716,7 +688,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     ] = None
     # MAMA DIREITA
     controle_lesao_pos_biopsia_paaf_benigna_mama_direita_nodulo: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="... mama direita: Nódulo",
             json_schema_extra={
@@ -727,7 +699,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_lesao_pos_biopsia_paaf_benigna_mama_direita_microcalcificacoes: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="... mama direita: Microcalcificações",
             json_schema_extra={
@@ -738,7 +710,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_lesao_pos_biopsia_paaf_benigna_mama_direita_assimetria_focal: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="... mama direita: Assimetria focal",
             json_schema_extra={
@@ -749,7 +721,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_lesao_pos_biopsia_paaf_benigna_mama_direita_assimetria_difusa: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="... mama direita: Assimetria difusa",
             json_schema_extra={
@@ -760,7 +732,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_lesao_pos_biopsia_paaf_benigna_mama_direita_area_densa: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="... mama direita: Área densa",
             json_schema_extra={
@@ -771,7 +743,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_lesao_pos_biopsia_paaf_benigna_mama_direita_distorcao_focal: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="... mama direita: Distorção focal",
             json_schema_extra={
@@ -782,7 +754,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_lesao_pos_biopsia_paaf_benigna_mama_direita_linfonodo_axilar: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="... mama direita: Linfonodo axilar",
             json_schema_extra={
@@ -794,7 +766,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     ] = None
     # MAMA ESQUERDA
     controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_nodulo: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="... mama esquerda: Nódulo",
             json_schema_extra={
@@ -805,7 +777,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_microcalcificacoes: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="... mama esquerda: Microcalcificações",
             json_schema_extra={
@@ -816,7 +788,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_assimetria_focal: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="... mama esquerda: Assimetria focal",
             json_schema_extra={
@@ -827,7 +799,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_assimetria_difusa: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="... mama esquerda: Assimetria difusa",
             json_schema_extra={
@@ -838,7 +810,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_area_densa: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="... mama esquerda: Área densa",
             json_schema_extra={
@@ -849,7 +821,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_distorcao_focal: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="... mama esquerda: Distorção focal",
             json_schema_extra={
@@ -860,7 +832,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         ),
     ] = None
     controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_linfonodo_axilar: Annotated[
-        Optional[YesOrNone],
+        Optional[YesNone],
         Field(
             description="... mama esquerda: Linfonodo axilar",
             json_schema_extra={
@@ -874,6 +846,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     model_config = {
         "json_schema_extra": {
             "example": {
+                "tipo_de_mamografia": "01",
                 "cartao_sus": "898001160104568",
                 "apelido": "",
                 "escolaridade": "4",
@@ -882,15 +855,15 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
                 "prestador": "HOSPITAL ERASTO GAERTNER",
                 "num_prontuario": "123456789",
                 "tem_nodulo_ou_caroco_na_mama": ["01", "02"],
-                "apresenta_risco_elevado_para_cancer_mama": "01",
-                "fez_mamografia_alguma_vez": "01",
+                "apresenta_risco_elevado_para_cancer_mama": "S",
+                "fez_mamografia_alguma_vez": "S",
                 "ano_que_fez_a_ultima_mamografia": "2025",
-                "antes_desta_consulta_teve_as_mamas_examinadas_por_um_profissional": "03",
-                "fez_radioterapia_na_mama_ou_no_plastrao": "01",
+                "antes_desta_consulta_teve_as_mamas_examinadas_por_um_profissional": "S",
+                "fez_radioterapia_na_mama_ou_no_plastrao": "S",
                 "radioterapia_localizacao": "03",
                 "ano_da_radioterapia_direita": "2023",
                 "ano_da_radioterapia_esquerda": "2023",
-                "fez_cirurgia_de_mama": "01",
+                "fez_cirurgia_de_mama": "S",
                 "ano_biopsia_cirurgica_incisional_direita": "2000",
                 "ano_biopsia_cirurgica_incisional_esquerda": "2001",
                 "ano_biopsia_cirurgica_excisional_direita": "2002",
@@ -918,17 +891,19 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
                 "ano_inclusao_implantes_direita": "2024",
                 "ano_inclusao_implantes_esquerda": "2025",
 
+                "grupo_achados_exame_clinico": "S",
                 "exame_clinico_mama_direita_lesao_papilar": "S",
                 "exame_clinico_mama_direita_descarga_papilar_espontanea": "01",
-                "exame_clinico_mama_direita_nodulo_localizacao": ["01","02","03","04","05","06","07","08","09","10"],
-                "exame_clinico_mama_direita_espessamento_localizacao": ["01","02","03","04","05","06","07","08","09","10"],
+                "exame_clinico_mama_direita_nodulo_localizacao": ["QSL","QIL","QSM","QIM","UQlat","UQsup","UQmed","UQinf","RRA","PA"],
+                "exame_clinico_mama_direita_espessamento_localizacao": ["QSL","QIL","QSM","QIM","UQlat","UQsup","UQmed","UQinf","RRA","PA"],
                 "exame_clinico_mama_direita_linfonodo_palpavel": ["01", "02"],
                 "exame_clinico_mama_esquerda_lesao_papilar": "S",
                 "exame_clinico_mama_esquerda_descarga_papilar_espontanea": "01",
-                "exame_clinico_mama_esquerda_nodulo_localizacao": ["01","02","03","04","05","06","07","08","09","10"],
-                "exame_clinico_mama_esquerda_espessamento_localizacao": ["01","02","03","04","05","06","07","08","09","10"],
+                "exame_clinico_mama_esquerda_nodulo_localizacao": ["QSL","QIL","QSM","QIM","UQlat","UQsup","UQmed","UQinf","RRA","PA"],
+                "exame_clinico_mama_esquerda_espessamento_localizacao": ["QSL","QIL","QSM","QIM","UQlat","UQsup","UQmed","UQinf","RRA","PA"],
                 "exame_clinico_mama_esquerda_linfonodo_palpavel": ["01", "02"],
 
+                "grupo_controle_radiologico_lesao_categoria_3": "S",
                 "controle_radiologico_lesao_categoria_3_mama_direita_nodulo": None,
                 "controle_radiologico_lesao_categoria_3_mama_direita_microcalcificacoes": "S",
                 "controle_radiologico_lesao_categoria_3_mama_direita_assimetria_focal": None,
@@ -944,6 +919,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
                 "controle_radiologico_lesao_categoria_3_mama_esquerda_distorcao_focal": None,
                 "controle_radiologico_lesao_categoria_3_mama_esquerda_linfonodo_axilar": "S",
 
+                "grupo_lesao_diagnostico_cancer": "S",
                 "lesao_diagnostico_cancer_mama_direita_nodulo": "S",
                 "lesao_diagnostico_cancer_mama_direita_microcalcificacoes": None,
                 "lesao_diagnostico_cancer_mama_direita_assimetria_focal": "S",
@@ -959,8 +935,20 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
                 "lesao_diagnostico_cancer_mama_esquerda_distorcao_focal": "S",
                 "lesao_diagnostico_cancer_mama_esquerda_linfonodo_axilar": None,
 
+                "grupo_avaliacao_resposta_quimioterapia_neoadjuvante": "S",
                 "avaliacao_resposta_quimioterapia_lateralidade": "01",
 
+                "grupo_revisao_mamografia_outra_instituicao": "S",
+                "revisao_mamografia_outra_instituicao_mama_direita_categoria_0": "S",
+                "revisao_mamografia_outra_instituicao_mama_direita_categoria_3": None,
+                "revisao_mamografia_outra_instituicao_mama_direita_categoria_4": None,
+                "revisao_mamografia_outra_instituicao_mama_direita_categoria_5": None,
+                "revisao_mamografia_outra_instituicao_mama_esquerda_categoria_0": "S",
+                "revisao_mamografia_outra_instituicao_mama_esquerda_categoria_3": None,
+                "revisao_mamografia_outra_instituicao_mama_esquerda_categoria_4": None,
+                "revisao_mamografia_outra_instituicao_mama_esquerda_categoria_5": None,
+
+                "grupo_controle_lesao_pos_biopsia_paaf_benigna": "S",
                 "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_nodulo": "S",
                 "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_microcalcificacoes": None,
                 "controle_lesao_pos_biopsia_paaf_benigna_mama_direita_assimetria_focal": "S",
@@ -976,31 +964,83 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
                 "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_distorcao_focal": "S",
                 "controle_lesao_pos_biopsia_paaf_benigna_mama_esquerda_linfonodo_axilar": None,
 
-                "revisao_mamografia_outra_instituicao_mama_direita_categoria_0": "S",
-                "revisao_mamografia_outra_instituicao_mama_direita_categoria_3": None,
-                "revisao_mamografia_outra_instituicao_mama_direita_categoria_4": None,
-                "revisao_mamografia_outra_instituicao_mama_direita_categoria_5": None,
-                "revisao_mamografia_outra_instituicao_mama_esquerda_categoria_0": "S",
-                "revisao_mamografia_outra_instituicao_mama_esquerda_categoria_3": None,
-                "revisao_mamografia_outra_instituicao_mama_esquerda_categoria_4": None,
-                "revisao_mamografia_outra_instituicao_mama_esquerda_categoria_5": None,
-
                 "data_da_solicitacao": "18/06/2025",
                 "cns_responsavel_coleta": "279802393660002"
             }
         }
     }
 
-    @model_validator(mode="before")
+    @field_validator(
+        "exame_clinico_mama_direita_nodulo_localizacao",
+        "exame_clinico_mama_direita_espessamento_localizacao",
+        "exame_clinico_mama_esquerda_nodulo_localizacao",
+        "exame_clinico_mama_esquerda_espessamento_localizacao",
+        mode="before"
+    )
     @classmethod
-    def substitui_none_por_str_null(cls, data: dict) -> dict:
-        """
-        Substitui valores None por YesOrNone.NONE nos campos esperados.
-        """
-        for field_name in data.keys():
-            if data[field_name] is None:
-                data[field_name] = "null"
-        return data
+    def map_enum_localizacao_mama(cls, value: Any) -> Any:
+        # Aceita valor já convertido (por reaproveitamento de validação)
+        if isinstance(value, LocalizacaoMama):
+            return value.value
+
+        if isinstance(value, list):
+            external_map = LocalizacaoMama.get_external_map()
+            result = []
+            for v in value:
+                if isinstance(v, LocalizacaoMama):
+                    result.append(v.value)
+                elif isinstance(v, str):
+                    key = v.strip().upper()
+                    if key in external_map:
+                        result.append(external_map[key])
+                    else:
+                        raise ValueError(
+                            f"Valor inválido '{v}': informe "
+                            f"{', '.join(external_map.keys())}."
+                        )
+                else:
+                    raise ValueError(
+                        f"Tipo inválido: esperado str ou LocalizacaoMama, "
+                        f"recebido {type(v)}."
+                    )
+            return result
+
+        raise ValueError(
+            f"Valor inválido: informe {', '.join(LocalizacaoMama.get_external_map().keys())}."
+        )
+
+    @model_validator(mode="after")
+    def valida_campos_diagnostica(self):
+        campos_diagnostica = [
+            "grupo_achados_exame_clinico",
+            "grupo_controle_radiologico_lesao_categoria_3",
+            "grupo_lesao_diagnostico_cancer",
+            "grupo_avaliacao_resposta_quimioterapia_neoadjuvante",
+            "grupo_revisao_mamografia_outra_instituicao",
+            "grupo_controle_lesao_pos_biopsia_paaf_benigna",
+        ]
+
+        valores = [getattr(self, campo) for campo in campos_diagnostica]
+
+        # Se todos são None, exceção geral
+        if all(v == YesNo.NAO for v in valores):
+            raise ValueError(
+                f"Pelo menos um dos grupos de campos diagnósticos deve ser "
+                f"informados com 'S' (Sim Selecionado): "
+                f"{', '.join(campos_diagnostica)}."
+            )
+
+        # Se algum campo é None, exceção específica
+        campos_faltando = [campo for campo, v in
+                           zip(campos_diagnostica, valores) if v is None]
+        if campos_faltando:
+            raise ValueError(
+                f"Os campos {', '.join(campos_faltando)} são obrigatórios e "
+                f"devem ser informados como 'S' (Sim Selecionado) ou 'N' "
+                f"(Não Selecionado)."
+            )
+
+        return self
 
     @model_validator(mode="after")
     def valida_tipo_de_mamografia(self) -> Self:
@@ -1054,38 +1094,6 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
     #     return data
 
     @model_validator(mode="after")
-    def valida_campos_diagnostica(self):
-        campos_diagnostica = [
-            "grupo_achados_exame_clinico",
-            "grupo_controle_radiologico_lesao_categoria_3",
-            "grupo_lesao_diagnostico_cancer",
-            "grupo_avaliacao_resposta_quimioterapia_neoadjuvante",
-            "grupo_revisao_mamografia_outra_instituicao",
-            "grupo_controle_lesao_pos_biopsia_paaf_benigna",
-        ]
-
-        valores = [getattr(self, campo) for campo in campos_diagnostica]
-
-        # Se todos são None, exceção geral
-        if all(v == YesOrNone.NONE for v in valores):
-            raise ValueError(
-                f"Pelo menos um dos grupos de campos diagnósticos deve ser "
-                f"informados com 'S' (Sim Selecionado): "
-                f"{', '.join(campos_diagnostica)}."
-            )
-
-        # Se algum campo é None, exceção específica
-        campos_faltando = [campo for campo, v in zip(campos_diagnostica, valores) if v is None]
-        if campos_faltando:
-            raise ValueError(
-                f"Os campos {', '.join(campos_faltando)} são obrigatórios e "
-                f"devem ser informados como 'S' (Sim Selecionado) ou null "
-                f"(Não Selecionado)."
-            )
-
-        return self
-
-    @model_validator(mode="after")
     def valida_obrigatoriedade_camopos_condicionais(self):
         logger.debug("Executando valida_obrigatoriedade_camopos_condicionais ...")
 
@@ -1116,16 +1124,15 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         return self
 
     def _valida_campos_condicionais_ativos(
-        self,
-        grupo: str,
-        campos_obrigatorios: list[str]
+            self,
+            grupo: str,
+            campos_obrigatorios: list[str]
     ) -> None:
         """
-        Verifica se os campos de um grupo foram preenchidos quando o grupo
-        está ativo.
+        Verifica se ao menos um campo de um grupo foi preenchido quando o grupo está ativo.
 
-        Também impede campos de grupo preenchidos se o grupo está inativo/nulo.
-        Lança ValueError com descrição esperada se houver inconsistência.
+        Também impede campos do grupo preenchidos se o grupo está inativo/nulo.
+        Lança ValueError com descrição adequada se houver inconsistência.
         """
         grupo_value = getattr(self, grupo, False)
         campos_preenchidos = [
@@ -1133,42 +1140,24 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
             if getattr(self, field_name) not in (None, "", [], False)
         ]
 
-        # Impede inconsistência lógica
-        if grupo_value == YesOrNone.NONE and campos_preenchidos:
+        # Impede inconsistência lógica: grupo inativo, mas campos preenchidos
+        if grupo_value == YesNo.NAO and campos_preenchidos:
             raise ValueError(
-                f"Foram informados os campos {', '.join(campos_preenchidos)}"
-                f"do grupo '{grupo}', mas o grupo está inativo (null). "
-                f"Defina o grupo como ativo ('S') ou remova os campos preenchidos.")
+                f"Foram informados os campos {', '.join(campos_preenchidos)} "
+                f"do grupo '{grupo}', mas o grupo está inativo ('N'). "
+                f"Defina o grupo como ativo ('S') ou remova os campos preenchidos."
+            )
 
-        # se grupo ativo, todos obrigatórios
-        if grupo_value == YesOrNone.SIM:
-            fields_required = []
-            for field_name in campos_obrigatorios:
-                grupo_value = getattr(self, field_name)
-                field_info = self.model_fields[field_name]
-
-                # Log para depuração
-                logger.debug(f"Campo {field_name}: value={grupo_value}, type={type(grupo_value)}")
-
-                if grupo_value is None:
-                    valores_possiveis = self._extrai_valores_possiveis(
-                        field_info.annotation)
-                    msg_valores = ", ".join(
-                        repr(v) for v in valores_possiveis if v is not None
-                    )
-                    msg_valores = msg_valores.replace(
-                        "'null'", "ou null")
-                    fields_required.append((field_name, msg_valores))
-
-            if fields_required:
-                campos = ", ".join(
-                    f"{name} ({valores})" for name, valores in fields_required
-                )
+        # Se grupo ativo, exige ao menos um campo preenchido
+        if grupo_value == YesNo.SIM:
+            if not campos_preenchidos:
+                campos = ", ".join(campos_obrigatorios)
                 raise ValueError(
-                    f"Os campos do grupo '{grupo}' estão ativos, mas os "
-                    f"seguintes campos obrigatórios não foram "
-                    f"preenchidos: {campos}."
+                    f"O grupo '{grupo}' está ativo ('S'), portanto deve ser informado "
+                    f"ao menos um dos campos do grupo: {campos}."
                 )
+
+        return self
 
     @model_validator(mode="after")
     def valida_categoria_revisao_mamografia_unica_por_mama(self) -> Self:
@@ -1177,7 +1166,7 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
         """
         def contar_marcados(campos: list[str]) -> list[str]:
             """Retorna a lista de campos marcados como 'S'."""
-            return [campo for campo in campos if getattr(self, campo, None) == YesOrNone.SIM]
+            return [campo for campo in campos if getattr(self, campo, None) == YesNone.SIM]
 
         campos_direita = [
             "revisao_mamografia_outra_instituicao_mama_direita_categoria_0",
@@ -1206,4 +1195,5 @@ class RequisicaoMamografiaDiagnosticaSchema(RequisicaoMamografiaSchema):
                 f"Apenas um dos campos {campos_esquerda} pode estar marcado como 'S'. "
                 f"Atualmente marcados: {marcados_esquerda}."
             )
+
         return self
