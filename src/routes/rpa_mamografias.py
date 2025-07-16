@@ -8,16 +8,16 @@ from src.siscan.schema.requisicao_mamografia_rastreamento_schema import \
     RequisicaoMamografiaRastreamentoSchema
 
 
-router = APIRouter(prefix="/preencher-formulario-siscan", tags=["siscan"])
+router = APIRouter(prefix="/api/v1/mamografias", tags=["mamografias"])
 
 
 @router.post(
-    "/requisicao-mamografia-rastreamento",
+    "/requisicoes-rastreamento",
     summary="Requisição de Mamografia de Rastreamento",
     description="Executa o RPA para preencher a requisição de mamografia de "
                 "rastreamento na interface web do SISCAN",
 )
-async def preencher_requisicao_mamografia_rastreamento(
+async def preencher_requisicao_rastreamento(
     data: RequisicaoMamografiaRastreamentoSchema,
     uuid: str = Depends(get_current_user_uuid),
 ):
@@ -26,12 +26,12 @@ async def preencher_requisicao_mamografia_rastreamento(
     return result
 
 @router.post(
-    "/requisicao-mamografia-diagnostica",
+    "/requisicoes-diagnostica",
     summary="Requisição de Mamografia de Diagnóstica",
     description="Executa o RPA para preencher a requisição de mamografia de "
                 "diagnóstica na interface web do SISCAN",
 )
-async def preencher_requisicao_mamografia_diagnostica(
+async def preencher_requisicao_diagnostica(
     data: RequisicaoMamografiaDiagnosticaSchema,
     uuid: str = Depends(get_current_user_uuid),
 ):
@@ -40,7 +40,7 @@ async def preencher_requisicao_mamografia_diagnostica(
     return result
 
 @router.post(
-    "/laudo-mamografia",
+    "/laudos",
     summary="Preencher Laudo de Mamografia",
     description="Executa o RPA para preencher o laudo de mamografia no SIScan",
 )

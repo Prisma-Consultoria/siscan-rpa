@@ -19,5 +19,5 @@ class YN(Enum):
 
 
 class TipoDeMamografia(Enum):
-    DIAGNOSTICA = "Diagnóstica"
-    RASTREAMENTO = "Rastreamento"
+    DIAGNOSTICA = "01"
+    RASTREAMENTO = "02"

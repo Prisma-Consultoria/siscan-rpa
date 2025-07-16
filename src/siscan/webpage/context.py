@@ -14,7 +14,7 @@ import logging
 from playwright.async_api import async_playwright, Browser, Page
 from typing import Optional
 
-from src.utils import messages as msg
+from src.siscan import messages as msg
 
 logger = logging.getLogger(__name__)
 

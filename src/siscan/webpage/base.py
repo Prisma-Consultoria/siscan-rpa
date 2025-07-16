@@ -32,7 +32,7 @@ from src.siscan.webpage.context import SiscanBrowserContext
 from src.siscan.webpage.xpath_constructor import XPathConstructor
 from src.siscan.webpage.xpath_constructor import XPathConstructor as XPE, \
     InputType
-from src.utils import messages as msg
+from src.siscan import messages as msg
 from src.utils.SchemaMapExtractor import SchemaMapExtractor
 from src.utils.validator import Validator, SchemaValidationError
 

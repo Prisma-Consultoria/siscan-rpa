@@ -1,7 +1,7 @@
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 from typing import Iterable
 
-from src.utils import messages as msg
+from src.siscan import messages as msg
 
 
 class SiscanException(Exception):

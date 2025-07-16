@@ -2,9 +2,7 @@ import logging
 from fastapi import FastAPI
 
 from .env import Base, engine
-from .routes.preencher_formulario_siscan import (
-    router as formulario_router,
-)
+from .routes.rpa_mamografias import router as formulario_router
 from .routes.auth.security import router as security_router
 from .routes.user import router as user_router
 

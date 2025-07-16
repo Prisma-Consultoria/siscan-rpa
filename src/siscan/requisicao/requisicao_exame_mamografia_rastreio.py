@@ -56,8 +56,6 @@ class RequisicaoExameMamografiaRastreio(RequisicaoExameMamografia):
         return map_label
 
     def validation(self, data: dict):
-        # Define o tipo de exame como Mamografia de Rastreio
-        data["tipo_de_mamografia"] = TipoDeMamografia.RASTREAMENTO.value
         super().validation(data)
         return data
 

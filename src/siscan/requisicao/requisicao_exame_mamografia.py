@@ -21,7 +21,7 @@ from src.siscan.schema.requisicao_novo_exame_schema import (
 )
 from src.siscan.webpage.xpath_constructor import \
     XPathConstructor as XPE  # XPathElement
-from src.utils import messages as msg
+from src.siscan import messages as msg
 from src.utils.SchemaMapExtractor import SchemaMapExtractor
 
 logger = logging.getLogger(__name__)
@@ -30,10 +30,6 @@ logger = logging.getLogger(__name__)
 class RequisicaoExameMamografia(RequisicaoExame):
     # manual https://www.inca.gov.br/sites/ufu.sti.inca.local/files/media/document/manual_siscan_modulo2_2021_1.pdf
     FIELDS_MAP = {
-        "tipo_de_mamografia": {
-            "Diagnóstica": "01",
-            "Rastreamento": "02",
-        },
         "fez_cirurgia_de_mama": {
             "01": "S",
             "02": "N",
