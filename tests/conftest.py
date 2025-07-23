@@ -10,10 +10,7 @@ from fastapi.testclient import TestClient
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 
-# Determine whether Playwright should run in headless mode. This can be
-# controlled via the ``HEADLESS`` environment variable. If the variable is not
-# defined, the default is ``True``.
-HEADLESS: bool = os.getenv("HEADLESS", "true").lower() == "true"
+from src.env import HEADLESS
 
 
 @pytest.fixture(scope="session")

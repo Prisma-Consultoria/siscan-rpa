@@ -40,23 +40,12 @@ class InputType(Enum):
             raise ValueError(f"Tipo de input não suportado: {self.value}")
 
 
-class RequirementLevel(Enum):
-    REQUIRED = "required"
-    OPTIONAL = "optional"
-
-    # Ou, para uso de instância:
-    def is_required(self) -> bool:
-        """
-        Verifica se a instância representa o nível 'required'.
-        """
-        return self is RequirementLevel.REQUIRED
-
-
 class LoginInput(BaseModel):
     """Modelo de entrada para login/cadastro de usuário."""
 
     username: str = Field(..., description="Nome de usuário para cadastro")
-    password: str = Field(..., description="Senha do usuário, deve ser criptografada")
+    password: str = Field(..., description="Senha do usuário, deve ser "
+                                           "criptografada")
 
     model_config = {
         "json_schema_extra": {"example": {"username": "alice", "password": "secret"}}

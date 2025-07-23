@@ -7,17 +7,12 @@ from src.utils.validator import Validator
 
 
 class SchemaMapExtractor:
-    @staticmethod
+    @classmethod
     def schema_to_maps(
+        cls,
         schema: Union[str, Path, Type[BaseModel]],
         fields: Optional[List[str]] = None,
-    ) -> Tuple[Dict[str, tuple], Dict[str, dict]]:
-        """
-        Dado um JSON Schema, retorna duas tuplas:
-          - MAP_DATA_LABEL: dicionário no formato esperado, restrito aos
-            campos informados (se fornecidos)
-          - FIELDS_MAP: dicionário para campos do tipo enum, array[enum], etc.
-        """
+    ) -> Tuple[Dict[str, dict], Dict[str, dict]]:
         map_data_label = {}
         fields_map = {}
 
@@ -41,11 +36,13 @@ class SchemaMapExtractor:
             requirement = SchemaMapExtractor._infer_requirement_level(
                 field, required_fields
             )
-            map_data_label[field] = (label, input_type, requirement)
+            x_xpath = SchemaMapExtractor._infer_input_xpath(field_schema)
+            map_data_label[field] = SchemaMapExtractor.make_field_dict(
+                label, input_type, requirement, x_xpath
+            )
             fm = SchemaMapExtractor._extract_fields_map(field_schema)
             if fm:
                 fields_map[field] = fm
-
         return map_data_label, fields_map
 
     @staticmethod
@@ -65,10 +62,15 @@ class SchemaMapExtractor:
         return "text"
 
     @staticmethod
-    def _infer_requirement_level(field: str, required_fields: List[str]) -> str:
+    def _infer_input_xpath(field_schema: dict) -> str:
+        return field_schema.get("x-xpath", "")
+
+    @staticmethod
+    def _infer_requirement_level(
+            field: str, required_fields: List[str]) -> bool:
         if field in required_fields:
-            return "required"
-        return "optional"
+            return True
+        return False
 
     @staticmethod
     def _extract_fields_map(field_schema: dict) -> dict:
@@ -81,3 +83,17 @@ class SchemaMapExtractor:
         elif "enum" in field_schema:
             return {v: v for v in field_schema["enum"] if v is not None}
         return None
+
+    @classmethod
+    def make_field_dict(
+            cls,
+            label: str,
+            input_type: str,
+            requirement: bool,
+            xpath: str | None = "") -> dict:
+        return {
+            "label": label,
+            "input_type": input_type,
+            "required": requirement,
+            "xpath": xpath
+        }

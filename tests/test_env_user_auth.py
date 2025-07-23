@@ -73,7 +73,7 @@ async def test_authenticate_env_user(headless: bool):
         timeout=15000,
     )
 
-    await req.authenticate()
+    await req._authenticate()
 
     assert await (
         (await req.context.page).locator('h1:text("SEJA BEM VINDO AO SISCAN")')

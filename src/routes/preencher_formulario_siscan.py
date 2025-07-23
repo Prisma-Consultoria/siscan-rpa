@@ -10,7 +10,8 @@ router = APIRouter(prefix="/preencher-formulario-siscan", tags=["siscan"])
 @router.post(
     "/requisicao-mamografia-rastreamento",
     summary="Requisição de Mamografia de Rastreamento",
-    description="Executa o RPA para preencher a requisição de mamografia de rastreamento na interface web do SISCAN",
+    description="Executa o RPA para preencher a requisição de mamografia de "
+                "rastreamento na interface web do SISCAN",
 )
 async def preencher_requisicao_mamografia_rastreamento(
     data: PreencherSolicitacaoInput,
@@ -23,7 +24,8 @@ async def preencher_requisicao_mamografia_rastreamento(
 @router.post(
     "/requisicao-mamografia-diagnostica",
     summary="Requisição de Mamografia de Diagnóstica",
-    description="Executa o RPA para preencher a requisição de mamografia de diagnóstica na interface web do SISCAN",
+    description="Executa o RPA para preencher a requisição de mamografia de "
+                "diagnóstica na interface web do SISCAN",
 )
 async def preencher_requisicao_mamografia_diagnostica(
     data: PreencherSolicitacaoInput,

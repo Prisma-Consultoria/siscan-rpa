@@ -5,7 +5,7 @@ from playwright.async_api import Page, Locator, TimeoutError, ElementHandle
 from src.siscan.exception import (
     SiscanMenuNotFoundError,
     XpathNotFoundError,
-    SiscanException,
+    SiscanException, SiscanTimeoutError,
 )
 
 from src.env import DEFAULT_TIMEOUT
@@ -43,7 +43,8 @@ class XPathConstructor:
 
     def __str__(self):
         return (
-            f"await XPE.create(xpath='{self._xpath}', input_type='{self._input_type}')"
+            f"await XPE.create(xpath='{self._xpath}', "
+            f"input_type='{self._input_type}')"
         )
 
     def _get_input_type(
@@ -150,13 +151,15 @@ class XPathConstructor:
                 return elem
         except Exception as e:
             logger.error(
-                f"Erro inesperado ao obter locator com XPath '{self._xpath}': {e}"
+                f"Erro inesperado ao obter locator com "
+                f"XPath '{self._xpath}': {e}"
             )
             # Envolve a exceção original na nossa exceção específica
             raise XpathNotFoundError(
                 self._context,
                 xpath=self._xpath,
-                m=f"Erro inesperado ao obter locator com: {e}",
+                m=f"Erro inesperado ao obter locator com "
+                  f"xpath={self._xpath}: {e}"
             )
 
     async def wait_and_get(self, timeout: float = DEFAULT_TIMEOUT) -> Page.locator:
@@ -190,8 +193,8 @@ class XPathConstructor:
             raise XpathNotFoundError(
                 self._context,
                 xpath=self._xpath,
-                m=f"Elemento não visível: XPath '{self._xpath}' "
-                f"não se tornou visível dentro do tempo limite.",
+                m=f"Elemento não encontrado: Locator '{locator}'. "
+                f"Não se tornou visível dentro do tempo limite."
             )
         except XpathNotFoundError:
             # Se o .get() já lançou essa exceção, apenas relança
@@ -204,7 +207,8 @@ class XPathConstructor:
             raise XpathNotFoundError(
                 self._context,
                 xpath=self._xpath,
-                m=f"Erro inesperado ao aguardar elemento: {e}",
+                m=f"Erro inesperado ao aguardar e obter locator com "
+                  f"XPath '{self._xpath}': {e}"
             )
         return locator
 
@@ -252,7 +256,11 @@ class XPathConstructor:
                 pass
             time.sleep(interval)
             elapsed += interval
-        raise TimeoutError("Elemento não ficou habilitado a tempo")
+        raise SiscanTimeoutError(
+            self._context,
+            m=f"Elemento locator '{locator}' não encontrado. "
+              f"Não se tornou visível dentro do tempo limite."
+        )
 
     async def wait_until_filled(self, timeout: float = DEFAULT_TIMEOUT):
         """
@@ -311,7 +319,8 @@ class XPathConstructor:
 
             # Primeiro, espera até o elemento estar visível
             logger.debug(
-                f"Aguardando preenchimento do campo localizado por XPath: {self._xpath}"
+                f"Aguardando preenchimento do campo localizado por "
+                f"XPath: {self._xpath}"
             )
             await locator.wait_for(
                 state="visible", timeout=timeout * (self.TIMEOUT_MS_FACTOR / 2)
@@ -319,7 +328,8 @@ class XPathConstructor:
 
             # Em seguida, espera até o atributo 'value' ser diferente de vazio
             logger.debug(
-                f"Esperando o campo com XPath '{self._xpath}' ter valor preenchido."
+                f"Esperando o campo com XPath '{self._xpath}' ter valor "
+                f"preenchido."
             )
             await self.page.wait_for_function(
                 """(element) => {
@@ -328,7 +338,8 @@ class XPathConstructor:
                 arg=await locator.element_handle(),
                 timeout=timeout * (self.TIMEOUT_MS_FACTOR / 2),
             )
-            logger.info(f"Campo com XPath '{self._xpath}' foi preenchido com sucesso.")
+            logger.info(f"Campo com XPath '{self._xpath}' foi preenchido "
+                        f"com sucesso.")
             return self
         except TimeoutError as e:
             # Captura timeouts do wait_for(state="visible")
@@ -343,7 +354,7 @@ class XPathConstructor:
                 self._context,
                 xpath=self._xpath,
                 m=f"Campo não preenchido ou visível: XPath '{self._xpath}' "
-                f"não atendeu às condições dentro do tempo limite.",
+                f"não atendeu às condições dentro do tempo limite."
             )
         except XpathNotFoundError:
             # Se a exceção já veio do self.get(), apenas a relançamos
@@ -357,80 +368,7 @@ class XPathConstructor:
             raise XpathNotFoundError(
                 self._context,
                 xpath=self._xpath,
-                m=f"Erro inesperado ao aguardar o preenchimento: {e}",
-            )
-
-    async def wait_page_ready(
-        self, timeout: float = DEFAULT_TIMEOUT
-    ) -> "XPathConstructor":
-        """
-        Aguarda até que a página esteja completamente carregada e o jQuery
-        (se usado) esteja disponível.
-
-        Este método espera pelo estado 'networkidle', indicando que não
-        há mais requisições de rede em andamento, e garante que o jQuery
-        já foi carregado e está acessível na página.
-
-        Parâmetros
-        ----------
-        timeout : int, opcional
-            Tempo máximo de espera, em segundos. O padrão é 10 segundos.
-
-        Retorno
-        -------
-        self : XPathConstructor
-            Permite o encadeamento de métodos.
-
-        Exceções
-        --------
-        SiscanException
-            Se a página não carregar completamente ou o jQuery não estiver
-            disponível dentro do tempo limite.
-        """
-        try:
-            logger.debug(
-                f"Aguardando o estado 'networkidle' da página. "
-                f"Timeout: {timeout * self.TIMEOUT_MS_FACTOR} "
-                f"milessegundos."
-            )
-            await self.page.wait_for_load_state(
-                "networkidle", timeout=timeout * self.TIMEOUT_MS_FACTOR
-            )
-            logger.debug("Estado 'networkidle' alcançado.")
-
-            # Espera pelo jQuery, caso a aplicação o utilize.
-            # Esta verificação é opcional; remova-a se sua aplicação não usa
-            # jQuery.
-            logger.debug(
-                f"Verificando a disponibilidade do jQuery na página. "
-                f"Timeout: {timeout * self.TIMEOUT_MS_FACTOR} "
-                f"milessegundos."
-            )
-            await self.page.wait_for_function(
-                "window.jQuery !== undefined && typeof jQuery === 'function'",
-                timeout=timeout * self.TIMEOUT_MS_FACTOR,
-            )
-            logger.info("Página pronta e jQuery disponível.")
-
-            return self
-
-        except TimeoutError as e:
-            # Captura timeouts do wait_for_load_state ou wait_for_function
-            logger.error(
-                f"Timeout: A página não ficou pronta ou o jQuery não "
-                f"carregou dentro de . Erro: {e}"
-            )
-            raise SiscanException(
-                self._context,
-                m=f"Página não carregada ou jQuery indisponível dentro do "
-                f"tempo limite: {e}",
-            )
-        except Exception as e:
-            # Captura quaisquer outras exceções inesperadas
-            logger.error(f"Erro inesperado ao aguardar a prontidão da página: {e}")
-            raise SiscanException(
-                self._context,
-                m=f"Erro inesperado ao aguardar a prontidão da página: {e}",
+                m=f"Erro inesperado ao aguardar o preenchimento: {e}"
             )
 
     async def get_value(
@@ -513,7 +451,8 @@ class XPathConstructor:
                     checkbox_id = await cb.get_attribute("id")
                     if checkbox_id:
                         # Busca o label associado ao id
-                        label_elem = locator.page.locator(f"label[for='{checkbox_id}']")
+                        label_elem = locator.page.locator(
+                            f"label[for='{checkbox_id}']")
                         if await label_elem.count() > 0:
                             text = (await label_elem.nth(0).inner_text()).strip()
                     if not text:
@@ -540,7 +479,8 @@ class XPathConstructor:
                     radio_id = await radio.get_attribute("id")
                     if radio_id:
                         # Busca o label associado ao id
-                        label_elem = locator.page.locator(f"label[for='{radio_id}']")
+                        label_elem = locator.page.locator(
+                            f"label[for='{radio_id}']")
                         if await label_elem.count() > 0:
                             text = (await label_elem.nth(0).inner_text()).strip()
                     if not text:
@@ -595,7 +535,7 @@ class XPathConstructor:
 
         Exceções
         --------
-        TimeoutError
+        SiscanTimeoutError
             Disparada caso a opção desejada não seja localizada dentro do tempo
             limite especificado.
 
@@ -620,12 +560,13 @@ class XPathConstructor:
             return
 
         elapsed = 0
+        locator_options: Locator = None
         while elapsed < timeout:
-            options = obj_locator.locator("option")
-            count = await options.count()
+            locator_options = obj_locator.locator("option")
+            count = await locator_options.count()
             found = False
             for i in range(count):
-                opt_value = await options.nth(i).get_attribute("value")
+                opt_value = await locator_options.nth(i).get_attribute("value")
                 if opt_value == value:
                     found = True
                     break
@@ -635,9 +576,11 @@ class XPathConstructor:
             time.sleep(interval)
             elapsed += interval
 
-        raise TimeoutError(
-            f"Timeout ao selecionar opção '{value}' no <select>: "
-            "opção não encontrada após aguardar carregamento."
+        raise SiscanTimeoutError(
+            self._context,
+            m=f"Timeout ao selecionar opção '{value}' no elemento "
+              f"locator '{locator_options}'. Opção não visível após aguardar "
+              f"o carregamento."
         )
 
     async def _select_radio_with_retry(
@@ -667,19 +610,20 @@ class XPathConstructor:
 
         Exceções
         --------
-        TimeoutError
+        SiscanTimeoutError
             Disparada caso o radio button desejado não seja localizado ou
             selecionado dentro do tempo limite.
         """
         interval = interval or self.ELAPSED_INTERVAL
         elapsed = 0
+        locator_radios: Locator = None
         while elapsed < timeout:
-            radios = obj_locator.locator("input[type='radio']")
-            count = await radios.count()
+            locator_radios = obj_locator.locator("input[type='radio']")
+            count = await locator_radios.count()
             found = False
 
             for i in range(count):
-                radio = radios.nth(i)
+                radio = locator_radios.nth(i)
                 radio_value = await radio.get_attribute("value")
                 is_checked = await radio.is_checked()
                 is_disabled = await radio.get_attribute("disabled")
@@ -698,7 +642,8 @@ class XPathConstructor:
                             )
                             # Pode ser overlay, atraso do frontend, etc.
                     elif is_checked:
-                        logger.debug(f"Radio value={value} já estava selecionado.")
+                        logger.debug(f"Radio value={value} já estava"
+                                     f"selecionado.")
                         return
                     # Se está desabilitado, aguarda
             if found:
@@ -710,11 +655,18 @@ class XPathConstructor:
                 # Radio ainda não apareceu, espera e tenta de novo
                 time.sleep(interval)
                 elapsed += interval
-        raise TimeoutError(f"Timeout ao tentar selecionar o radio com value='{value}'.")
+
+        raise SiscanTimeoutError(
+            self._context,
+            m=f"Timeout ao selecionar o radio com value='{value}' no "
+              f"elemento locator: {locator_radios}. Opção não visível após "
+              f"aguardar o carregamento."
+        )
 
     async def find_search_link_after_input(self, label_name: str) -> "XPathConstructor":
         """
-        Localiza o link (<a>) de busca imediatamente após um campo input identificado pelo label.
+        Localiza o link (<a>) de busca imediatamente após um campo input
+        identificado pelo label.
 
         Retorno
         -------
@@ -725,31 +677,48 @@ class XPathConstructor:
         xpath.find_search_link_after_input("Cartão SUS").handle_click()
         """
         await self.find_form_input(label_name, input_type=InputType.TEXT)
+        if self._xpath:
+            logger.debug(f"XPath já definido: {self._xpath}. Não redefinindo "
+                         f"para o label '{label_name}'.")
+            return self
+
+        # Se não tiver um XPath definido, constrói o XPath para o label
         # Adiciona o seletor para o <a> logo após o campo
         self._xpath += "/following-sibling::a[1]"
-        logger.debug(f"XPath para lupa após input '{label_name}': {self._xpath}")
+        logger.debug(f"XPath para lupa após input '{label_name}': "
+                     f"{self._xpath}")
         return self
 
-    async def find_form_input(
-        self, label_name: str, input_type: str | InputType | None = None
-    ) -> "XPathConstructor":
+    async def find_form_input(self,
+                              label_name: str,
+                              input_type: str | InputType | None = None,
+                              ) -> "XPathConstructor":
         """
-        Localiza um campo de formulário pelo label e tipo, construindo o XPath adequado. Suporta diferentes estruturas HTML e tipos de input (input, select, textarea, date, checkbox, radio).
+        Localiza um campo de formulário pelo label e tipo, construindo o XPath
+         adequado. Suporta diferentes estruturas HTML e tipos de input
+         (input, select, textarea, date, checkbox, radio).
         """
         self._label = label_name
-        
         input_type = self._get_input_type(input_type)
+        self._input_type = input_type
+
+        if self._xpath:
+            logger.debug(f"XPath já definido: {self._xpath}. Não redefinindo "
+                         f"para o label '{label_name}'.")
+            return self
+
         label_xpath = f"//label[normalize-space(text())='{label_name}']"
 
         if input_type == InputType.DATE:
-            # Para campos de data, encontra o span após o label e dentro dele busca o input de texto do calendário
-            # TODO O campo de data de solicitação não funciona dessa maneira, teremos que criar um retry para contemplar
+            # Para campos de data, encontra o span após o label e dentro dele
+            # busca o input de texto do calendário
             self._xpath += (
                 f"{label_xpath}/following-sibling::span[1]//{input_type.html_element}"
                 f"[contains(@class, 'date') or contains(@class, 'calendar')]"
             )
         elif input_type == InputType.CHECKBOX:
-            # Para checkbox, busca todos os inputs do tipo checkbox após o label, dentro de qualquer estrutura (ex: tabela)
+            # Para checkbox, busca todos os inputs do tipo checkbox após o
+            # label, dentro de qualquer estrutura (ex: tabela)
             self._xpath += (
                 f"{label_xpath}/following-sibling::table[1]"
                 f"|//fieldset[legend[normalize-space(text())='{label_name}']]"
@@ -775,7 +744,8 @@ class XPathConstructor:
             else:
                 # Caminho alternativo: select irmão
                 self._xpath = f"{label_xpath}/following-sibling::select[1]"
-                # Opcional: checar se existe, caso contrário, tente por ancestral comum
+                # Opcional: checar se existe, caso contrário, tente por
+                # ancestral comum
                 if await self.page.locator(self._xpath).count() == 0:
                     # Busca por select descendente do mesmo div ancestral
                     self._xpath = f"{label_xpath}/ancestor::div[1]//select[1]"
@@ -784,7 +754,6 @@ class XPathConstructor:
             self._xpath += (
                 f"{label_xpath}/following-sibling::{input_type.html_element}[1]"
             )
-        self._input_type = input_type
         logger.debug(f"XPath: {self}")
 
         return self
@@ -812,7 +781,8 @@ class XPathConstructor:
         locator = await self.wait_and_get(timeout)
 
         logger.debug(
-            f"Preenchendo o campo do tipo {input_type.html_element} com valor: {value}"
+            f"Preenchendo o campo do tipo {input_type.html_element} com "
+            f"valor: {value}"
         )
         # Preenchimento dependendo do tipo de input
         if input_type in (InputType.SELECT, InputType.SELECT):
@@ -824,7 +794,8 @@ class XPathConstructor:
                 return self
             await self._select_option_with_retry(locator, value, timeout)
         elif input_type == InputType.CHECKBOX:
-            # Para checkbox: encontrar todos os inputs dentro da tabela localizada
+            # Para checkbox: encontrar todos os inputs dentro da tabela
+            # localizada
             valores = value if isinstance(value, list) else [value]
             # Usar CSS selector!
             checkboxes = locator.locator("input[type='checkbox']")
@@ -835,7 +806,8 @@ class XPathConstructor:
                 is_checked = await input_el.is_checked()
                 if input_value in valores and not is_checked:
                     logger.debug(
-                        f"Marcando checkbox value={input_value} (checked={is_checked})"
+                        f"Marcando checkbox value={input_value} "
+                        f"(checked={is_checked})"
                     )
                     await input_el.check(force=True)
                 elif input_value not in valores and is_checked:
@@ -869,6 +841,14 @@ class XPathConstructor:
         - Recomenda-se informar o texto exatamente como apresentado na
           interface.
         """
+        if self._xpath:
+            logger.debug(
+                f"XPath já definido: {self.xpath}. Não redefinindo para "
+                f"localizar botão '{button_text}'."
+            )
+            return self
+
+        # O XPath localiza o botão de submit, button ou link com classe
         self._xpath = (
             f"(//input[@type='submit' "
             f"and normalize-space(@value)='{button_text}']"
@@ -906,6 +886,13 @@ class XPathConstructor:
         xpath.find_form_anchor_button("Pesquisar").handle_click()
         ```
         """
+        if self._xpath:
+            logger.debug(
+                f"XPath já definido: {self._xpath}. Não redefinindo para "
+                f"localizar botão âncora '{button_text}'."
+            )
+            return self
+
         # O XPath localiza <a> com classe form-button e texto igual ao
         # informado (ignorando espaços extras)
         self._xpath = (
@@ -924,7 +911,9 @@ class XPathConstructor:
         reset=True,
     ) -> "XPathConstructor":
         """
-        Tenta clicar no elemento localizado pelo XPath corrente até sucesso ou timeout. Se `wait_for_selector` for informado, aguarda o seletor após o clique.
+        Tenta clicar no elemento localizado pelo XPath corrente até sucesso ou
+        timeout. Se `wait_for_selector` for informado, aguarda o seletor após
+        o clique.
 
         Parâmetros:
         - timeout: tempo máximo em segundos.
@@ -936,20 +925,23 @@ class XPathConstructor:
         - self
 
         Exceções:
-        - TimeoutError se não conseguir clicar ou aguardar o seletor no tempo limite.
+        - SiscanTimeoutError se não conseguir clicar ou aguardar o seletor no
+        tempo limite.
         """
         interval = interval or self.ELAPSED_INTERVAL
+        elocator: Locator = None
 
         elapsed = 0
         while elapsed < timeout:
             try:
-                locator = await self.wait_and_get(timeout)
+                elocator = await self.wait_and_get(timeout)
                 logger.debug(
                     f"Clicando no elemento localizado com XPath: {self._xpath}"
                 )
-                await locator.click(force=True)
+                await elocator.click(force=True)
                 if wait_for_selector:
-                    logger.debug(f"Aguardando seletor após clique: {wait_for_selector}")
+                    logger.debug(f"Aguardando seletor após clique: "
+                                 f"{wait_for_selector}")
                     await self.page.wait_for_selector(
                         wait_for_selector,
                         state="visible",
@@ -961,10 +953,11 @@ class XPathConstructor:
             except Exception:
                 time.sleep(interval)
                 elapsed += interval
-        raise TimeoutError(
-            f"Timeout ao clicar no elemento {self.xpath} após "
-            f"{timeout * self.TIMEOUT_MS_FACTOR} "
-            f"milessegundos."
+
+        raise SiscanTimeoutError(
+            self._context,
+            m=f"Timeout ao clicar no elemento locator '{elocator}' após "
+            f"{timeout * self.TIMEOUT_MS_FACTOR} milessegundos."
         )
 
     async def click_menu_action(
@@ -1061,77 +1054,6 @@ class XPathConstructor:
         await locator.dispatch_event("blur")
         return self  # Permite encadeamento, se necessário
 
-    async def fill_form_fields(
-        self, data: dict, campos_map: dict[str, tuple[str, str, str]]
-    ):
-        """
-        Preenche automaticamente os campos de um formulário de acordo com
-        o mapeamento informado, suportando diferentes tipos de input.
-
-        Parâmetros
-        ----------
-        data : dict
-            Dicionário contendo os dados a serem preenchidos no formulário,
-            onde as chaves são os nomes dos campos e os valores são os dados.
-
-        campos_map : dict[str, tuple[str, str, str]]
-            Dicionário de mapeamento dos campos permitidos para preenchimento.
-            As chaves correspondem aos nomes dos campos e os valores devem ser
-            tuplas contendo (label:str, type_input:str, requirement_level:str),
-             em que:
-              - label: texto do label associado ao campo no formulário.
-              - type_input: tipo do campo (ex: InputType.TEXT,
-                InputType.SELECT, InputType.CHECKBOX).
-              - requirement_level: se "required" ou "optional"
-
-        Exceções
-        --------
-        TypeError
-            É lançada se algum valor do `campos_map` não for uma tupla de três
-            strings, indicando erro na configuração do mapeamento.
-
-        Exemplo
-        -------
-        ```python
-        campos_map = {
-        ...     "nome": ("Nome:", InputType.TEXT, "required"),
-        ...     "sexo": ("Sexo:", InputType.CHECKBOX, "required"),
-        ...     "escolaridade": ("Nacionalidade:", InputType.SELECT,
-        "optional")
-        ... }
-        data = {
-        ...     "nome": "Maria",
-        ...     "sexo": "F",
-        ...     "escolaridade": "01"
-        ... }
-        xpath.fill_form_fields(data, campos_map)
-        ```
-        """
-        for nome_campo, valor in data.items():
-            if nome_campo not in campos_map:
-                logger.warning(
-                    f"Campo '{nome_campo}' não está mapeado ou não é editável. Ignorado."
-                )
-                continue
-
-            # Verificação do tipo esperado
-            campo_info = campos_map[nome_campo]
-            if not (
-                isinstance(campo_info, tuple)
-                and len(campo_info) == 3
-                and all(isinstance(x, str) for x in campo_info)
-            ):
-                raise TypeError(
-                    f"O valor de campos_map['{nome_campo}'] deve ser uma "
-                    f"tupla (label:str, type_input:str, requirement_level:str)"
-                    f", mas foi recebido: {campo_info!r}"
-                )
-
-            label, type_input, _ = campo_info
-            await (await self.find_form_input(label, type_input)).handle_fill(
-                str(valor), type_input
-            )
-
     async def get_select_options(
         self,
         min_options: int = 2,
@@ -1174,12 +1096,13 @@ class XPathConstructor:
 
         Exceções
         --------
-        TimeoutError
+        SiscanTimeoutError
             Se o select não carregar o número mínimo de opções no tempo limite.
         """
         locator = await self.wait_and_get(timeout)
         interval = interval or self.ELAPSED_INTERVAL
         elapsed = 0
+        option_count: Locator = None
         # Aguarda o select carregar as opções mínimas
         while elapsed < timeout:
             option_count = await locator.locator("option").count()
@@ -1188,9 +1111,11 @@ class XPathConstructor:
             time.sleep(interval)
             elapsed += interval
         else:
-            raise TimeoutError(
-                f"Select não carregou pelo menos {min_options} opções após "
-                f"{timeout * self.TIMEOUT_MS_FACTOR} milessegundos."
+            raise SiscanTimeoutError(
+                self._context,
+                m=f"Select não carregou pelo menos {min_options} opções após "
+                  f"{timeout * self.TIMEOUT_MS_FACTOR} milessegundos. "
+                  f"Objeto locator:'{option_count}'"
             )
 
         options_dict = {}
