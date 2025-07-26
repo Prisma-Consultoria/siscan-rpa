@@ -103,7 +103,7 @@ def fake_json_file(tmp_path_factory):
         "bairro": fake.bairro().upper(),
         "cep": bc._format_cep(fake.postcode()),
         "ponto_de_referencia": "PONTO DE REFERÊNCIA",
-        "unidade_requisitante": fake.numerify("#######"),
+        "cnes_unidade_requisitante": fake.numerify("#######"),
         "prestador": fake.company().upper(),
         "num_prontuario": fake.numerify("#########"),
         "tem_nodulo_ou_caroco_na_mama": ["01", "02"],
@@ -124,6 +124,7 @@ def fake_json_file(tmp_path_factory):
         "data_da_solicitacao": fake.date_between(
             start_date="-30d", end_date="today"
         ).strftime("%d/%m/%Y"),
+        "cns_responsavel_coleta": cns.generate(),
     }
 
     output_path = Path("./fake_data.json")

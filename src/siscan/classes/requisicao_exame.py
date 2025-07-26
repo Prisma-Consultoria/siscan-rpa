@@ -21,7 +21,7 @@ class RequisicaoExame(SiscanWebPage):
         "escolaridade",
         "ponto_de_referencia",
         "tipo_exame_mama",
-        "unidade_requisitante",
+        "cnes_unidade_requisitante",
         "prestador",
     ]
 
@@ -84,7 +84,7 @@ class RequisicaoExame(SiscanWebPage):
         """
         Seleciona e valida a unidade requisitante a partir dos dados fornecidos.
         """
-        nome_campo = "unidade_requisitante"
+        nome_campo = "cnes_unidade_requisitante"
         await self.load_select_options(nome_campo)
 
         # Atualiza o mapeamento de campos usando apenas o código CNES antes do hífen.
@@ -157,4 +157,4 @@ class RequisicaoExame(SiscanWebPage):
             RequisicaoExame.MAP_DATA_LABEL,
             suffix=""
         )
-        await self.take_screenshot("screenshot_03.png")
+        await self.take_screenshot("screenshot_03_requisicao_exame.png")

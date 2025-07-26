@@ -283,9 +283,8 @@ class WebPage(ABC):
 
         xpath = await XPE.create(self.context,
                                  xpath=field_metadata.get("xpath"))
-        await (await xpath.find_form_input(label, field_type)).handle_fill(
-            str(value), field_type
-        )
+        await (await xpath.find_form_input(label, field_type)
+               ).handle_fill(value, field_type)
 
     async def fill_form_fields(
         self,
@@ -293,7 +292,6 @@ class WebPage(ABC):
         map_label: dict[str, dict[str, Any]] | None = None,
         suffix: Optional[str] = ":",
     ):
-        breakpoint
         # Monta o dicionário de campos e os dados finais para preenchimento
         fields_map, final_data = self._mount_fields_map_and_data(
             data, map_label, suffix,
@@ -328,11 +326,9 @@ class WebPage(ABC):
             input_type = field_metadata.get("input_type", InputType.TEXT)
             xpath = await XPE.create(self.context,
                                      xpath=field_metadata.get("xpath"))
-            await (await xpath.find_form_input(field_metadata.get("label"),
-                                               input_type
-                                               )).handle_fill(
-                str(value), input_type
-            )
+            await (await xpath.find_form_input(
+                field_metadata.get("label"),
+                input_type)).handle_fill(value, input_type)
 
     async def load_select_options(self, field_name: str):
         """

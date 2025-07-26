@@ -1,5 +1,10 @@
+import enum
+
+import logging
+
 from enum import Enum
-from typing import Annotated, List, Optional
+from typing import Annotated, List, Optional, get_origin, get_args, Union, \
+    Literal
 from pydantic import Field
 from pydantic.functional_validators import model_validator
 from src.siscan.schema.requisicao_novo_exame_schema import RequisicaoNovoExameSchema
@@ -7,9 +12,10 @@ from src.siscan.schema import (
     YNIDK,
     Lateralidade,
     TipoDeMamografia,
-    YN,
+    YN
 )
 
+logger = logging.getLogger(__name__)
 
 class TemNoduloOuCarocoNaMama(Enum):
     SIM_MAMA_DIREITA = "01"
@@ -362,8 +368,20 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
         ),
     ] = None
 
+    cns_responsavel_coleta: Annotated[
+        str,
+        Field(
+            description="CNS do responsável pela coleta (15 dígitos)",
+            json_schema_extra={
+                "x-widget": "select",
+                "x-xpath": "//select[@name='frm:responsavelColeta']"},
+            title="Responsável:",
+        ),
+    ]
+
     @model_validator(mode="after")
     def valida_regras_condicionais(cls, values):
+        logger.debug("Executando valida_regras_condicionais...")
         # 1) Se existe '04' em tem_nodulo_ou_caroco_na_mama, então só pode haver esse item
         nodulos = values.tem_nodulo_ou_caroco_na_mama or []
         if any(n.value == "04" for n in nodulos):
@@ -386,7 +404,8 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
                 "Se não fez mamografia (≠01), não deve informar 'ano_que_fez_a_ultima_mamografia'."
             )
 
-        # 3) Se fez_radioterapia_na_mama_ou_no_plastrao == '01', radioterapia_localizacao é obrigatório
+        # 3) Se fez_radioterapia_na_mama_ou_no_plastrao == '01',
+        # radioterapia_localizacao é obrigatório
         fez_radio = values.fez_radioterapia_na_mama_ou_no_plastrao
         loc = values.radioterapia_localizacao
         if fez_radio == YNIDK.SIM and not loc:
@@ -417,16 +436,58 @@ class RequisicaoMamografiaSchema(RequisicaoNovoExameSchema):
                     "'ano_da_radioterapia_direita' e 'ano_da_radioterapia_esquerda'."
                 )
 
-        # 5) Se tipo_de_mamografia == 'Rastreamento', tipo_mamografia_de_rastreamento é obrigatório
-        tipo = values.tipo_de_mamografia
-        mamo = values.tipo_mamografia_de_rastreamento
-        if tipo == TipoDeMamografia.RASTREAMENTO and not mamo:
-            raise ValueError(
-                "Se tipo_de_mamografia = Rastreamento, precisa informar 'tipo_mamografia_de_rastreamento'."
-            )
-        if tipo != TipoDeMamografia.RASTREAMENTO and mamo:
-            raise ValueError(
-                "Se tipo_de_mamografia ≠ Rastreamento, não deve informar 'tipo_mamografia_de_rastreamento'."
-            )
-
         return values
+
+    @classmethod
+    def _extrai_valores_possiveis(cls, annotation):
+        """
+        Extrai valores possíveis do tipo anotado:
+        - Optional[...] → extrai tipo base e ignora None (mas pode incluir
+        como permitido)
+        - Literal[...] → retorna valores literais
+        - Enum → retorna valores da enumeração
+        - Annotated[...] → trata o primeiro argumento como tipo base
+        - List[T] → aplica recursivamente para T
+        """
+        origin = get_origin(annotation)
+        args = get_args(annotation)
+
+        logger.debug(
+            f"Extrai valores possíveis de {annotation}, "
+            f"origin: {origin}, "
+            f"args: {args}"
+        )
+
+        # Trata Annotated[T, ...]
+        if origin is Annotated:
+            return cls._extrai_valores_possiveis(args[0])
+
+        # Trata Union[T1, T2, ...] (inclui Optional[T])
+        if origin is Union:
+            valores = []
+            for arg in args:
+                if arg is type(None):
+                    valores.append(None)
+                else:
+                    valores += cls._extrai_valores_possiveis(arg)
+            return valores
+
+        # Trata List[T]
+        if origin in (list, List):
+            if args:
+                return cls._extrai_valores_possiveis(args[0])
+            return []
+
+        # Trata Literal["S", "N", ...]
+        if origin is Literal:
+            return list(args)
+
+        # Trata Enum
+        if isinstance(annotation, type):
+            try:
+                if issubclass(annotation, enum.Enum):
+                    return [e.value for e in annotation]
+            except TypeError:
+                pass
+
+        return []

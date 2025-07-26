@@ -5,14 +5,15 @@ import logging
 from typing import Type
 from pydantic import BaseModel
 
-from src.siscan.exception import CartaoSusNotFoundError
+from src.siscan.exception import CartaoSusNotFoundError, \
+    SiscanInvalidFieldValueError
 from src.siscan.classes.requisicao_exame import RequisicaoExame
 
 from src.siscan.schema.requisicao_mamografia_schema import (
     RequisicaoMamografiaSchema,
 )
 from src.siscan.schema.requisicao_novo_exame_schema import (
-    RequisicaoNovoExameSchema,
+    RequisicaoNovoExameSchema, TipoExameMama,
 )
 from src.utils.SchemaMapExtractor import SchemaMapExtractor
 from src.utils.xpath_constructor import XPathConstructor as XPE  # XPathElement
@@ -57,10 +58,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
 
     def validation(self, data: dict):
         # Define o tipo de exame como Mamografia
-        data["tipo_exame_mama"] = "01"  # 01-Mamografia
-        # Define o tipo de mamografia como "Rastreamento"
-        data["tipo_de_mamografia"] = "Rastreamento"  # 02-Rastreamento
-
+        data["tipo_exame_mama"] = TipoExameMama.MAMOGRAFIA.value
         super().validation(data)
 
     def get_map_label(self) -> dict[str, dict[str, str]]:
@@ -185,6 +183,32 @@ class RequisicaoExameMamografia(RequisicaoExame):
         if value == "S":
             await self._preencher_ano_cirurgia(data)
 
+    async def _seleciona_responsavel_coleta(self, data: dict | None = None):
+        """
+        Seleciona e valida a unidade requisitante a partir dos dados fornecidos.
+        """
+        nome_campo = "cns_responsavel_coleta"
+        await self.load_select_options(nome_campo)
+
+        # Atualiza o mapeamento de campos usando apenas o código CNES após do hífen.
+        for k, v in list(self.FIELDS_MAP[nome_campo].items()):
+            key = f"{k.split('-')[-1].strip()}"
+            self.FIELDS_MAP[nome_campo][key] = v
+
+            # Remove o item original que contém o hífen
+            if v != "0":
+                del self.FIELDS_MAP[nome_campo][k]
+
+        text, value = await self.select_value(nome_campo, data)
+        if value == "0":
+            raise SiscanInvalidFieldValueError(
+                self.context,
+                field_name=nome_campo,
+                data=data,
+                options_values=self.FIELDS_MAP[nome_campo].keys(),
+            )
+        data.pop(nome_campo, None)
+
     async def preencher(self, data: dict):
         """
         Preenche o formulário de requisição de exame com os dados fornecidos.
@@ -229,7 +253,7 @@ class RequisicaoExameMamografia(RequisicaoExame):
 
         await self.fill_form_field("data_da_solicitacao", data)
 
-        await self.take_screenshot("screenshot_04.png")
+        await self.take_screenshot("screenshot_04_requisicao_exame_mamografia.png")
 
 base_fields = set(RequisicaoNovoExameSchema.model_fields.keys())
 diag_fields = set(RequisicaoMamografiaSchema.model_fields.keys())

@@ -383,7 +383,7 @@ class SiscanWebPage(WebPage):
                 xpath.reset()
                 nome_ele = await xpath.find_form_input("Nome")
 
-                await nome_ele.wait_until_filled(timeout=timeout)
+                await nome_ele.wait_until_filled(timeout=timeout * 5) # 0.5 segundos
                 nome, _ = await nome_ele.get_value()
                 if nome:
                     return  # Sucesso!
