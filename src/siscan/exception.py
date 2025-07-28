@@ -1,6 +1,7 @@
-from typing import Iterable
-from src.utils import messages as msg
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
+from typing import Iterable
+
+from src.siscan import messages as msg
 
 
 class SiscanException(Exception):
@@ -131,7 +132,7 @@ class FieldValueNotFoundError(SiscanException):
     """
     Exceção lançada quando o valor preenchido/selecionado em um campo de
     formulário não corresponde a nenhuma opção válida definida no mapeamento
-    FIELDS_MAP. Isto é, o valor fornecido para um select, radio ou checkbox
+    FIELDS_VALUE_MAP. Isto é, o valor fornecido para um select, radio ou checkbox
     não consta entre as opções disponíveis.
     """
 
@@ -152,7 +153,7 @@ class SiscanInvalidFieldValueError(SiscanException):
     ----------------------------------------
 
     1. Quando o valor informado em `data` para um campo não consta na lista
-       de opções válidas definidas em `FIELDS_MAP` (exemplo: campo select,
+       de opções válidas definidas em `FIELDS_VALUE_MAP` (exemplo: campo select,
        radio ou checkbox recebeu valor inexistente nas opções do campo).
        - Exemplo: Selecionar uma unidade requisitante cujo código não
             exista no select.

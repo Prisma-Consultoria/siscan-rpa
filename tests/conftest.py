@@ -1,14 +1,12 @@
-import os
 import json
-from pathlib import Path
-
+import os
 import pytest
-from faker import Faker
-from validate_docbr import CNS
-import brazilcep.client as bc
-from fastapi.testclient import TestClient
-from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from faker import Faker
+from fastapi.testclient import TestClient
+from pathlib import Path
+from validate_docbr import CNS
 
 from src.env import HEADLESS
 
@@ -84,24 +82,24 @@ def fake_json_file(tmp_path_factory):
     ]
 
     data = {
+        # "nome": fake.name().upper(),
+        # "data_de_nascimento": fake.date_of_birth(
+        #     minimum_age=30, maximum_age=80
+        # ).strftime("%d/%m/%Y"),
+        # "nacionalidade": "BRASILEIRO",
+        # "sexo": fake.random_element(elements=("F", "M")),
+        # "nome_da_mae": fake.name_female().upper(),
+        # "raca_cor": "BRANCA",
+        # "uf": fake.estado_sigla(),
+        # "municipio": fake.city().upper(),
+        # "tipo_logradouro": "RUA",
+        # "nome_logradouro": fake.street_name().upper(),
+        # "numero": str(fake.random_int(min=1, max=9999)),
+        # "bairro": fake.bairro().upper(),
+        # "cep": bc._format_cep(fake.postcode()),
         "cartao_sus": cns.generate(),
-        "nome": fake.name().upper(),
         "apelido": fake.first_name().upper(),
-        "data_de_nascimento": fake.date_of_birth(
-            minimum_age=30, maximum_age=80
-        ).strftime("%d/%m/%Y"),
-        "nacionalidade": "BRASILEIRO",
-        "sexo": fake.random_element(elements=("F", "M")),
-        "nome_da_mae": fake.name_female().upper(),
-        "raca_cor": "BRANCA",
         "escolaridade": "4",
-        "uf": fake.estado_sigla(),
-        "municipio": fake.city().upper(),
-        "tipo_logradouro": "RUA",
-        "nome_logradouro": fake.street_name().upper(),
-        "numero": str(fake.random_int(min=1, max=9999)),
-        "bairro": fake.bairro().upper(),
-        "cep": bc._format_cep(fake.postcode()),
         "ponto_de_referencia": "PONTO DE REFERÊNCIA",
         "cnes_unidade_requisitante": fake.numerify("#######"),
         "prestador": fake.company().upper(),

@@ -1,8 +1,8 @@
 import os
+from cryptography.hazmat.primitives import serialization
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
-from cryptography.hazmat.primitives import serialization
 
 load_dotenv(override=True)
 

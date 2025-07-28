@@ -1,8 +1,25 @@
-import logging
-from typing import Callable, Any, Type
+#
+# Define a classe abstrata WebPage e a implementação concreta SiscanWebPage.
+#
+# Centraliza toda a lógica de navegação, autenticação, preenchimento de
+# formulários, manipulação de campos, screenshot, validação de dados,
+# navegação de menus e interação de alto nível com a interface web do SISCAN.
+#
+# Depende diretamente do contexto de navegador
+# Playwright (SiscanBrowserContext) e do construtor de XPath, compondo a
+# camada de abstração de página.
+#
 import asyncio
+import logging
+from abc import abstractmethod, ABC
+from datetime import datetime
+from pathlib import Path
 from pydantic import BaseModel
+from typing import Callable, List, Dict
+from typing import Optional, Type, Any
 
+from src.env import PRODUCTION
+from src.siscan.exception import FieldValueNotFoundError
 from src.siscan.exception import (
     SiscanLoginError,
     SiscanMenuNotFoundError,
@@ -11,14 +28,41 @@ from src.siscan.exception import (
     CartaoSusNotFoundError,
     SiscanInvalidFieldValueError, SiscanTimeoutError,
 )
-from src.utils.SchemaMapExtractor import SchemaMapExtractor
+from src.siscan.webpage import WebPage
+from src.siscan.webpage.context import SiscanBrowserContext
+from src.siscan.webpage.xpath_constructor import XPathConstructor
+from src.siscan.webpage.xpath_constructor import XPathConstructor as XPE, \
+    InputType
+from src.siscan import messages as msg
+from src.siscan.schema.SchemaMapExtractor import SchemaMapExtractor
 from src.utils.validator import Validator, SchemaValidationError
-from src.utils.webpage import WebPage
-from src.utils.xpath_constructor import XPathConstructor as XPE, \
-    XPathConstructor
-from src.utils import messages as msg
 
 logger = logging.getLogger(__name__)
+
+
+def ensure_metadata_schema_fields(cls: Type[WebPage]) -> List[str]:
+    # Pega a superclasse base
+    bases = cls.__bases__
+    base_fields= set()
+
+    if not bases:
+        return list(cls._schema_model.model_fields.keys())
+    # Supondo herança simples:
+    class_base = bases[0]
+    if hasattr(class_base._schema_model, "model_fields"):
+        base_fields = set(class_base._schema_model.model_fields.keys())
+    own_fields = set(cls._schema_model.model_fields.keys()) - base_fields
+
+
+    cls.FORM_SCHEMA_FIELDS = sorted(own_fields)
+
+    fields_metadata, field_value_map = SchemaMapExtractor.schema_to_maps(
+        cls._schema_model, cls.FORM_SCHEMA_FIELDS)
+    cls.FIELDS_METADATA = fields_metadata
+    cls.FIELDS_VALUE_MAP = field_value_map
+    breakpoint()
+
+    print('\n11111111', cls.FORM_SCHEMA_FIELDS )
 
 
 class SiscanWebPage(WebPage):
@@ -41,18 +85,37 @@ class SiscanWebPage(WebPage):
         "bairro",
         "cep",
     ]
-    MAP_SCHEMA_FIELDS = MAP_DATA_FIND_CARTAO_SUS + MAP_DATA_CARTAO_SUS
+    FORM_SCHEMA_FIELDS = MAP_DATA_FIND_CARTAO_SUS + MAP_DATA_CARTAO_SUS
 
-    def __init__(
-        self, base_url: str, user: str, password: str, schema_model: Type[BaseModel]
-    ):
-        super().__init__(base_url, user, password, schema_model)
-        map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
-            self.schema_model, fields=SiscanWebPage.MAP_SCHEMA_FIELDS
-        )
-        SiscanWebPage.MAP_DATA_LABEL = map_data_label
-        self.FIELDS_MAP.update(fields_map)
+    #Dicionário contendo metadados de cada campo do formulário, como rótulo,
+    # tipo de entrada, obrigatoriedade e xpath.
+    FIELDS_METADATA: Dict[str, Dict[str, Any]] = None
+
+    # Dicionário de mapeamento dos valores aceitos em cada campo para o
+    # valor esperado pelo backend ou frontend.
+    FIELDS_VALUE_MAP: Dict[str, Dict[str, Any]] = None
+
+    def __init__(self, base_url: str, user: str, password: str):
+        super().__init__(base_url, user, password)
         self._is_authenticated = False
+
+    @classmethod
+    def get_form_schema_fields(cls) -> List[str]:
+        return cls.FORM_SCHEMA_FIELDS
+
+    @classmethod
+    def get_fields_mapping(cls) -> Dict[str, Dict[str, Any]]:
+        """
+        Retorna o dicionário de metadados dos campos do formulário.
+        """
+        return cls.FIELDS_METADATA
+
+    @classmethod
+    def get_fields_values_mapping(cls) -> Dict[str, Dict[str, Any]]:
+        """
+        Retorna o dicionário de mapeamento de valores para os campos do formulário.
+        """
+        return cls.FIELDS_VALUE_MAP
 
     def validation(self, data: dict):
         try:
@@ -257,7 +320,7 @@ class SiscanWebPage(WebPage):
                     f"{menu_action_text}' falhou ({elapsed:.1f}s). "
                     f"Retentando..."
                 )
-                asyncio.sleep(interval)
+                await asyncio.sleep(interval)
                 elapsed += interval
 
         # Todas as tentativas falharam
@@ -402,7 +465,7 @@ class SiscanWebPage(WebPage):
                     )
 
             # 3. Aguarda o intervalo antes da próxima tentativa
-            asyncio.sleep(interval)
+            await asyncio.sleep(interval)
             elapsed += interval
 
     async def fill_field_in_card(self, card_name: str, field_name: str, value: str):

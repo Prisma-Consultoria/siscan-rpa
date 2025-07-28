@@ -1,9 +1,20 @@
-import logging
+#
+# Implementa a classe SiscanBrowserContext.
+#
+# Gerencia o ciclo de vida do navegador Playwright: inicialização,
+# configuração de contexto, gerenciamento de página, timeout, navegação
+# para URLs, coleta de pop-ups de mensagens informativas, fechamento do
+# navegador.
+#
+# Fornece métodos utilitários para manipulação de páginas, acesso ao contexto
+# do Playwright e coleta de mensagens contextuais.
+#
 import asyncio
-from typing import Optional
-from src.utils import messages as msg
+import logging
 from playwright.async_api import async_playwright, Browser, Page
+from typing import Optional
 
+from src.siscan import messages as msg
 
 logger = logging.getLogger(__name__)
 

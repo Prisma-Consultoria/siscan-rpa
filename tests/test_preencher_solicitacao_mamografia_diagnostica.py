@@ -2,12 +2,12 @@ import pytest
 import logging
 from pathlib import Path
 
-from src.siscan.classes.requisicao_exame_mamografia_diagnostica import (
+from src.siscan.requisicao.requisicao_exame_mamografia_diagnostica import (
     RequisicaoExameMamografiaDiagnostica,
 )
 from src.env import SISCAN_URL, SISCAN_USER, SISCAN_PASSWORD
 from src.utils.validator import Validator
-from src.siscan.context import SiscanBrowserContext
+from src.siscan.webpage.context import SiscanBrowserContext
 
 logger = logging.getLogger(__name__)
 

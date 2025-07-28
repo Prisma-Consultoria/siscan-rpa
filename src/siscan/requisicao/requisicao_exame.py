@@ -1,39 +1,32 @@
-from typing import Type, Any
-
-from pydantic import BaseModel
-
+#
+# Define a classe base RequisicaoExame, que representa a lógica de automação
+# para o preenchimento da requisição genérica de exames.
+#
+# Centraliza fluxos como autenticação, seleção de unidade requisitante,
+# prestador, preenchimento dos campos gerais do exame e validação dos dados.
+#
+# Serve de base para os demais tipos de requisição de exame por herança
+#
+import logging
 from abc import abstractmethod
 
-import logging
-
 from src.siscan.exception import SiscanInvalidFieldValueError
-from src.siscan.classes.webpage import SiscanWebPage
-from src.utils.SchemaMapExtractor import SchemaMapExtractor
-from src.utils.xpath_constructor import XPathConstructor as XPE, InputType
+from src.siscan.schema.requisicao_novo_exame_schema import \
+    RequisicaoNovoExameSchema
+from src.siscan.webpage.base import SiscanWebPage, \
+    ensure_metadata_schema_fields
+from src.siscan.webpage.xpath_constructor import (XPathConstructor as XPE)
 
 logger = logging.getLogger(__name__)
 
 
 class RequisicaoExame(SiscanWebPage):
-    # Campos específicos deste formulário
-    MAP_SCHEMA_FIELDS = [
-        "apelido",
-        "escolaridade",
-        "ponto_de_referencia",
-        "tipo_exame_mama",
-        "cnes_unidade_requisitante",
-        "prestador",
-    ]
+    _schema_model = RequisicaoNovoExameSchema
 
-    def __init__(
-        self, base_url: str, user: str, password: str, schema_model: Type[BaseModel]
-    ):
-        super().__init__(base_url, user, password, schema_model)
-        map_data_label, fields_map = SchemaMapExtractor.schema_to_maps(
-            self.schema_model, fields=RequisicaoExame.MAP_SCHEMA_FIELDS
-        )
-        RequisicaoExame.MAP_DATA_LABEL = map_data_label
-        self.FIELDS_MAP.update(fields_map)
+    def __init__(self, base_url: str, user: str, password: str):
+        super().__init__(base_url, user, password)
+        ensure_metadata_schema_fields(RequisicaoExame)
+
 
     def validation(self, data: dict):
         super().validation(data)
@@ -48,17 +41,6 @@ class RequisicaoExame(SiscanWebPage):
             "O método select_type_exam deve ser implementado na subclasse."
         )
 
-    def get_map_label(self) -> dict[str, dict[str, Any]]:
-        """
-        Retorna o mapeamento de campos do formulário com seus respectivos labels e tipos.
-        """
-        map_label = {
-            **SiscanWebPage.MAP_DATA_LABEL,
-            **RequisicaoExame.MAP_DATA_LABEL,
-        }
-        map_label["cartao_sus"] = SchemaMapExtractor.make_field_dict(
-            "Cartão SUS", InputType.TEXT, True)
-        return map_label
 
     async def buscar_cartao_sus(self, data: dict):
         await self._buscar_cartao_sus(data, menu_action=self._novo_exame)
@@ -88,13 +70,13 @@ class RequisicaoExame(SiscanWebPage):
         await self.load_select_options(nome_campo)
 
         # Atualiza o mapeamento de campos usando apenas o código CNES antes do hífen.
-        for k, v in list(self.FIELDS_MAP[nome_campo].items()):
+        for k, v in list(self.FIELDS_VALUE_MAP[nome_campo].items()):
             key = f"{k.split('-')[0].strip()}"
-            self.FIELDS_MAP[nome_campo][key] = v
+            self.FIELDS_VALUE_MAP[nome_campo][key] = v
 
             # Remove o item original que contém o hífen
             if v != "0":
-                del self.FIELDS_MAP[nome_campo][k]
+                del self.FIELDS_VALUE_MAP[nome_campo][k]
 
         text, value = await self.select_value(nome_campo, data)
         if value == "0":
@@ -102,7 +84,7 @@ class RequisicaoExame(SiscanWebPage):
                 self.context,
                 field_name=nome_campo,
                 data=data,
-                options_values=self.FIELDS_MAP[nome_campo].keys(),
+                options_values=self.FIELDS_VALUE_MAP[nome_campo].keys(),
             )
         data.pop(nome_campo, None)
 
@@ -118,7 +100,7 @@ class RequisicaoExame(SiscanWebPage):
                 self.context,
                 field_name=nome_campo,
                 data=data,
-                options_values=self.FIELDS_MAP[nome_campo].keys(),
+                options_values=self.FIELDS_VALUE_MAP[nome_campo].keys(),
             )
         data.pop(nome_campo, None)
 
@@ -126,10 +108,10 @@ class RequisicaoExame(SiscanWebPage):
         """
         Preenche o formulário de novo exame de acordo com os campos informados.
         """
+        breakpoint()
+        self.validation(data)
 
         await self._authenticate()
-
-        self.validation(data)
 
         xpath = await self._novo_exame(event_button=True)
 
@@ -154,7 +136,7 @@ class RequisicaoExame(SiscanWebPage):
         # apelido, escolaridade, ponto_de_referenciea
         await self.fill_form_fields(
             data,
-            RequisicaoExame.MAP_DATA_LABEL,
+            self.get_fields_mapping(),
             suffix=""
         )
         await self.take_screenshot("screenshot_03_requisicao_exame.png")

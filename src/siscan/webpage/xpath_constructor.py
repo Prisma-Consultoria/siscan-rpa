@@ -1,15 +1,27 @@
-from typing import Optional
+#
+# Implementa a classe XPathConstructor, que abstrai a construção, manipulação
+# e reutilização de expressões XPath para localização de elementos na página.
+#
+# Oferece métodos robustos para encontrar campos de formulário, botões,
+# âncoras, além de interações como preenchimento, clique, seleção, espera
+# por carregamento e obtenção de valores.
+#
+# Auxilia na navegação e manipulação da estrutura DOM do front-end do SISCAN,
+# suportando as ações orquestradas pela WebPage.
+#
 import time
+
 import logging
 from playwright.async_api import Page, Locator, TimeoutError, ElementHandle
+from typing import Optional
+
+from src.env import DEFAULT_TIMEOUT
 from src.siscan.exception import (
     SiscanMenuNotFoundError,
     XpathNotFoundError,
-    SiscanException, SiscanTimeoutError,
+    SiscanTimeoutError,
 )
-
-from src.env import DEFAULT_TIMEOUT
-from src.utils.schema import InputType
+from src.siscan.webpage.types import InputType
 
 logger = logging.getLogger(__name__)
 

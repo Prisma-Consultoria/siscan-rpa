@@ -1,11 +1,10 @@
-from fastapi import FastAPI
 import logging
+from fastapi import FastAPI
+
 from .env import Base, engine
+from .routes.rpa_mamografias import router as formulario_router
+from .routes.auth.security import router as security_router
 from .routes.user import router as user_router
-from .routes.preencher_formulario_siscan import (
-    router as formulario_router,
-)
-from .routes.security import router as security_router
 
 logging.basicConfig(
     level=logging.DEBUG,  # Troque para logging.INFO caso deseje menos verbosidade
