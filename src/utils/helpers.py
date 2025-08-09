@@ -59,36 +59,67 @@ def decode_access_token(token: str) -> Dict[str, Any]:
     return jwt.decode(token, public_key, algorithms=["RS256"])
 
 
-async def run_rpa(form_type, data):
-    """Executa o fluxo do RPA utilizando Playwright assíncrono."""
-    screenshots = []
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page()
-        # TODO: implementar login no SISCAN usando CPF/senha de users db
+async def run_rpa(form_type: str, data: dict) -> dict:
+    """Executa o fluxo de preenchimento conforme ``form_type``."""
 
-        # TODO: navegar até o formulário e preencher campos com 'data'
-        # Exemplo: page.handle_fill("input[name=campo1]",
-        """
-        req = RequisicaoExameMamografiaRastreio(
-            base_url=SISCAN_URL, user=SISCAN_USER, password=SISCAN_PASSWORD
-        )
+    from pathlib import Path
+    from src.env import (
+        SISCAN_URL,
+        SISCAN_USER,
+        SISCAN_PASSWORD,
+        HEADLESS,
+    )
+    from src.siscan.context import SiscanBrowserContext
+    from src.siscan.classes.requisicao_exame_mamografia_rastreio import (
+        RequisicaoExameMamografiaRastreio,
+    )
+    from src.siscan.classes.requisicao_exame_mamografia_diagnostica import (
+        RequisicaoExameMamografiaDiagnostica,
+    )
 
-        req._context = SiscanBrowserContext(headless=headless)
+    screenshots: list[str] = []
 
-        await req.authenticate()
-        await req.preencher(json_data)
-        """
-        # informations = req.context.information_messages
-        if not PRODUCTION and TAKE_SCREENSHOT:
-            for i in range(1, 4):
-                path = f"static/tmp/{form_type}_step{i}.png"
-                await page.screenshot(path=path)
-                screenshots.append(path)
+    cls_map = {
+        "requisicao-rastreamento": RequisicaoExameMamografiaRastreio,
+        "requisicao-diagnostica": RequisicaoExameMamografiaDiagnostica,
+    }
 
-        if PRODUCTION:
-            await page.click("button[type=submit]")
+    rpa_cls = cls_map.get(form_type)
 
-        await browser.close()
+    if rpa_cls is None:
+        # fluxos não implementados retornam sucesso imediato
+        return {"success": True, "screenshots": []}
 
-    return {"success": True, "screenshots": screenshots}
+    context = SiscanBrowserContext(headless=HEADLESS)
+    req = rpa_cls(base_url=SISCAN_URL, user=SISCAN_USER, password=SISCAN_PASSWORD)
+    req._context = context
+
+    try:
+        await req.preencher(data)
+
+        if TAKE_SCREENSHOT:
+            Path("static/tmp").mkdir(parents=True, exist_ok=True)
+            screenshot = await req.take_screenshot(
+                f"{form_type}.png", subdir="static/tmp"
+            )
+            screenshots.append(str(screenshot))
+
+        informations = req.context.information_messages
+        success = True
+        error = None
+    except Exception as exc:  # pragma: no cover - network errors
+        success = False
+        informations = {}
+        error = str(exc)
+    finally:
+        try:
+            await context.close()
+        except Exception:
+            pass
+
+    result = {"success": success, "screenshots": screenshots}
+    if informations:
+        result["information_messages"] = informations
+    if error:
+        result["error"] = error
+    return result
